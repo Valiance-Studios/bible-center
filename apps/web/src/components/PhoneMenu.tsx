@@ -17,6 +17,7 @@ export function PhoneMenu({opened, onClose}: PhoneMenuProps) {
 
   return (
     <Drawer opened={opened} onClose={onClose} position="left" size={334} title="Bible Center" classNames={{title: classes.title, body: classes.body}}>
+      <Link className={classes.link} to="/search" onClick={onClose}>Search</Link>
       <Link className={classes.link} to="/topics" onClick={onClose}>Topics</Link>
 
       <h2 className={classes.heading}>Read the Bible</h2>

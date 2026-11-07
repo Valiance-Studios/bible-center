@@ -1,11 +1,15 @@
 import type {ChapterRef} from '@bible-center/core';
 
+import {useEffect} from 'react';
 import {useQuery} from '@tanstack/react-query';
-import {Link, Navigate, useNavigate, useParams} from 'react-router';
+import {Link, Navigate, useLocation, useNavigate, useParams} from 'react-router';
 import {BIBLE_BOOKS, chapterTitle, nextChapter, parseChapterRef, previousChapter} from '@bible-center/core';
 import {Alert, Button, Loader, NativeSelect} from '@mantine/core';
 import {chapterPath} from '@/bible/paths';
-import {findTranslation, TRANSLATIONS} from '@/bible/translations';
+import {chapterQuery} from '@/bible/queries';
+import {findTranslation} from '@/bible/translations';
+import {TranslationSelect} from '@/components/TranslationSelect';
+import {VerseText} from '@/components/VerseText';
 import {useTranslationStore} from '@/stores/translation';
 import classes from './ReaderPage.module.scss';
 
@@ -20,15 +24,20 @@ function ChapterLink({target, label, path}: {target: ChapterRef | null; label: s
 
 function Chapter({reference}: {reference: ChapterRef}) {
   const navigate = useNavigate();
+  const {hash} = useLocation();
   const translationId = useTranslationStore((state) => state.translationId);
-  const setTranslationId = useTranslationStore((state) => state.setTranslationId);
   const translation = findTranslation(translationId);
   const {book, chapter} = reference;
   const title = chapterTitle(reference);
-  const {data, isPending, isError, refetch} = useQuery({
-    queryKey: ['chapter', translation.id, book.slug, chapter],
-    queryFn: () => translation.getChapter(reference),
-  });
+  const {data, isPending, isError, refetch} = useQuery(chapterQuery(translation, reference));
+  const hasText = data !== undefined;
+
+  // A link to a verse, as from search results. The text loads after navigation, so scroll once it is there.
+  useEffect(() => {
+    if (hasText && hash) {
+      document.getElementById(hash.slice(1))?.scrollIntoView({block: 'center'});
+    }
+  }, [hasText, hash]);
 
   return (
     <main className={classes.reading}>
@@ -49,13 +58,7 @@ function Chapter({reference}: {reference: ChapterRef}) {
           data={Array.from({length: book.chapters}, (_, index) => String(index + 1))}
           onChange={(event) => void navigate(`/read/${book.slug}/${event.currentTarget.value}`)}
         />
-        <NativeSelect
-          size="md"
-          aria-label="Translation"
-          value={translation.id}
-          data={TRANSLATIONS.map(({id, name}) => ({label: name, value: id}))}
-          onChange={(event) => setTranslationId(event.currentTarget.value)}
-        />
+        <TranslationSelect />
         <ChapterLink target={previousChapter(reference)} label="Previous chapter" path="M15 5l-7 7 7 7" />
         <ChapterLink target={nextChapter(reference)} label="Next chapter" path="M9 5l7 7-7 7" />
       </div>
@@ -74,10 +77,7 @@ function Chapter({reference}: {reference: ChapterRef}) {
       {data && (
         <>
           {data.verses.map(({verse, text}) => (
-            <p key={verse} className={classes.verse}>
-              <sup className={classes.verseNumber}>{verse}</sup>
-              {text}
-            </p>
+            <VerseText key={verse} id={`v${verse}`} verse={verse} text={text} isTarget={hash === `#v${verse}`} />
           ))}
           <p className={classes.credit}>{translation.credit}</p>
         </>

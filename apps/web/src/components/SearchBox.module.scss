@@ -1,0 +1,59 @@
+.label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.hiddenLabel {
+  position: absolute;
+  left: -9999px;
+}
+
+.box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px 0 18px;
+  border: 1.5px solid var(--bc-ink);
+  border-radius: 8px;
+  background: var(--bc-field);
+
+  &:focus-within {
+    outline: 3px solid var(--bc-accent);
+    outline-offset: 2px;
+  }
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 16px 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--bc-ink);
+  font: inherit;
+  font-size: 18px;
+
+  &::placeholder {
+    color: var(--bc-muted);
+  }
+
+  @media (max-width: 900px) {
+    font-size: 16px;
+  }
+}
+
+.button {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--bc-accent);
+  color: var(--bc-on-accent);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}

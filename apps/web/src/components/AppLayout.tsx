@@ -31,6 +31,7 @@ export function AppLayout() {
           </svg>
         </button>
         <Link className={classes.mark} to="/">Bible Center</Link>
+        <Link className={classes.navLink} to="/search">Search</Link>
         <Link className={classes.navLink} to="/read">Read</Link>
         <Link className={classes.navLink} to="/topics">Topics</Link>
         <ThemeToggle />
