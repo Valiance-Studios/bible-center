@@ -50,11 +50,19 @@ async function request(url: string, init: RequestInit, action: string): Promise<
   return response.json();
 }
 
-/** Adds the email to the allowlist the security rules check. Safe to repeat. */
-export async function allowEmail(email: string): Promise<void> {
-  const url = `http://127.0.0.1:${ports.firestore}/v1/projects/${projectId}/databases/(default)/documents/allowedUsers/${encodeURIComponent(email.toLowerCase())}`;
+/** The Firestore emulator's REST address for a document or collection path. */
+function documentsUrl(path: string): string {
+  return `http://127.0.0.1:${ports.firestore}/v1/projects/${projectId}/databases/(default)/documents/${path}`;
+}
 
-  await request(url, {method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields: {}})}, `allow ${email}`);
+/** A role from `packages/core/src/roles.ts`. */
+export type EmulatorRole = 'member' | 'reviewer' | 'admin';
+
+/** Adds the email to the allowlist the security rules check, with a role. Safe to repeat. */
+export async function allowEmail(email: string, role: EmulatorRole = 'member'): Promise<void> {
+  const url = documentsUrl(`allowedUsers/${encodeURIComponent(email.toLowerCase())}`);
+
+  await request(url, {method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields: {role: {stringValue: role}}})}, `allow ${email}`);
 }
 
 /** Opens the confirmation link the Auth emulator would have emailed, as the person would from their inbox. */
@@ -117,7 +125,7 @@ export interface SeedAnnotation {
 
 /** Writes annotations straight to Firestore, for tests that need more than are quick to make in the reader. */
 export async function addAnnotations(uid: string, annotations: SeedAnnotation[]): Promise<void> {
-  const url = `http://127.0.0.1:${ports.firestore}/v1/projects/${projectId}/databases/(default)/documents/users/${uid}/annotations`;
+  const url = documentsUrl(`users/${uid}/annotations`);
 
   await Promise.all(annotations.map(({type, startVerse, endVerse, text, createdAt}) => {
     const fields = {
@@ -132,4 +140,47 @@ export async function addAnnotations(uid: string, annotations: SeedAnnotation[])
 
     return request(url, {method: 'POST', headers: ADMIN_HEADERS, body: JSON.stringify({fields})}, `add a ${type} for ${uid}`);
   }));
+}
+
+/**
+ * Starts a topic, pending review, with one verse at one upvote, as someone adding its first verse would.
+ * The vote itself is left out, since nothing here reads it.
+ */
+export async function startTopic(slug: string, name: string, verseId: string, createdAt: Date): Promise<void> {
+  const by = {stringValue: 'e2e-seed'};
+  const at = {timestampValue: createdAt.toISOString()};
+
+  await request(documentsUrl(`topics/${slug}`), {
+    method: 'PATCH',
+    headers: ADMIN_HEADERS,
+    body: JSON.stringify({fields: {name: {stringValue: name}, status: {stringValue: 'pending'}, createdBy: by, createdAt: at}}),
+  }, `start ${name}`);
+  await request(documentsUrl(`topics/${slug}/verses/${verseId}`), {
+    method: 'PATCH',
+    headers: ADMIN_HEADERS,
+    body: JSON.stringify({fields: {startVerse: {stringValue: verseId}, endVerse: {stringValue: verseId}, upvotes: {integerValue: '1'}, createdBy: by, createdAt: at}}),
+  }, `add ${verseId} to ${name}`);
+}
+
+export interface SeedReport {
+  topic: string;
+  verseKey: string;
+  reason: 'fit' | 'reference' | 'other';
+  details?: string;
+  createdAt: Date;
+}
+
+/** Files an open report, as someone reporting a verse on a topic would. */
+export async function addReport({topic, verseKey, reason, details, createdAt}: SeedReport): Promise<void> {
+  const fields = {
+    topic: {stringValue: topic},
+    verseKey: {stringValue: verseKey},
+    reason: {stringValue: reason},
+    ...(details === undefined ? {} : {details: {stringValue: details}}),
+    reportedBy: {stringValue: 'e2e-seed'},
+    createdAt: {timestampValue: createdAt.toISOString()},
+    status: {stringValue: 'open'},
+  };
+
+  await request(documentsUrl('reports'), {method: 'POST', headers: ADMIN_HEADERS, body: JSON.stringify({fields})}, `report ${verseKey} on ${topic}`);
 }

@@ -55,11 +55,39 @@ export async function listMyVotes(uid: string, slug: string): Promise<Set<string
   return new Set(votes.flatMap((vote) => vote.ref.parent.parent?.id ?? []));
 }
 
-/** The name of a topic someone started, or null if nobody has. */
-export async function getStartedTopicName(slug: string): Promise<string | null> {
+/** Where a topic someone started stands. Mirrors `topics/{slug}` in `firestore.rules`. */
+export type StartedTopicStatus = 'pending' | 'approved' | 'rejected';
+
+export interface StartedTopic {
+  name: string;
+  status: StartedTopicStatus;
+}
+
+/** A topic someone started, or null if nobody has. */
+export async function getStartedTopic(slug: string): Promise<StartedTopic | null> {
   const topic = await getDocFromServer(doc(db, 'topics', slug));
 
-  return topic.exists() ? (topic.data() as {name: string}).name : null;
+  if (!topic.exists()) {
+    return null;
+  }
+
+  const {name, status} = topic.data() as StartedTopic;
+
+  return {name, status};
+}
+
+/** The names of the topics people started that a reviewer approved. */
+export async function listApprovedTopicNames(): Promise<string[]> {
+  const topics = await fetchFromServer(query(collection(db, 'topics'), where('status', '==', 'approved')));
+
+  return topics.map((topic) => topic.get('name') as string);
+}
+
+/** The keys of the verses a reviewer took off the topic. */
+export async function listRemovedVerseKeys(slug: string): Promise<Set<string>> {
+  const removed = await fetchFromServer(query(collection(db, 'topics', slug, 'removed')));
+
+  return new Set(removed.map((verse) => verse.id));
 }
 
 /**

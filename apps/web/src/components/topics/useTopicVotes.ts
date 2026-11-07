@@ -2,14 +2,14 @@ import type {TopicSpan} from '@/firebase/topics';
 
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {topicVerseKey} from '@bible-center/core';
-import {listCommunityVerses, listMyVotes, removeUpvote, upvoteVerse} from '@/firebase/topics';
+import {listCommunityVerses, listMyVotes, listRemovedVerseKeys, removeUpvote, upvoteVerse} from '@/firebase/topics';
 import {topicQueryKeys} from './topicQueryKeys';
 
-const NO_VOTES = new Set<string>();
+const NONE = new Set<string>();
 
 /**
- * A topic's Bible Center upvotes, which of them are this user's, and the ways to change them.
- * With no user, anyone can still see the counts.
+ * A topic's Bible Center upvotes, which of them are this user's, the verses reviewers removed, and the ways
+ * to change the votes. With no user, anyone can still see the counts.
  */
 export function useTopicVotes(slug: string, uid: string | undefined) {
   const queryClient = useQueryClient();
@@ -19,6 +19,12 @@ export function useTopicVotes(slug: string, uid: string | undefined) {
     // Other people vote too.
     staleTime: 0,
     // Being offline counts as a failure here (see fetchFromServer), so give a brief one time to pass.
+    retry: 4,
+  });
+  const removed = useQuery({
+    queryKey: topicQueryKeys.removed(slug),
+    queryFn: () => listRemovedVerseKeys(slug),
+    staleTime: 0,
     retry: 4,
   });
   const mine = useQuery({
@@ -39,9 +45,10 @@ export function useTopicVotes(slug: string, uid: string | undefined) {
 
   return {
     community: verses.data ?? [],
-    myVotes: mine.data ?? NO_VOTES,
-    isLoading: verses.isLoading || mine.isLoading,
-    hasLoadError: verses.isError || mine.isError,
+    myVotes: mine.data ?? NONE,
+    removedKeys: removed.data ?? NONE,
+    isLoading: verses.isLoading || removed.isLoading || mine.isLoading,
+    hasLoadError: verses.isError || removed.isError || mine.isError,
     /** The verse being voted on, if any. */
     savingKey: change.isPending ? change.variables.key : undefined,
     hasSaveError: change.isError,

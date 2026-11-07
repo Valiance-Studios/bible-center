@@ -1,0 +1,76 @@
+// Shared by the Review and People pages.
+$phone-width: 900px;
+
+.content {
+  max-width: 820px;
+  padding: 28px 180px 64px 56px;
+
+  @media (max-width: $phone-width) {
+    max-width: none;
+    padding: 8px 16px 40px;
+  }
+}
+
+.title {
+  margin: 0 0 8px;
+  font-family: 'Literata', serif;
+  font-size: 44px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+
+  @media (max-width: $phone-width) {
+    margin-bottom: 14px;
+    font-size: 34px;
+  }
+}
+
+.intro {
+  max-width: 40em;
+  margin: 0 0 20px;
+  color: var(--bc-muted);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.alertText {
+  margin: 0 0 12px;
+}
+
+.tabs {
+  margin-bottom: 10px;
+}
+
+.hint {
+  max-width: 40em;
+  margin: 10px 0 0;
+  color: var(--bc-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.empty {
+  padding: 28px 0;
+  border-top: 1px solid var(--bc-line);
+
+  h2 {
+    margin: 0 0 6px;
+    font-family: 'Literata', serif;
+    font-size: 26px;
+    font-weight: 400;
+  }
+
+  p {
+    margin: 0;
+    color: var(--bc-muted);
+    font-size: 16px;
+  }
+}
+
+.none {
+  margin: 0;
+  padding: 20px 0;
+  border-top: 1px solid var(--bc-line);
+  color: var(--bc-muted);
+  font-size: 16px;
+}

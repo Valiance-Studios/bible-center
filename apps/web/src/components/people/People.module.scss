@@ -1,0 +1,106 @@
+$phone-width: 900px;
+
+.roles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: -14px 0 22px;
+  padding: 0;
+  list-style: none;
+  font-size: 15px;
+  line-height: 1.5;
+
+  strong {
+    font-weight: 600;
+  }
+}
+
+.add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 170px auto;
+  align-items: end;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 6px;
+  background: var(--bc-panel);
+
+  @media (max-width: $phone-width) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.addHint {
+  margin: 6px 0 28px;
+  color: var(--bc-muted);
+  font-size: 13px;
+}
+
+.count {
+  margin: 0 0 6px;
+  color: var(--bc-muted);
+  font-size: 15px;
+}
+
+.person {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 170px 92px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--bc-line);
+
+  @media (max-width: $phone-width) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 4px;
+  }
+}
+
+.email {
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.you {
+  color: var(--bc-muted);
+  font-size: 14px;
+}
+
+.fixedRole {
+  padding: 0 10px;
+  font-size: 15px;
+
+  @media (max-width: $phone-width) {
+    grid-column: 1;
+    padding: 0;
+  }
+}
+
+.roleSelect {
+  @media (max-width: $phone-width) {
+    grid-column: 1;
+  }
+}
+
+.remove {
+  justify-self: end;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--bc-muted);
+  font: 400 14px 'Schibsted Grotesk', sans-serif;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+
+  @media (max-width: $phone-width) {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+  }
+}
+
+.status {
+  margin: 10px 0 0;
+  color: var(--bc-muted);
+  font-size: 14px;
+}

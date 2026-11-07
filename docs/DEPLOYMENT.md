@@ -27,9 +27,11 @@ To check a referrer, request `https://identitytoolkit.googleapis.com/v1/projects
 
 Referrer restrictions are a light barrier, since non-browser clients can fake the header. Security rules and App Check are the real protection. `localhost` must stay off the reCAPTCHA key, which is separate; local runs use a [debug token](#debug-token) for App Check.
 
-## Allowlist
+## Allowlist and Roles
 
-Add a document with no fields at `allowedUsers/<lowercase email>` in the Firestore console. The email must be verified to count; see [Authentication and Access](../ARCHITECTURE.md#authentication-and-access).
+Admins add people, set their roles and remove them on the People page (`/people`). The first admin has to be made in the Firestore console: on `allowedUsers/<lowercase email>`, add a string field `role` set to `admin`. An entry with no `role` is a member. The email must be verified to count; see [Authentication and Access](../ARCHITECTURE.md#authentication-and-access).
+
+Admins cannot change or remove their own entry, so there is always at least one admin. To demote the last admin, use the console.
 
 ## App Check Setup
 

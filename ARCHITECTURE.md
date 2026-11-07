@@ -4,13 +4,13 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 ## Project Status
 
-**Current step: topic voting, in review.** Next, admins and reviewers, whose mockups come first.
+**Current step: Hebrew/Greek study.** Admins and reviewers are in a pull request from `feature/admins-and-reviewers`. Topic search is complete.
 
 | Area | Status |
 | --- | --- |
 | Monorepo, tooling, tests, env files, Firebase and App Check wiring, deploy check | Done |
 | GitHub Actions CI (`.github/workflows/ci.yml`) | Built. Runs on pull requests and pushes to `main` |
-| Firestore rules and indexes: default deny, allowlist, user settings, annotations | Built and deployed |
+| Firestore rules and indexes: default deny, allowlist, user settings, annotations, topics | Built and deployed, including roles and review |
 | Topic score formula (`packages/core/src/topicScore.ts`) | Done, not yet used by any feature |
 | Design mockups | Approved |
 | Sign-in and registration | Built. Google sign-in is confirmed on the hosted site; email registration is tested against the emulators only |
@@ -24,34 +24,34 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | Translation choice saved to the account | Built |
 | My verses page | Built |
 | About dialog | Planned, with no mockup yet. `CLAUDE.md` expects it, as a shorter version of the README with data credits |
-| Topic search, voting, reports | Built. Voting, adding verses, starting topics and reports are in a pull request from `feature/topic-voting` |
-| Admins and reviewers | Planned: roles assigned in the app, and review of new topics and reports |
+| Topic search, voting, reports | Built: topic pages, the Topics page, voting, adding verses, starting topics and reports |
+| Admins and reviewers | Built: roles on the allowlist, the People page for admins, and the Review page for reported verses and new topics |
 | Hebrew/Greek study | Planned |
 | AI topic suggestions | Planned as the last V1 step |
 | ESV | Blocked: Crossway's review of the API key application, applied for November 2026, may take 3-4 weeks |
+| Scripture memorization | An idea to flesh out later; see [Scope](#scope) |
 | Boards, plugins, paraphrase search (embeddings) | After V1 |
 
 ### Current State
 
 Last updated November 7, 2026.
 
-- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon, reader, search, annotations, CI and My verses are merged. Topic pages are merged; voting is in a pull request from `feature/topic-voting`. Check what has merged before starting new work.
-- **Hosted project:** `vs-bible-center-dev`. The owner deploys it, and deployed the My verses rules and indexes on November 7, 2026. Before running `npm run deploy`, move the debug token out of `apps/web/.env.staging.local`, as the deploy check refuses it. `npm run deploy:rules` sends the rules and `firestore.indexes.json` and needs no token moved. **After voting merges, run `npm run deploy:rules`**: until then the hosted rules reject votes, reports and new topics, and listing your own votes needs its new `votes` index. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
-- **Set up in the project:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. `allowedUsers/bobbyjuba@gmail.com` exists.
+- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon, reader, search, annotations, CI and My verses are merged. Topic search, including voting, is merged. Admins and reviewers are in a pull request from `feature/admins-and-reviewers`. Check what has merged before starting new work.
+- **Hosted project:** `vs-bible-center-dev`. The owner deploys it, and deployed the My verses rules and indexes on November 7, 2026. Before running `npm run deploy`, move the debug token out of `apps/web/.env.staging.local`, as the deploy check refuses it. `npm run deploy:rules` sends the rules and `firestore.indexes.json` and needs no token moved. The owner deployed the roles and review rules and indexes on November 7, 2026, ahead of the merge. The hosted site does not show Review or People until the app itself is deployed. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
+- **Set up in the project:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. `allowedUsers/bobbyjuba@gmail.com` exists, with the `admin` role.
 - **`gcloud` and Firebase CLI account:** `broden@valiance-studios.com`.
 
 ### Next Steps
 
 Build features one branch at a time, from `main` or from the latest unmerged branch, in this order:
 
-1. **Admins and reviewers:** assign admin and reviewer roles in the app, and let reviewers approve or reject new topics and resolve reports. Its mockups come first. Verse of the Day's `admins` builds on it.
-2. **Verse of the Day:** `dailyVerses`, `admins`, the admin dialog and the automatic list.
-3. **Hebrew/Greek study:** the reader's word panel, using STEPBible data.
-4. **About dialog and final polish.**
-5. **AI suggestions:** the first Cloud Function.
-6. **ESV:** once Crossway approves the key.
+1. **Hebrew/Greek study:** the reader's word panel, using STEPBible data. The reader mockups already show it.
+2. **Verse of the Day:** `dailyVerses`, the admin dialog and the automatic list. Admins are the allowlist's `admin` role. When it is built, add "set the verse of the day" to what the People page says admins can do, as its mockup does.
+3. **About dialog and final polish.**
+4. **AI suggestions:** the first Cloud Function.
+5. **ESV:** once Crossway approves the key.
 
-After V1: boards, plugins, and possibly embeddings for search by meaning.
+After V1: boards, plugins, and possibly embeddings for search by meaning. Scripture memorization is wanted too, and is not yet placed or designed; see [Scope](#scope).
 
 ### Open Items
 
@@ -71,7 +71,9 @@ To do when reached:
 - Add a Content Security Policy once the app's external origins are settled.
 - Check the first phrase search on a real phone, and move indexing to a Web Worker if it is slow.
 - The 10-character password minimum is only enforced in the app. Firebase's password policy could enforce it server-side.
-- Topics created by users start pending: they work by link but are not listed or linked from search until a reviewer approves them. Anything else users can make public needs the same before the allowlist is removed.
+- Topics created by users start pending: they work by link but are not listed or linked from search until a reviewer approves them on the Review page. Anything else users can make public needs the same before the allowlist is removed.
+- A review decision cannot be undone in the app. A removed verse or a rejected topic can be restored by deleting its `removed` document or setting the topic back to `pending` in the console.
+- Roles live on the allowlist. When the allowlist is removed, they need a home of their own, such as `roles/{email}`.
 - Common topics are a fixed list for now. Later they could follow what people search for, which changes through the year (such as "resurrection" around Easter).
 
 ### Resuming in a New Session
@@ -106,6 +108,10 @@ Start with "Starting a Session" in `CLAUDE.md`, then the [Mockups](#mockups) sec
 | `TopicReport.dc.html` | Reporting a verse on a topic |
 | `TopicEmpty.dc.html` | A topic nobody has added a verse to yet |
 | `PhoneTopic.dc.html` | A topic on a phone, signed out |
+| `Review.dc.html` | Reviewers remove or keep reported verses, and approve or reject new topics |
+| `People.dc.html` | Admins add people, set their roles and remove access |
+| `AccountMenuRoles.dc.html` | The account menu for an admin, with Review and People |
+| `PhoneReview.dc.html` | Review on a phone |
 
 The canvas is the source of truth for the design. To work from it in a new session, read `project/canvas.json` and any `project/<artboard>` from that URL with the Artifact tool. The design language is in [UI.md](docs/UI.md#design-language).
 
@@ -126,6 +132,8 @@ Bible Center is a free, public, one-stop Bible resource. The [README](README.md)
 - Google sign-in and email/password registration, limited to an allowlist for now.
 
 **After V1: boards.** Signed-in users create titled, infinitely scrolling boards holding photos, text boxes, embedded videos, links to other boards, and titled photo carousels whose navigation wraps in both directions. Items can be tagged and searched. Selecting a result jumps to the item, and for a photo in a carousel, makes that photo active.
+
+**Wanted, to flesh out later: scripture memorization.** Help people memorize a verse. At minimum, something like flash cards: focus on one verse, then hide it or flip it over to test recall. It might use the microphone so people can say the verse aloud. Not yet designed or scheduled.
 
 **Later, if there is demand: plugins.** Translations and search sit behind interfaces so a plugin system could be added. None is built now.
 
@@ -331,7 +339,7 @@ flowchart TD
   list --> show
 ```
 
-- **Setting it:** admins get a "Set verse of the day" dialog on the home page. An admin is a verified email with a document at `admins/{lowercase email}`, managed in the Firebase console. Only admins can write to `dailyVerses`, enforced by security rules.
+- **Setting it:** admins get a "Set verse of the day" dialog on the home page. An admin is an allowlist entry with the `admin` role (see [Roles and Review](#roles-and-review)). Only admins can write to `dailyVerses`, enforced by security rules with `isAdmin`.
 - **Automatic picks:** a static list of about 366 verse ranges, indexed by day of the year, so everyone on the same date sees the same verse and nothing runs on a schedule. The list starts from OpenBible's most-voted short passages and needs a person's review before launch.
 - **Storage:** a `VerseId` range, not text, so the verse appears in the viewer's translation. The list and documents hold no scripture.
 - **Reading:** anyone can read a single date's document, but not list the collection.
@@ -386,20 +394,28 @@ The app shows OpenBible and Bible Center counts separately rather than the combi
 - One vote per user for each verse and topic, enforced by the document path and security rules.
 - Counts are checked by the security rules rather than kept by a Cloud Function. `upvoteVerse` and `removeUpvote` in `apps/web/src/firebase/topics.ts` change a vote and its count in one transaction, and the rules use `existsAfter` and `getAfter` to accept a count change only when that user's vote is created (+1) or deleted (-1) in the same write, and a vote only when its count moves with it. Adding a verse to a topic creates its count at 1 alongside the adder's vote. A transaction retries when someone else votes at the same moment, so no vote is lost. `tests/rules/topics.spec.ts` tries each way of changing a count without a vote.
 - Anyone can read the counts. A user's own votes are found with one collection-group query on `uid` and `topic`, and nobody else can read them.
-- Reports go to `reports` for review, with a reason from `REPORT_REASONS` and up to 500 characters of details. They do not change the ranking, so they cannot be used to bury verses, and the app cannot read them back.
-- Topic names are normalized (trimmed, lowercased, single spaces). Adding the first verse to a topic OpenBible does not have starts it, as a `topics/{slug}` document with `status: 'pending'`. It works by its link, but is not listed or linked from search until a reviewer approves it.
+- Reports go to `reports` for review, with a reason from `REPORT_REASONS` and up to 500 characters of details. They do not change the ranking, so they cannot be used to bury verses. Only reviewers can read them; see [Roles and Review](#roles-and-review).
+- Topic names are normalized (trimmed, lowercased, single spaces). Adding the first verse to a topic OpenBible does not have starts it, as a `topics/{slug}` document with `status: 'pending'`. It works by its link, but is not listed or linked from search until a reviewer approves it. A rejected topic's page says it is not available, and nobody can add verses to it.
+- A verse a reviewer removed from a topic has a `topics/{slug}/removed/{key}` document. `rankTopicVerses` leaves it out, which hides OpenBible's verses too, and nobody can add it back.
 - A verse someone adds starts with one vote, so it usually ranks low. The page grows to include it and scrolls to it, so the person sees it was added.
 
 ```mermaid
 erDiagram
   TOPIC ||--o{ TOPIC_VERSE : "topics/{slug}/verses/{key}"
+  TOPIC ||--o{ REMOVED_VERSE : "topics/{slug}/removed/{key}"
   TOPIC_VERSE ||--o{ VOTE : "votes/{uid}"
   REPORT }o--|| TOPIC_VERSE : "topic, verseKey"
   TOPIC {
     string name "only for topics people start"
-    string status "pending"
+    string status "pending, approved or rejected"
     string createdBy
     timestamp createdAt
+    string reviewedBy "once decided"
+    timestamp reviewedAt
+  }
+  REMOVED_VERSE {
+    string removedBy "a reviewer"
+    timestamp removedAt
   }
   TOPIC_VERSE {
     string startVerse "bbcccvvv"
@@ -419,7 +435,10 @@ erDiagram
     string reason "fit, reference or other"
     string details "optional, up to 500"
     string reportedBy
-    string status "open"
+    timestamp createdAt
+    string status "open, removed or kept"
+    string resolvedBy "once resolved"
+    timestamp resolvedAt
   }
 ```
 
@@ -449,7 +468,7 @@ sequenceDiagram
 
 [OpenBible.info's topic data](https://www.openbible.info/topics/) is licensed CC BY, so the app must credit it with a link wherever it is shown. The [vote file](https://a.openbible.info/data/topic-votes.txt) is refreshed weekly upstream and contains only topics, verse references and vote counts, with no scripture text. As of November 2026 it has about 470,000 rows across 6,751 topics. Each row may be a range (`Topic`, `Start Verse ID`, `End Verse ID`, `Votes`).
 
-`scripts/build-topic-data.ts` (`npm run topic-data`) splits it into one static JSON file per topic on Hosting, so reading a topic costs no Firestore reads. Names are normalized (trimmed, lowercased, single spaces), and spellings that share a slug, such as "self control" and "self-control", become one topic named by the more-voted spelling, keeping a passage's higher count where both list it. That leaves 6,739 topics. Rows naming a verse that does not exist are dropped. `_index.json` lists every name, for the Topics page and for spotting a search that names a topic; no slug starts with an underscore, so it never collides with a topic. The output is committed, like the Bible text: about 13 MB across 6,740 small files, marked as generated in `.gitattributes`. Refreshing means rerunning the script and committing the result. Bible Center votes are unaffected, since they are keyed by topic slug and verse ids.
+`scripts/build-topic-data.ts` (`npm run topic-data`) splits it into one static JSON file per topic on Hosting, so reading a topic costs no Firestore reads. Names are normalized (trimmed, lowercased, single spaces), and spellings that share a slug, such as "self control" and "self-control", become one topic named by the more-voted spelling, keeping a passage's higher count where both list it. That leaves 6,739 topics. Rows naming a verse that does not exist are dropped. `_index.json` lists every name, for the Topics page and for spotting a search that names a topic, and `topicNamesQuery` adds the approved topics people started from Firestore. If those cannot be loaded, OpenBible's topics still show; no slug starts with an underscore, so it never collides with a topic. The output is committed, like the Bible text: about 13 MB across 6,740 small files, marked as generated in `.gitattributes`. Refreshing means rerunning the script and committing the result. Bible Center votes are unaffected, since they are keyed by topic slug and verse ids.
 
 ```mermaid
 flowchart LR
@@ -457,8 +476,11 @@ flowchart LR
   script --> files["apps/web/public/topic-data/slug.json"]
   script --> index["apps/web/public/topic-data/_index.json"]
   files -- "topicQuery" --> topicPage["TopicPage<br/>rankTopicVerses"]
-  index -- "topicNamesQuery" --> topicsPage["TopicsPage"]
-  index -- "findTopic" --> searchPage["SearchPage topic link"]
+  index --> names["topicNamesQuery"]
+  approved[("Firestore topics<br/>status approved")] -- "listApprovedTopicNames" --> names
+  names --> topicsPage["TopicsPage"]
+  names -- "findTopic" --> searchPage["SearchPage topic link"]
+  removed[("Firestore topics/slug/removed")] -- "listRemovedVerseKeys" --> topicPage
   topicPage -- "usePassage" --> text["/bible/translation/..."]
 ```
 
@@ -486,7 +508,7 @@ The first version is a word-by-word original-language panel for each verse. It f
 
 ## Authentication and Access
 
-Anyone can read the Bible without an account. Signing in unlocks annotations and voting, and for now is limited to an allowlist in `allowedUsers/{lowercase email}`, managed in the Firebase console.
+Anyone can read the Bible without an account. Signing in unlocks annotations and voting, and for now is limited to an allowlist in `allowedUsers/{lowercase email}`, which admins manage on the People page. Each entry also holds the person's role; see [Roles and Review](#roles-and-review).
 
 ```mermaid
 flowchart TD
@@ -499,16 +521,84 @@ flowchart TD
   verified -- "Yes" --> allowed{"In allowedUsers?"}
   allowed -- "No" --> denied["status: noAccess<br/>Read only, invite-only message"]
   allowed -- "Check failed" --> failed["status: accessCheckFailed<br/>Read only, offer to retry"]
-  allowed -- "Yes" --> access["status: allowed<br/>Annotations and voting"]
+  allowed -- "Yes" --> access["status: allowed, with the entry's role<br/>Annotations and voting"]
   denied -- "recheckAccess" --> allowed
   failed -- "recheckAccess" --> allowed
 ```
 
-`apps/web/src/stores/auth.ts` holds this status, and `SignInPage` shows the panel for it. The status only shapes the interface; the security rules enforce access.
+`apps/web/src/stores/auth.ts` holds this status and the role, and `SignInPage` shows the panel for the status. The status only shapes the interface; the security rules enforce access.
 
 **The verified-email check is what makes the allowlist safe.** Anyone can register a password account using someone else's address, so an unverified email proves nothing. `firestore.rules` requires `email_verified` before accepting one, and `tests/rules/allowedUsers.spec.ts` covers this.
 
 Firebase handles the password storage. The app never sees or stores a password. Firebase keeps one account per email by default, and a Google sign-in takes over an unverified password account with the same address, removing the password.
+
+## Roles and Review
+
+Everyone on the allowlist has a role, stored as `role` on their `allowedUsers/{lowercase email}` entry. An entry with no role, as older ones have, is a member. Each role can do everything the ones before it can:
+
+| Role | Can also |
+| --- | --- |
+| Member | Highlight, bookmark, take notes, vote, add verses, start topics and report verses |
+| Reviewer | Remove reported verses or keep them, and approve or reject topics people start, on the Review page (`/review`) |
+| Admin | Add people, change their roles and remove them, on the People page (`/people`). Verse of the Day will add setting the verse |
+
+- **Roles in code:** `ROLES`, `canReview` and `isAdmin` in `packages/core/src/roles.ts`. `getAccess` in `apps/web/src/firebase/access.ts` reads the role with the allowlist check, and the auth store keeps it. `RoleGate` shows a page only to its roles and `useAccountLinks` lists the pages each role can open. These only shape the interface; `myRole`, `isReviewer` and `isAdmin` in `firestore.rules` enforce it.
+- **Managing people:** only admins can read or change the allowlist, and never their own entry, so there is always an admin and nobody can promote themselves. Each write records `updatedBy` and `updatedAt`. Adding someone already on it is refused rather than changing their role. The first admin is set in the console; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#allowlist-and-roles). Removing someone keeps their annotations and votes, which are keyed by their account.
+- **The queue:** `useReviewQueue` loads the open reports and pending topics, oldest first, which needs the two `status, createdAt` indexes. `groupReports` gathers reports by topic and verse, so a reviewer decides once for each. The account menu shows how many are waiting. A decision stays on the page, with its outcome, until the queue next loads.
+- **Resolving reports:** `resolveReports` closes every report in a group in one transaction. Removing also creates `topics/{slug}/removed/{key}` in the same write, and the rules only accept a report closed as removed when that document exists afterwards.
+- **Deciding topics:** `decideTopic` sets a pending topic to approved or rejected, once. Approved topics join the Topics page and search links; rejected ones are hidden and closed to new verses.
+
+```mermaid
+flowchart LR
+  entry[("allowedUsers/email<br/>role")] --> getAccess["getAccess<br/>auth store role"]
+  getAccess --> links["useAccountLinks<br/>account and phone menus"]
+  getAccess --> gate["RoleGate"]
+  gate -- "canReview" --> review["ReviewPage<br/>useReviewQueue"]
+  gate -- "isAdmin" --> people["PeoplePage<br/>usePeople"]
+  review -- "resolveReports" --> reports[("reports")]
+  review -- "resolveReports" --> removed[("topics/slug/removed")]
+  review -- "decideTopic" --> topics[("topics/slug")]
+  people -- "addPerson, setRole, removePerson" --> entry
+```
+
+`firestore.rules` checks every write in this diagram with `isReviewer` or `isAdmin`.
+
+```mermaid
+stateDiagram-v2
+  direction LR
+  state "Topic someone started" as topic {
+    [*] --> pending: first verse added
+    pending --> approved: Approve
+    pending --> rejected: Reject
+  }
+  state "Report" as report {
+    [*] --> open: Report
+    open --> removed: Remove from topic
+    open --> kept: Keep it
+  }
+```
+
+```mermaid
+sequenceDiagram
+  actor Reviewer
+  participant Page as ReviewPage
+  participant Fn as resolveReports
+  participant Firestore
+  participant Rules as firestore.rules
+
+  Reviewer->>Page: Remove from topic
+  Page->>Fn: useReviewQueue.resolve(group, removed)
+  Fn->>Firestore: Transaction: is the verse already removed?
+  Fn->>Firestore: Create topics/slug/removed/key, and close each report in the group
+  Firestore->>Rules: Check each write against the state after all of them
+  alt Reviewer, and the removed document exists after the write
+    Rules-->>Firestore: Allow
+    Firestore-->>Page: Done, mark the item removed and refresh the topic
+  else Anything else
+    Rules-->>Firestore: Deny the whole transaction
+    Firestore-->>Page: Error, nothing changed
+  end
+```
 
 ## Security
 
@@ -555,9 +645,10 @@ Before finishing a change, check whether it touches a source below, and update t
 | [Reading Flow](#reading-flow) | `apps/web/src/pages/ReaderPage.tsx`, `apps/web/src/bible/translations.ts`, `scripts/build-bible-data.ts` | Built, ESV planned |
 | [Search](#search) | `apps/web/src/pages/SearchPage.tsx`, `packages/core/src/references.ts`, `apps/web/src/bible/phraseSearch.ts`, `scripts/build-bible-data.ts` | Built |
 | [Annotations](#annotations), data model, selection and pages | `firestore.rules`, `packages/core/src/annotations.ts`, `apps/web/src/firebase/annotations.ts`, `apps/web/src/firebase/settings.ts`, `firestore.indexes.json`, `apps/web/src/components/annotationQueryKeys.ts`, `apps/web/src/components/myVerses/`, `apps/web/src/pages/MyVersesPage.tsx` | Built |
-| [Verse of the Day](#verse-of-the-day) | The home page, `dailyVerses` and `admins` rules, the automatic list | Planned |
+| [Verse of the Day](#verse-of-the-day) | The home page, `dailyVerses` rules, the automatic list | Planned |
 | [Topic Search](#topic-search) | `packages/core/src/topicScore.ts`, `packages/core/src/topics.ts`, `apps/web/src/pages/TopicPage.tsx`, `suggestVerses` | Built, AI suggestions planned |
 | [Voting](#voting), data model and upvoting | `firestore.rules`, `firestore.indexes.json`, `apps/web/src/firebase/topics.ts`, `apps/web/src/components/topics/` | Built |
+| [Roles and Review](#roles-and-review), structure, statuses and resolving a report | `packages/core/src/roles.ts`, `packages/core/src/review.ts`, `apps/web/src/firebase/review.ts`, `apps/web/src/firebase/people.ts`, `apps/web/src/components/review/`, `apps/web/src/components/people/`, `apps/web/src/components/RoleGate.tsx`, `apps/web/src/components/useAccountLinks.ts`, `apps/web/src/pages/ReviewPage.tsx`, `apps/web/src/pages/PeoplePage.tsx`, `firestore.rules` | Built |
 | [OpenBible Data](#openbible-data) | `scripts/build-topic-data.ts`, `apps/web/src/topics/topicData.ts`, `apps/web/src/pages/TopicPage.tsx`, `apps/web/src/pages/TopicsPage.tsx`, `apps/web/src/pages/SearchPage.tsx` | Built |
-| [Authentication and Access](#authentication-and-access) | `firestore.rules`, `apps/web/src/stores/auth.ts`, `apps/web/src/pages/SignInPage.tsx` | Built |
+| [Authentication and Access](#authentication-and-access) | `firestore.rules`, `apps/web/src/stores/auth.ts`, `apps/web/src/firebase/access.ts`, `apps/web/src/pages/SignInPage.tsx` | Built |
 | [Environments and Delivery](#environments-and-delivery) | `package.json`, `apps/web/.env.*`, `firebase.json`, `scripts/`, `.github/workflows/ci.yml` | Built |

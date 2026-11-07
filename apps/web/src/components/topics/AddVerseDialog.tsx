@@ -12,6 +12,8 @@ interface AddVerseDialogProps {
   topicName: string;
   /** The keys of the verses already on the topic. */
   existingKeys: ReadonlySet<string>;
+  /** The keys of the verses a reviewer took off the topic, which cannot be added back. */
+  removedKeys: ReadonlySet<string>;
   translation: TranslationProvider;
   isSaving: boolean;
   /** Resolves once added, which closes the dialog, or rejects to show an error. */
@@ -27,7 +29,7 @@ function parseOneReference(text: string): VerseReference | null {
 }
 
 /** Adds a verse or passage to a topic, which counts as the person's upvote. */
-export function AddVerseDialog({topicName, existingKeys, translation, isSaving, onAdd, onClose}: AddVerseDialogProps) {
+export function AddVerseDialog({topicName, existingKeys, removedKeys, translation, isSaving, onAdd, onClose}: AddVerseDialogProps) {
   const [text, setText] = useState('');
   const [hasError, setHasError] = useState(false);
   const reference = parseOneReference(text);
@@ -49,7 +51,9 @@ export function AddVerseDialog({topicName, existingKeys, translation, isSaving, 
       }
     : null;
   const title = reference ? formatReference(reference) : '';
-  const isListed = span !== null && existingKeys.has(topicVerseKey(span.startVerse, span.endVerse));
+  const spanKey = span ? topicVerseKey(span.startVerse, span.endVerse) : null;
+  const isListed = spanKey !== null && existingKeys.has(spanKey);
+  const isRemoved = spanKey !== null && removedKeys.has(spanKey);
   let problem: string | null = null;
 
   if (text.trim() && !reference) {
@@ -58,6 +62,8 @@ export function AddVerseDialog({topicName, existingKeys, translation, isSaving, 
     problem = `There is no ${title} in the ${translation.name}.`;
   } else if (isListed) {
     problem = `${title} is already on this topic. Upvote it there instead.`;
+  } else if (isRemoved) {
+    problem = `A reviewer removed ${title} from this topic.`;
   }
 
   async function add() {
@@ -90,7 +96,7 @@ export function AddVerseDialog({topicName, existingKeys, translation, isSaving, 
           data-autofocus
         />
 
-        {span && !isListed && (
+        {span && !isListed && !isRemoved && (
           <div className={classes.preview}>
             <span className={classes.reference}>{title}</span>
             <p className={classes.text}>{passage.text}</p>
@@ -109,7 +115,7 @@ export function AddVerseDialog({topicName, existingKeys, translation, isSaving, 
 
         <Group justify="flex-end" mt="md">
           <Button variant="default" onClick={onClose} disabled={isSaving}>Cancel</Button>
-          <Button type="submit" disabled={!span || isListed} loading={isSaving}>Add verse</Button>
+          <Button type="submit" disabled={!span || isListed || isRemoved} loading={isSaving}>Add verse</Button>
         </Group>
       </form>
     </Modal>

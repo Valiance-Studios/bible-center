@@ -57,4 +57,10 @@ describe('rankTopicVerses', () => {
     expect(ranked.at(-1)).toMatchObject({openBibleVotes: 0, upvotes: 1, score: 1});
     expect(ranked[0]).toMatchObject({openBibleVotes: 250, upvotes: 2});
   });
+
+  it('leaves out verses a reviewer removed, from OpenBible or Bible Center', () => {
+    const ranked = rankTopicVerses(verses, [{startVerse: '45012015', endVerse: '45012015', upvotes: 1}], new Set(['40005004', '45012015']));
+
+    expect(ranked.map(({startVerse}) => startVerse)).toEqual(['19147003', '43011035']);
+  });
 });

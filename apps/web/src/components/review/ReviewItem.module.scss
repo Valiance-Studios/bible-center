@@ -1,0 +1,153 @@
+$phone-width: 900px;
+
+.item {
+  padding: 22px 0;
+  border-top: 1px solid var(--bc-line);
+
+  @media (max-width: $phone-width) {
+    padding: 14px 0;
+  }
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.reference {
+  color: var(--bc-rubric);
+  font-size: 17px;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: $phone-width) {
+    font-size: 16px;
+  }
+}
+
+.onTopic {
+  color: var(--bc-muted);
+  font-size: 15px;
+
+  a {
+    color: var(--bc-accent);
+    text-underline-offset: 3px;
+  }
+}
+
+.text {
+  max-width: 38em;
+  margin: 6px 0 12px;
+  font-family: 'Literata', serif;
+  font-size: 19px;
+  line-height: 1.6;
+
+  @media (max-width: $phone-width) {
+    margin: 4px 0 10px;
+    font-size: 17px;
+    line-height: 1.55;
+  }
+}
+
+.missing {
+  margin: 6px 0 12px;
+  color: var(--bc-muted);
+  font-size: 15px;
+}
+
+.reports {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.report {
+  padding: 10px 14px;
+  border-radius: 4px;
+  background: var(--bc-panel);
+  font-size: 15px;
+  line-height: 1.5;
+
+  strong {
+    font-weight: 600;
+  }
+}
+
+.when {
+  color: var(--bc-muted);
+  font-size: 14px;
+}
+
+.details {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.topicName {
+  color: var(--bc-ink);
+  font-family: 'Literata', serif;
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.25;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.meta {
+  margin: 4px 0 10px;
+  color: var(--bc-muted);
+  font-size: 14px;
+}
+
+.verses {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 6px;
+  padding: 0;
+  list-style: none;
+
+  .reference {
+    font-size: 15px;
+  }
+
+  .text {
+    margin: 2px 0 0;
+    font-size: 17px;
+    line-height: 1.55;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+
+  @media (max-width: $phone-width) {
+    flex-direction: column;
+  }
+}
+
+.done {
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  border: 1px solid var(--bc-line);
+  border-radius: 4px;
+  font-size: 15px;
+  line-height: 1.5;
+}

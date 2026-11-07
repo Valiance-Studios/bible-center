@@ -1,0 +1,39 @@
+$phone-width: 900px;
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  // On a phone the filters stay on one line and scroll, rather than pushing the list down.
+  @media (max-width: $phone-width) {
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
+.filter {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid var(--bc-line);
+  border-radius: 22px;
+  background: none;
+  color: var(--bc-ink);
+  font: 500 15px 'Schibsted Grotesk', sans-serif;
+  cursor: pointer;
+
+  @media (max-width: $phone-width) {
+    padding: 0 14px;
+    font-size: 14px;
+  }
+}
+
+.filterOn {
+  composes: filter;
+  border-color: var(--bc-accent);
+  background: var(--bc-accent);
+  color: var(--bc-on-accent);
+  font-weight: 600;
+}

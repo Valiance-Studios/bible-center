@@ -16,11 +16,56 @@ service cloud.firestore {
       return isAllowed() && request.auth.uid == uid;
     }
 
-    // The allowlist, keyed by lowercase email and managed in the Firebase console. Users may only check themselves.
+    function myEmail() {
+      return request.auth.token.email.lower();
+    }
+
+    // Keep in sync with ROLES in packages/core/src/roles.ts. An entry with no role is a member.
+    function myRole() {
+      return get(/databases/$(database)/documents/allowedUsers/$(myEmail())).data.get('role', 'member');
+    }
+
+    // Handles reports and the topics people start.
+    function isReviewer() {
+      return isAllowed() && myRole() in ['reviewer', 'admin'];
+    }
+
+    // Manages the allowlist and roles.
+    function isAdmin() {
+      return isAllowed() && myRole() == 'admin';
+    }
+
+    // Matches normalizeEmail and isEmailAddress in packages/core/src/roles.ts.
+    function isEmailKey(email) {
+      return email.size() <= 254
+        && email == email.lower()
+        && email.matches('[^@\\s/]+@[^@\\s/]+[.][^@\\s/]+');
+    }
+
+    function isValidAllowedUser(data) {
+      return data.keys().hasOnly(['role', 'updatedBy', 'updatedAt'])
+        && data.keys().hasAll(['role', 'updatedBy', 'updatedAt'])
+        && data.role in ['member', 'reviewer', 'admin']
+        && data.updatedBy == request.auth.uid
+        && data.updatedAt == request.time;
+    }
+
+    // The allowlist, keyed by lowercase email, with each person's role. Users may check themselves. Admins manage
+    // everyone else in the app, but never their own entry, so the last admin cannot lock everyone out.
+    // The first admin is set in the Firebase console.
     match /allowedUsers/{email} {
       allow get: if request.auth != null
         && request.auth.token.email_verified == true
-        && request.auth.token.email.lower() == email;
+        && myEmail() == email;
+
+      allow read: if isAdmin();
+
+      allow create, update: if isAdmin()
+        && email != myEmail()
+        && isEmailKey(email)
+        && isValidAllowedUser(request.resource.data);
+
+      allow delete: if isAdmin() && email != myEmail();
     }
 
     // Keep the translation ids in sync with TRANSLATIONS in apps/web/src/bible/translations.ts.
@@ -106,9 +151,34 @@ service cloud.firestore {
       return /databases/$(database)/documents/topics/$(slug)/verses/$(key);
     }
 
-    // A topic someone started. It works by link while pending; only a reviewer will list it.
+    function removedOf(slug, key) {
+      return /databases/$(database)/documents/topics/$(slug)/removed/$(key);
+    }
+
+    function isRejectedTopic(slug) {
+      return exists(/databases/$(database)/documents/topics/$(slug))
+        && get(/databases/$(database)/documents/topics/$(slug)).data.status == 'rejected';
+    }
+
+    // Matches topicVerseKey.
+    function isVerseKey(key) {
+      return key is string && key.matches('[0-9]{8}(-[0-9]{8})?');
+    }
+
+    // A topic someone started. It works by link while pending, and is listed once a reviewer approves it.
+    // A rejected topic is hidden, and nobody can add verses to it.
     match /topics/{slug} {
       allow get: if true;
+
+      allow list: if resource.data.status == 'approved' || isReviewer();
+
+      // Keep the decisions in sync with TopicDecision in packages/core/src/review.ts.
+      allow update: if isReviewer()
+        && resource.data.status == 'pending'
+        && request.resource.data.status in ['approved', 'rejected']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reviewedBy', 'reviewedAt'])
+        && request.resource.data.reviewedBy == request.auth.uid
+        && request.resource.data.reviewedAt == request.time;
 
       allow create: if isAllowed()
         && isTopicSlug(slug)
@@ -135,6 +205,8 @@ service cloud.firestore {
           && request.resource.data.upvotes == 1
           && request.resource.data.createdBy == request.auth.uid
           && request.resource.data.createdAt == request.time
+          && !isRejectedTopic(slug)
+          && !exists(removedOf(slug, key))
           && !exists(voteOf(slug, key))
           && existsAfter(voteOf(slug, key));
 
@@ -167,6 +239,18 @@ service cloud.firestore {
             && getAfter(verseOf(slug, key)).data.upvotes == get(verseOf(slug, key)).data.upvotes - 1;
         }
       }
+
+      // A verse or passage a reviewer took off the topic, keyed like its verse. It hides OpenBible's verses too.
+      match /removed/{key} {
+        allow read: if true;
+
+        allow create: if isReviewer()
+          && isVerseKey(key)
+          && request.resource.data.keys().hasOnly(['removedBy', 'removedAt'])
+          && request.resource.data.keys().hasAll(['removedBy', 'removedAt'])
+          && request.resource.data.removedBy == request.auth.uid
+          && request.resource.data.removedAt == request.time;
+      }
     }
 
     // A user's own votes, found across topics' verses with one query on `uid` and `topic`.
@@ -174,7 +258,7 @@ service cloud.firestore {
       allow read: if request.auth != null && resource.data.uid == request.auth.uid;
     }
 
-    // Reports wait for a reviewer. Nobody can read them from the app yet, and they do not change the ranking.
+    // Reports wait for a reviewer, and only reviewers can read them. They do not change the ranking.
     // Keep the reasons and limit in sync with REPORT_REASONS and REPORT_DETAILS_MAX_LENGTH in packages/core/src/topics.ts.
     match /reports/{reportId} {
       allow create: if isAllowed()
@@ -189,6 +273,19 @@ service cloud.firestore {
         && request.resource.data.reportedBy == request.auth.uid
         && request.resource.data.createdAt == request.time
         && request.resource.data.status == 'open';
+
+      allow read: if isReviewer();
+
+      // A reviewer closes a report by keeping the verse, or by removing it from the topic in the same write.
+      // Keep the outcomes in sync with ReportOutcome in packages/core/src/review.ts.
+      allow update: if isReviewer()
+        && resource.data.status == 'open'
+        && request.resource.data.status in ['removed', 'kept']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedBy', 'resolvedAt'])
+        && request.resource.data.resolvedBy == request.auth.uid
+        && request.resource.data.resolvedAt == request.time
+        && (request.resource.data.status == 'kept'
+          || existsAfter(removedOf(resource.data.topic, resource.data.verseKey)));
     }
   }
 }

@@ -11,6 +11,7 @@ import {
   getDoc,
   getDocs,
   increment,
+  orderBy,
   query,
   runTransaction,
   serverTimestamp,
@@ -19,7 +20,7 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore';
-import {ALICE, BOB, dbFor, MALLORY, useRulesTestEnvironment} from './support';
+import {ALICE, BOB, dbFor, MALLORY, RITA, useRulesTestEnvironment} from './support';
 
 const TOPIC = 'grief';
 /** Already has Bob's upvote. */
@@ -225,7 +226,130 @@ describe('reports', () => {
     await assertFails(addDoc(collection(dbFor(MALLORY), 'reports'), report({reportedBy: MALLORY})));
   });
 
-  it('keeps reports out of reach of the app', async () => {
+  it('keeps reports out of reach of everyone but reviewers', async () => {
     await assertFails(getDocs(collection(dbFor(ALICE), 'reports')));
+    await assertFails(getDocs(collection(dbFor(null), 'reports')));
+  });
+});
+
+describe('reviewing topics', () => {
+  const PENDING = 'screen-time';
+
+  async function seedTopic(slug: string, status: string) {
+    await setDoc(doc(dbFor(ALICE), 'topics', slug), {name: slug.replaceAll('-', ' '), status: 'pending', createdBy: ALICE, createdAt: serverTimestamp()});
+
+    if (status !== 'pending') {
+      await updateDoc(doc(dbFor(RITA), 'topics', slug), decision(status));
+    }
+  }
+
+  function decision(status: string, uid = RITA) {
+    return {status, reviewedBy: uid, reviewedAt: serverTimestamp()};
+  }
+
+  const pending = (db: Firestore) => query(collection(db, 'topics'), where('status', '==', 'pending'), orderBy('createdAt'));
+  const approved = (db: Firestore) => query(collection(db, 'topics'), where('status', '==', 'approved'));
+
+  it('lets a reviewer list pending topics, and anyone list approved ones', async () => {
+    await seedTopic(PENDING, 'pending');
+
+    await assertSucceeds(getDocs(pending(dbFor(RITA))));
+    await assertFails(getDocs(pending(dbFor(ALICE))));
+    await assertSucceeds(getDocs(approved(dbFor(null))));
+    await assertFails(getDocs(collection(dbFor(null), 'topics')));
+  });
+
+  it('lets a reviewer approve or reject a pending topic, once', async () => {
+    await seedTopic(PENDING, 'pending');
+    await seedTopic('social-media', 'pending');
+
+    await assertSucceeds(updateDoc(doc(dbFor(RITA), 'topics', PENDING), decision('approved')));
+    await assertSucceeds(updateDoc(doc(dbFor(RITA), 'topics', 'social-media'), decision('rejected')));
+    await assertFails(updateDoc(doc(dbFor(RITA), 'topics', PENDING), decision('rejected')));
+  });
+
+  it('checks the decision, its fields and the reviewer', async () => {
+    await seedTopic(PENDING, 'pending');
+    const topicRef = doc(dbFor(RITA), 'topics', PENDING);
+
+    await assertFails(updateDoc(topicRef, decision('pending')));
+    await assertFails(updateDoc(topicRef, decision('approved', ALICE)));
+    await assertFails(updateDoc(topicRef, {...decision('approved'), name: 'something else'}));
+    await assertFails(updateDoc(doc(dbFor(ALICE), 'topics', PENDING), decision('approved', ALICE)));
+  });
+
+  it('lets nobody add a verse to a rejected topic', async () => {
+    await seedTopic(PENDING, 'rejected');
+
+    await assertFails(upvote(dbFor(ALICE), ALICE, UNVOTED, UNVOTED, PENDING));
+  });
+});
+
+describe('resolving reports', () => {
+  function removedRef(db: Firestore, key: string, topic = TOPIC) {
+    return doc(db, 'topics', topic, 'removed', key);
+  }
+
+  function removal(uid = RITA) {
+    return {removedBy: uid, removedAt: serverTimestamp()};
+  }
+
+  function resolution(status: string, uid = RITA) {
+    return {status, resolvedBy: uid, resolvedAt: serverTimestamp()};
+  }
+
+  async function seedReport(): Promise<string> {
+    const report = await addDoc(collection(dbFor(ALICE), 'reports'), {
+      topic: TOPIC, verseKey: VOTED, reason: 'fit', reportedBy: ALICE, createdAt: serverTimestamp(), status: 'open',
+    });
+
+    return report.id;
+  }
+
+  it('lets a reviewer read the open reports, oldest first', async () => {
+    await seedReport();
+
+    await assertSucceeds(getDocs(query(collection(dbFor(RITA), 'reports'), where('status', '==', 'open'), orderBy('createdAt'))));
+  });
+
+  it('lets a reviewer keep a reported verse', async () => {
+    const id = await seedReport();
+
+    await assertFails(updateDoc(doc(dbFor(ALICE), 'reports', id), resolution('kept', ALICE)));
+    await assertSucceeds(updateDoc(doc(dbFor(RITA), 'reports', id), resolution('kept')));
+    // Closed for good.
+    await assertFails(updateDoc(doc(dbFor(RITA), 'reports', id), resolution('removed')));
+  });
+
+  it('only closes a report as removed when the verse comes off the topic in the same write', async () => {
+    const id = await seedReport();
+    const db = dbFor(RITA);
+
+    await assertFails(updateDoc(doc(db, 'reports', id), resolution('removed')));
+
+    const batch = writeBatch(db);
+
+    batch.set(removedRef(db, VOTED), removal());
+    batch.update(doc(db, 'reports', id), resolution('removed'));
+    await assertSucceeds(batch.commit());
+  });
+
+  it('checks the outcome and its fields', async () => {
+    const id = await seedReport();
+    const reportRef = doc(dbFor(RITA), 'reports', id);
+
+    await assertFails(updateDoc(reportRef, resolution('open')));
+    await assertFails(updateDoc(reportRef, resolution('kept', ALICE)));
+    await assertFails(updateDoc(reportRef, {...resolution('kept'), reason: 'other'}));
+  });
+
+  it('lets only reviewers remove a verse, and nobody add it back', async () => {
+    await assertFails(setDoc(removedRef(dbFor(ALICE), UNVOTED), removal(ALICE)));
+    await assertFails(setDoc(removedRef(dbFor(RITA), 'nonsense'), removal()));
+    await assertFails(setDoc(removedRef(dbFor(RITA), UNVOTED), removal(ALICE)));
+    await assertSucceeds(setDoc(removedRef(dbFor(RITA), UNVOTED), removal()));
+    await assertSucceeds(getDoc(removedRef(dbFor(null), UNVOTED)));
+
+    await assertFails(upvote(dbFor(ALICE), ALICE, UNVOTED));
   });
 });

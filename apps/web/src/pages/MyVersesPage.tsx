@@ -5,6 +5,7 @@ import {referenceOf} from '@bible-center/core';
 import {Alert, Button, Loader, NativeSelect} from '@mantine/core';
 import {useMediaQuery} from '@mantine/hooks';
 import {findTranslation} from '@/bible/translations';
+import {FilterButtons} from '@/components/FilterButtons';
 import {AnnotationItem} from '@/components/myVerses/AnnotationItem';
 import {useAnnotationPages} from '@/components/myVerses/useAnnotationPages';
 import {TranslationSelect} from '@/components/TranslationSelect';
@@ -96,19 +97,13 @@ function SavedVerses({uid}: {uid: string}) {
   return (
     <>
       <div className={classes.toolbar}>
-        <div className={classes.filters} role="group" aria-label="Show">
-          {FILTERS.map(({value, label}) => (
-            <button
-              key={value}
-              type="button"
-              className={value === filter ? classes.filterOn : classes.filter}
-              aria-pressed={value === filter}
-              onClick={() => setParam('show', value, DEFAULT_FILTER)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <FilterButtons
+          className={classes.filters}
+          label="Show"
+          options={FILTERS}
+          value={filter}
+          onChange={(value) => setParam('show', value, DEFAULT_FILTER)}
+        />
         <div className={classes.selects}>
           <NativeSelect
             size="md"

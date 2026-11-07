@@ -57,8 +57,13 @@ export function topicVerseKey(startVerse: VerseId, endVerse: VerseId): string {
 /**
  * Ranks a topic's verses by `topicVerseScore`: OpenBible's votes as a starting score, plus Bible Center upvotes.
  * Verses only Bible Center has start from their upvotes alone. Ties go to more OpenBible votes, then Bible order.
+ * Verses a reviewer removed from the topic, by their `topicVerseKey`, are left out.
  */
-export function rankTopicVerses(openBible: readonly TopicFileVerse[], community: readonly CommunityTopicVerse[]): TopicVerse[] {
+export function rankTopicVerses(
+  openBible: readonly TopicFileVerse[],
+  community: readonly CommunityTopicVerse[],
+  removedKeys: ReadonlySet<string> = new Set(),
+): TopicVerse[] {
   const topicMax = Math.max(0, ...openBible.map(([, , votes]) => votes));
   const upvotes = new Map(community.map(({startVerse, endVerse, upvotes: count}) => [topicVerseKey(startVerse, endVerse), count]));
   const openBibleKeys = new Set(openBible.map(([startVerse, endVerse]) => topicVerseKey(startVerse, endVerse)));
@@ -67,6 +72,7 @@ export function rankTopicVerses(openBible: readonly TopicFileVerse[], community:
     .map(({startVerse, endVerse}): TopicFileVerse => [startVerse, endVerse, 0]);
 
   return [...openBible, ...onlyOnBibleCenter]
+    .filter(([startVerse, endVerse]) => !removedKeys.has(topicVerseKey(startVerse, endVerse)))
     .map(([startVerse, endVerse, openBibleVotes]) => {
       const verseUpvotes = upvotes.get(topicVerseKey(startVerse, endVerse)) ?? 0;
 
