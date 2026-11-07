@@ -5,6 +5,7 @@ import classes from './HomePage.module.scss';
 const PLACEHOLDER_VERSE = {
   text: 'Because of the loving devotion of the LORD we are not consumed, for His mercies never fail. They are new every morning; great is Your faithfulness!',
   reference: 'Lamentations 3:22–23, BSB',
+  chapterPath: '/read/lamentations/3',
 };
 
 export function HomePage() {
@@ -12,7 +13,9 @@ export function HomePage() {
     <main className={classes.content}>
       <p className={classes.label}>Verse of the day</p>
       <blockquote className={classes.verse}>{PLACEHOLDER_VERSE.text}</blockquote>
-      <p className={classes.reference}>{PLACEHOLDER_VERSE.reference}</p>
+      <p className={classes.reference}>
+        <Link to={PLACEHOLDER_VERSE.chapterPath}>{PLACEHOLDER_VERSE.reference}</Link>
+      </p>
     </main>
   );
 }

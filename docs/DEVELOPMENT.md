@@ -29,6 +29,13 @@ To try another account, add `allowedUsers/<lowercase email>` with no fields in t
 - `scripts/with-emulators.ts` runs a command against the emulators and then stops them. `npm run test:emulator` and `npm run test:e2e` use it, so stop any `npm run emulators` session first, as they share ports.
 - `npm run emulators:stop` stops this project's emulators, including leftovers from a crashed run. It never stops an unrelated server on a shared port; it reports it instead.
 
+## Generated Files
+
+Both are committed, so a normal build does not regenerate them.
+
+- `npm run bible-data` rebuilds `apps/web/public/bible` from its online sources. Only add public-domain text; see [Translations](../ARCHITECTURE.md#translations).
+- `npm run icons` rebuilds the icon PNGs in `apps/web/public` from `favicon.svg`.
+
 ## Environment Files
 
 The files live in `apps/web`, since only the web app reads `VITE_` variables. There is one file per Vite mode and no bare `.env`, since Vite loads that in every mode and could point `npm run dev` and the E2E tests at real Firebase. Vite does not layer modes, so each file holds a complete config.
@@ -61,6 +68,7 @@ ESLint (`eslint.config.js`) with `typescript-eslint`, `eslint-plugin-react-hooks
 
 ## Known Quirks
 
+- **E2E tests never reuse a running dev server.** They start their own on port 5174 in development mode, so they always use the emulators, even with `npm run dev:staging` running. Reusing a staging server once made them create real accounts in the hosted project.
 - **npm audit:** production dependencies are clean, using `overrides` in `package.json` for a newer `@grpc/grpc-js` under the Firestore SDK. Moderate findings remain in dev tooling (`firebase-tools`, `eslint`, `typescript-eslint`), where the only suggested fixes are major downgrades.
 - **Install scripts:** npm does not run dependencies' install scripts unless approved. The test suites and build pass without them.
 - **TypeScript:** stays on 6.0 until `typescript-eslint` supports 7.

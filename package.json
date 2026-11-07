@@ -24,6 +24,8 @@
     "test:e2e": "node scripts/with-emulators.ts --project demo-bible-center --only auth,firestore -- playwright test --config apps/web/playwright.config.ts",
     "emulators": "node scripts/with-emulators.ts --keep-running --project demo-bible-center --only auth,firestore -- node scripts/seed-emulators.ts",
     "emulators:stop": "node scripts/stop-emulators.ts",
+    "icons": "node scripts/generate-icons.ts",
+    "bible-data": "node scripts/build-bible-data.ts",
     "deploy": "firebase deploy --project dev --only hosting,firestore",
     "deploy:hosting": "firebase deploy --project dev --only hosting",
     "deploy:rules": "firebase deploy --project dev --only firestore"

@@ -125,10 +125,15 @@ $phone-width: 900px;
     font-weight: 500;
     text-decoration: none;
 
-    &:hover {
+    &:hover,
+    &.currentTab {
       width: 124px;
       background: var(--bc-accent);
       color: var(--bc-on-accent);
+    }
+
+    &.currentTab {
+      font-weight: 600;
     }
   }
 
