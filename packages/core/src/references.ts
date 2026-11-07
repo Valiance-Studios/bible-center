@@ -1,6 +1,8 @@
 import type {BibleBook} from './bibleBooks.ts';
+import type {VerseId} from './verseId.ts';
 
 import {BIBLE_BOOKS} from './bibleBooks.ts';
+import {parseVerseId} from './verseId.ts';
 
 /** A verse, a range of verses, or whole chapters. Without verses it covers the chapters in full. */
 export interface VerseReference {
@@ -197,4 +199,17 @@ export function formatReference({book, startChapter, startVerse, endChapter, end
   }
 
   return startVerse === endVerse ? `${name} ${startChapter}:${startVerse}` : `${name} ${startChapter}:${startVerse}–${endVerse}`;
+}
+
+/** The reference from one verse id to another, as an annotation or topic stores it, or null if either is malformed. */
+export function referenceOf({startVerse, endVerse}: {startVerse: VerseId; endVerse: VerseId}): VerseReference | null {
+  const start = parseVerseId(startVerse);
+  const end = parseVerseId(endVerse);
+  const book = start ? BIBLE_BOOKS[start.book - 1] : undefined;
+
+  if (!start || !end || !book) {
+    return null;
+  }
+
+  return {book, startChapter: start.chapter, startVerse: start.verse, endChapter: end.chapter, endVerse: end.verse};
 }

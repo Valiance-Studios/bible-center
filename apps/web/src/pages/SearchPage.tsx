@@ -1,18 +1,20 @@
 import type {VerseReference} from '@bible-center/core';
 import type {TranslationProvider} from '@/bible/translations';
 
-import {useQueries, useQuery} from '@tanstack/react-query';
+import {useQuery} from '@tanstack/react-query';
 import {Link, useSearchParams} from 'react-router';
 import {BIBLE_BOOKS, chapterTitle, formatReference, parseReferences} from '@bible-center/core';
 import {Alert, Button, Loader} from '@mantine/core';
 import {highlightWords} from '@/bible/highlight';
 import {chapterPath} from '@/bible/paths';
-import {chapterQuery, phraseIndexQuery} from '@/bible/queries';
+import {phraseIndexQuery} from '@/bible/queries';
 import {findTranslation, TRANSLATIONS} from '@/bible/translations';
+import {usePassage} from '@/bible/usePassage';
 import {SearchBox} from '@/components/SearchBox';
 import {TranslationSelect} from '@/components/TranslationSelect';
 import {VerseText} from '@/components/VerseText';
 import {useTranslationStore} from '@/stores/translation';
+import {findTopic, topicNamesQuery, topicPath} from '@/topics/topicData';
 import classes from './SearchPage.module.scss';
 
 function LoadFailed({onRetry}: {onRetry: () => void}) {
@@ -25,21 +27,9 @@ function LoadFailed({onRetry}: {onRetry: () => void}) {
 }
 
 function Passage({reference, translation}: {reference: VerseReference; translation: TranslationProvider}) {
-  const {book, startChapter, startVerse, endChapter, endVerse} = reference;
-  const chapters = Array.from({length: endChapter - startChapter + 1}, (_, index) => startChapter + index);
-  const results = useQueries({queries: chapters.map((chapter) => chapterQuery(translation, {book, chapter}))});
-  const isSpanningChapters = chapters.length > 1;
-  const sections = chapters.map((chapter, index) => ({
-    chapter,
-    verses: (results[index]?.data?.verses ?? []).filter(({verse}) => {
-      const isAfterStart = chapter !== startChapter || startVerse === null || verse >= startVerse;
-      const isBeforeEnd = chapter !== endChapter || endVerse === null || verse <= endVerse;
-
-      return isAfterStart && isBeforeEnd;
-    }),
-  }));
-  const isPending = results.some((result) => result.isPending);
-  const failed = results.filter((result) => result.isError);
+  const {book, startChapter} = reference;
+  const {sections, isPending, isError, retry} = usePassage(reference, translation);
+  const isSpanningChapters = sections.length > 1;
   const first = {book, chapter: startChapter};
 
   return (
@@ -47,9 +37,9 @@ function Passage({reference, translation}: {reference: VerseReference; translati
       <h2 className={classes.passageTitle}>{formatReference(reference)}</h2>
 
       {isPending && <Loader aria-label="Loading" />}
-      {failed.length > 0 && <LoadFailed onRetry={() => failed.forEach((result) => void result.refetch())} />}
+      {isError && <LoadFailed onRetry={retry} />}
 
-      {!isPending && failed.length === 0 && sections.every(({verses}) => verses.length === 0) && (
+      {!isPending && !isError && sections.every(({verses}) => verses.length === 0) && (
         <p className={classes.notFound}>{`${translation.name} has no verses at this reference.`}</p>
       )}
 
@@ -154,6 +144,24 @@ function PhraseResults({query, translation}: {query: string; translation: Transl
   );
 }
 
+/** Links to the topic a search names, such as "marriage", ahead of the verses using that word. */
+function TopicLink({query}: {query: string}) {
+  const {data: names} = useQuery(topicNamesQuery);
+  const topic = names ? findTopic(names, query) : null;
+
+  if (!topic) {
+    return null;
+  }
+
+  return (
+    <Link className={classes.topic} to={topicPath(topic)}>
+      <span className={classes.topicAsk}>What does the Bible say about</span>
+      <span className={classes.topicName}>{topic}</span>
+      <span className={classes.topicNote}>See verses ranked by the community</span>
+    </Link>
+  );
+}
+
 export function SearchPage() {
   const [searchParams] = useSearchParams();
   const translationId = useTranslationStore((state) => state.translationId);
@@ -170,6 +178,7 @@ export function SearchPage() {
 
       {!query && <p className={classes.prompt}>Search by reference, such as John 1:1-5, or by words you remember from a verse.</p>}
       {references && <ReferenceResults references={references} translation={translation} />}
+      {query && !references && <TopicLink query={query} />}
       {query && !references && <PhraseResults query={query} translation={translation} />}
     </main>
   );

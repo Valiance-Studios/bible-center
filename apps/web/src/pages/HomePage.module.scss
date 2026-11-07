@@ -47,9 +47,34 @@
   }
 }
 
-.comingSoonTitle {
+.topics {
+  max-width: 720px;
+  margin: 44px 0 0;
+}
+
+.topicsTitle {
   margin: 0 0 12px;
   font-family: 'Literata', serif;
-  font-size: 44px;
+  font-size: 22px;
   font-weight: 400;
+}
+
+.topicLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+
+  a {
+    padding: 10px 0;
+    color: var(--bc-ink);
+    font-size: 16px;
+    text-decoration: underline;
+    text-decoration-color: var(--bc-line);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+
+    &:hover {
+      text-decoration-color: var(--bc-accent);
+    }
+  }
 }

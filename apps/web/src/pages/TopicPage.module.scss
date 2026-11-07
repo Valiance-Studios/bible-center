@@ -1,0 +1,140 @@
+$phone-width: 900px;
+
+.content {
+  max-width: 860px;
+  padding: 40px 180px 64px 56px;
+
+  @media (max-width: $phone-width) {
+    max-width: none;
+    padding: 12px 16px 40px;
+  }
+}
+
+.ask {
+  margin: 0 0 6px;
+  color: var(--bc-muted);
+  font-size: 16px;
+
+  @media (max-width: $phone-width) {
+    margin-bottom: 4px;
+    font-size: 15px;
+  }
+}
+
+.title {
+  margin: 0 0 14px;
+  font-family: 'Literata', serif;
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+
+  @media (max-width: $phone-width) {
+    margin-bottom: 10px;
+    font-size: 36px;
+  }
+}
+
+.intro {
+  max-width: 620px;
+  margin: 0 0 20px;
+  color: var(--bc-muted);
+  font-size: 15px;
+  line-height: 1.55;
+
+  a {
+    color: var(--bc-accent);
+  }
+}
+
+.notice {
+  max-width: 620px;
+  margin: 4px 0 20px;
+  padding: 16px 18px;
+  border-radius: 4px;
+  background: var(--bc-panel);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.more {
+  color: var(--bc-accent);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.alertText {
+  margin: 0 0 12px;
+}
+
+.row {
+  padding: 22px 0;
+  border-top: 1px solid var(--bc-line);
+
+  @media (max-width: $phone-width) {
+    padding: 16px 0;
+  }
+}
+
+.reference {
+  color: var(--bc-rubric);
+  font-size: 17px;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: $phone-width) {
+    font-size: 16px;
+  }
+}
+
+.text {
+  max-width: 38em;
+  margin: 6px 0 10px;
+  font-family: 'Literata', serif;
+  font-size: 19px;
+  line-height: 1.6;
+
+  @media (max-width: $phone-width) {
+    margin: 4px 0 6px;
+    font-size: 17px;
+    line-height: 1.55;
+  }
+}
+
+.missing {
+  margin: 6px 0 10px;
+  color: var(--bc-muted);
+  font-size: 15px;
+}
+
+.meta {
+  margin: 0;
+  color: var(--bc-muted);
+  font-size: 14px;
+
+  @media (max-width: $phone-width) {
+    font-size: 13px;
+  }
+}
+
+.showMore {
+  margin-top: 20px;
+}
+
+.credit {
+  margin: 24px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--bc-line);
+  color: var(--bc-muted);
+  font-size: 13px;
+  line-height: 1.5;
+
+  a {
+    color: var(--bc-muted);
+  }
+}

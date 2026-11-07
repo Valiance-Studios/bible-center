@@ -4,11 +4,13 @@ import {createBrowserRouter, Navigate, RouterProvider} from 'react-router';
 import {MantineProvider} from '@mantine/core';
 import {READER_START_PATH} from '@/bible/paths';
 import {AppLayout} from '@/components/AppLayout';
-import {ComingSoonPage, HomePage} from '@/pages/HomePage';
+import {HomePage} from '@/pages/HomePage';
 import {MyVersesPage} from '@/pages/MyVersesPage';
 import {ReaderPage} from '@/pages/ReaderPage';
 import {SearchPage} from '@/pages/SearchPage';
 import {SignInPage} from '@/pages/SignInPage';
+import {TopicPage} from '@/pages/TopicPage';
+import {TopicsPage} from '@/pages/TopicsPage';
 import {useAuthStore} from '@/stores/auth';
 import {useTranslationSync} from '@/stores/useTranslationSync';
 import {mantineCssVariables, mantineTheme} from '@/theme/mantineTheme';
@@ -21,7 +23,8 @@ const router = createBrowserRouter([
       {path: '/read', element: <Navigate to={READER_START_PATH} replace />},
       {path: '/read/:book/:chapter', element: <ReaderPage />},
       {path: '/search', element: <SearchPage />},
-      {path: '/topics', element: <ComingSoonPage title="Topics" />},
+      {path: '/topics', element: <TopicsPage />},
+      {path: '/topics/:slug', element: <TopicPage />},
       {path: '/my-verses', element: <MyVersesPage />},
     ],
   },

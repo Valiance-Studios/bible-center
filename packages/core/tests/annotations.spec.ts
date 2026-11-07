@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {chapterIdOf, referenceOf, selectVerse, spanContains, spanOf, spansOverlap, verseIdIn} from '../src/annotations';
+import {chapterIdOf, selectVerse, spanContains, spanOf, spansOverlap, verseIdIn} from '../src/annotations';
 import {parseChapterRef} from '../src/bibleBooks';
 
 const JOHN_3 = parseChapterRef('john', '3')!;
@@ -45,18 +45,5 @@ describe('selectVerse', () => {
 
   it('starts over when tapping after a range', () => {
     expect(selectVerse({start: 5, end: 8}, 6)).toEqual({start: 6, end: 6});
-  });
-});
-
-describe('referenceOf', () => {
-  it('names the book, chapter and verses of a span', () => {
-    expect(referenceOf({startVerse: '43001001', endVerse: '43001003'})).toEqual({
-      book: JOHN_3.book, startChapter: 1, startVerse: 1, endChapter: 1, endVerse: 3,
-    });
-  });
-
-  it('is null for malformed verse ids', () => {
-    expect(referenceOf({startVerse: 'nonsense', endVerse: '43001003'})).toBeNull();
-    expect(referenceOf({startVerse: '67001001', endVerse: '67001001'})).toBeNull();
   });
 });

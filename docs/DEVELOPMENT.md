@@ -31,9 +31,10 @@ To try another account, add `allowedUsers/<lowercase email>` with no fields in t
 
 ## Generated Files
 
-Both are committed, so a normal build does not regenerate them.
+All are committed, so a normal build does not regenerate them.
 
 - `npm run bible-data` rebuilds `apps/web/public/bible` from its online sources. Only add public-domain text; see [Translations](../ARCHITECTURE.md#translations).
+- `npm run topic-data` rebuilds `apps/web/public/topic-data` from OpenBible.info's topic votes; see [OpenBible Data](../ARCHITECTURE.md#openbible-data).
 - `npm run icons` rebuilds the icon PNGs in `apps/web/public` from `favicon.svg`.
 
 ## Environment Files
