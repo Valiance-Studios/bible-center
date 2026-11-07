@@ -4,13 +4,72 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Everything not matched below is denied, so each new collection must opt in with its own rules.
 
-    // The allowlist, keyed by lowercase email and managed in the Firebase console. Users may only check
-    // themselves. The email must be verified: anyone can register a password account with someone else's
-    // address, and it stays unverified until they prove they own it.
+    // A verified email on the allowlist. It must be verified: anyone can register a password account
+    // with someone else's address, and it stays unverified until they prove they own it.
+    function isAllowed() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/allowedUsers/$(request.auth.token.email.lower()));
+    }
+
+    function isAllowedOwner(uid) {
+      return isAllowed() && request.auth.uid == uid;
+    }
+
+    // The allowlist, keyed by lowercase email and managed in the Firebase console. Users may only check themselves.
     match /allowedUsers/{email} {
       allow get: if request.auth != null
         && request.auth.token.email_verified == true
         && request.auth.token.email.lower() == email;
+    }
+
+    // Keep the translation ids in sync with TRANSLATIONS in apps/web/src/bible/translations.ts.
+    function isValidUserSettings(data) {
+      return data.keys().hasOnly(['translationId'])
+        && data.translationId in ['bsb', 'kjv'];
+    }
+
+    // Keep in sync with Annotation and NOTE_MAX_LENGTH in packages/core/src/annotations.ts.
+    // A span stays within one chapter, whose id begins both of its verse ids.
+    function isValidAnnotation(data) {
+      return data.keys().hasOnly(['type', 'chapterId', 'startVerse', 'endVerse', 'text', 'createdAt', 'updatedAt'])
+        && data.keys().hasAll(['type', 'chapterId', 'startVerse', 'endVerse', 'createdAt', 'updatedAt'])
+        && data.type in ['highlight', 'bookmark', 'note']
+        && data.chapterId is string
+        && data.chapterId.matches('[0-9]{5}')
+        && data.startVerse is string
+        && data.startVerse.matches('[0-9]{8}')
+        && data.endVerse is string
+        && data.endVerse.matches('[0-9]{8}')
+        && data.startVerse[0:5] == data.chapterId
+        && data.endVerse[0:5] == data.chapterId
+        && data.startVerse <= data.endVerse
+        && data.updatedAt == request.time
+        && (data.type == 'note'
+          ? data.text is string && data.text.trim().size() > 0 && data.text.size() <= 2000
+          : !('text' in data));
+    }
+
+    // Each user's own settings and annotations. Nobody can read or change another user's.
+    match /users/{uid} {
+      allow get: if isAllowedOwner(uid);
+
+      allow create, update: if isAllowedOwner(uid)
+        && isValidUserSettings(request.resource.data);
+
+      match /annotations/{annotationId} {
+        allow read, delete: if isAllowedOwner(uid);
+
+        allow create: if isAllowedOwner(uid)
+          && isValidAnnotation(request.resource.data)
+          && request.resource.data.createdAt == request.time;
+
+        // Only a note's words can change. Moving or retyping an annotation means replacing it.
+        allow update: if isAllowedOwner(uid)
+          && resource.data.type == 'note'
+          && isValidAnnotation(request.resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'updatedAt']);
+      }
     }
   }
 }

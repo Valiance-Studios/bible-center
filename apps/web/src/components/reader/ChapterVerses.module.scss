@@ -1,0 +1,97 @@
+$phone-width: 900px;
+
+.ribbon {
+  position: absolute;
+  top: 0;
+  right: 28px;
+  width: 22px;
+  height: 112px;
+  background: var(--bc-ribbon);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 88%, 0 100%);
+
+  @media (max-width: $phone-width) {
+    right: 16px;
+    width: 18px;
+    height: 78px;
+  }
+}
+
+.signInHint {
+  margin: 0 0 14px;
+  color: var(--bc-muted);
+  font-size: 14px;
+}
+
+.bookmarkMarker {
+  display: inline-block;
+  margin-right: 6px;
+  color: var(--bc-ribbon);
+}
+
+.note {
+  margin: 2px 0 10px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  background: var(--bc-panel);
+}
+
+.noteText {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.noteEdit {
+  min-height: 32px;
+  padding: 4px 0 0;
+  border: 0;
+  background: none;
+  color: var(--bc-accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.tools {
+  margin: 4px 0 10px;
+}
+
+.toolsLabel {
+  margin: 4px 0 0;
+  color: var(--bc-muted);
+  font-size: 14px;
+}
+
+.toolButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: -10px;
+}
+
+.tool {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--bc-accent);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--bc-panel);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
