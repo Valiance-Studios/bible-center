@@ -57,6 +57,23 @@ export async function allowEmail(email: string): Promise<void> {
   await request(url, {method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields: {}})}, `allow ${email}`);
 }
 
+/** Opens the confirmation link the Auth emulator would have emailed, as the person would from their inbox. */
+export async function confirmEmail(email: string): Promise<void> {
+  const url = `http://127.0.0.1:${ports.auth}/emulator/v1/projects/${projectId}/oobCodes`;
+  const {oobCodes} = await request(url, {headers: ADMIN_HEADERS}, 'list emailed links') as {
+    oobCodes: {email: string; requestType: string; oobLink: string}[];
+  };
+  const code = oobCodes.findLast((candidate) => candidate.email === email && candidate.requestType === 'VERIFY_EMAIL');
+
+  if (!code) {
+    throw new Error(`No confirmation link was sent to ${email}.`);
+  }
+
+  await request(code.oobLink, {}, `confirm ${email}`).catch(() => {
+    // The link answers with a web page rather than JSON once it has done its work.
+  });
+}
+
 /**
  * Creates a verified Google account in the Auth emulator, the way its sign-in popup does, so the popup
  * then offers it under "Choose an account". Signing in again with the same email reuses the account.

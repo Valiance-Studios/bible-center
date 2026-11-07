@@ -45,11 +45,11 @@ Other rules:
 
 | Page | Purpose | Signed in? |
 | --- | --- | --- |
-| Home | Verse of the Day, search and a way into reading | No (admins can set the verse) |
+| Home (`/`) | Verse of the Day, search and a way into reading. Built with a fixed verse so far | No (admins can set the verse) |
 | Reader | One chapter of a translation, with translation switching | No |
 | Reader annotations | Highlights and bookmarks in the reader | Yes |
 | Original languages | Word-by-word Hebrew or Greek for a verse | No |
 | Search results | Verses for a reference or phrase | No |
 | Topic | Ranked verses for "What does the Bible say about ___?" | To vote or report |
-| Sign in and register | Google or email and password | No |
+| Sign in (`/sign-in`) | Google or email and password, registering, password reset, confirming an email, and the invite-only message. Built | No |
 | About | A shorter version of the [README](../README.md), with data credits | No |

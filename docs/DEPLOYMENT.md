@@ -14,6 +14,17 @@ Hosting deploys first run `scripts/check-firebase-config.ts staging`, then `npm 
 
 **The check reads `apps/web/.env.staging.local` too, so a machine with a debug token cannot deploy Hosting.** Temporarily move the token out of the file. This is deliberate, since a build containing a registered debug token would let anyone pass App Check.
 
+## API Key Restrictions
+
+The Firebase web API key is public by design, so restrict it in Google Cloud under APIs & Services > Credentials.
+
+- **HTTP referrers:** `vs-bible-center-dev.web.app/*`, `vs-bible-center-dev.firebaseapp.com/*` and `localhost:5173/*`. The `firebaseapp.com` entry is the value of `VITE_FIREBASE_AUTH_DOMAIN`, and Google sign-in fails without it, since its popup calls Firebase from that domain. The `localhost` entry is only for `npm run dev:staging`.
+- **APIs:** at least Identity Toolkit, Token Service, Firestore and App Check.
+
+To check a referrer, request `https://identitytoolkit.googleapis.com/v1/projects?key=<key>` with a `Referer` header. A 200 means it is allowed and a 403 means it is blocked.
+
+Referrer restrictions are a light barrier, since non-browser clients can fake the header. Security rules and App Check are the real protection. `localhost` must stay off the reCAPTCHA key, which is separate; local runs use a [debug token](#debug-token) for App Check.
+
 ## Allowlist
 
 Add a document with no fields at `allowedUsers/<lowercase email>` in the Firestore console. The email must be verified to count; see [Authentication and Access](../ARCHITECTURE.md#authentication-and-access).

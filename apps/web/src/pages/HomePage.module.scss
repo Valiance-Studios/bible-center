@@ -1,0 +1,37 @@
+.content {
+  max-width: 1040px;
+  padding: 44px 180px 72px 56px;
+
+  @media (max-width: 900px) {
+    padding: 20px 16px 48px;
+  }
+}
+
+.label {
+  margin: 0 0 20px;
+  color: var(--bc-muted);
+  font-size: 15px;
+}
+
+.verse {
+  max-width: 17em;
+  margin: 0;
+  font-family: 'Literata', serif;
+  font-size: clamp(29px, 4.6vw, 56px);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.reference {
+  margin: 24px 0 0;
+  color: var(--bc-rubric);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.comingSoonTitle {
+  margin: 0 0 12px;
+  font-family: 'Literata', serif;
+  font-size: 44px;
+  font-weight: 400;
+}

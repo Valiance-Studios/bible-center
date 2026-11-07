@@ -1,0 +1,37 @@
+import {useState} from 'react';
+import {Link, Outlet} from 'react-router';
+import {BIBLE_SECTIONS} from '@bible-center/core';
+import {AccountMenu} from './AccountMenu';
+import {PhoneMenu} from './PhoneMenu';
+import {ThemeToggle} from './ThemeToggle';
+import classes from './AppLayout.module.scss';
+
+/** The app bar and thumb index around every page except sign-in. */
+export function AppLayout() {
+  const [menuOpened, setMenuOpened] = useState(false);
+
+  return (
+    <div className={classes.app}>
+      <header className={classes.bar}>
+        <button type="button" className={classes.menuButton} aria-label="Open menu" onClick={() => setMenuOpened(true)}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </button>
+        <Link className={classes.mark} to="/">Bible Center</Link>
+        <Link className={classes.navLink} to="/read">Read</Link>
+        <Link className={classes.navLink} to="/topics">Topics</Link>
+        <ThemeToggle />
+        <AccountMenu />
+      </header>
+
+      <nav className={classes.thumb} aria-label="Browse by section of the Bible">
+        {BIBLE_SECTIONS.map(({name}) => <Link key={name} to="/read">{name}</Link>)}
+      </nav>
+
+      <PhoneMenu opened={menuOpened} onClose={() => setMenuOpened(false)} />
+
+      <Outlet />
+    </div>
+  );
+}

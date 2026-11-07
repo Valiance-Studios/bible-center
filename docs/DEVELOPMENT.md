@@ -15,7 +15,7 @@ Run every command from the repository root. The root holds the commands, shared 
 
 - `npm run emulators` in one terminal and `npm run dev` in another. The app is at http://localhost:5173 and the Emulator UI at http://127.0.0.1:4000.
 - Development runs against the **Firebase Local Emulator Suite** using the `demo-bible-center` project. The `demo-` prefix guarantees no real Firebase resources are touched.
-- `npm run dev:staging` runs the dev server against the hosted project (`apps/web/.env.staging`), with the real allowlist. It needs an App Check debug token in `apps/web/.env.staging.local` (see [Debug Token](DEPLOYMENT.md#debug-token)).
+- `npm run dev:staging` runs the dev server against the hosted project (`apps/web/.env.staging`), with the real allowlist. It needs an App Check debug token in `apps/web/.env.staging.local` (see [Debug Token](DEPLOYMENT.md#debug-token)). It must run on port 5173, the only local port allowed on the API key (see [API Key Restrictions](DEPLOYMENT.md#api-key-restrictions)).
 
 ### Seed Data
 
