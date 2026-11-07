@@ -4,7 +4,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 ## Project Status
 
-**Current step: first features, starting with the home page and sign-in.** The mockups are approved.
+**Current step: the reader.** The mockups are approved.
 
 | Area | Status |
 | --- | --- |
@@ -12,8 +12,10 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | Allowlist rule, default-deny Firestore rules | Done, not yet deployed |
 | Topic score formula (`packages/core/src/topicScore.ts`) | Done, not yet used by any feature |
 | Design mockups | Approved |
-| Sign-in and registration | Planned |
-| Home page, Verse of the Day | Planned |
+| Sign-in and registration | Built. Google sign-in is confirmed on the hosted site; email registration is tested against the emulators only |
+| App layout: app bar, thumb index, phone menu, light and dark mode | Built |
+| Home page | Built with a fixed verse. Search and topics are added with those features |
+| Verse of the Day | Planned |
 | Reader (BSB, KJV), translation switching | Planned |
 | Reference and phrase search | Planned |
 | Annotations | Planned |
@@ -27,21 +29,21 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 Last updated November 7, 2026.
 
-- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation is in a pull request from `feature/foundation`. Check whether it has merged before starting new work.
-- **Hosted project:** `vs-bible-center-dev`. Nothing has been deployed, so the live site and Firestore rules are not this code yet.
+- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation is merged. Sign-in is in a pull request from `feature/home-and-sign-in`. Check whether it has merged before starting new work.
+- **Hosted project:** `vs-bible-center-dev`. The foundation and Firestore rules are deployed. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
 - **Set up in the project:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. `allowedUsers/bobbyjuba@gmail.com` exists.
 - **`gcloud` and Firebase CLI account:** `broden@valiance-studios.com`.
 
 ### Next Steps
 
-Build features one branch at a time, branching from `main` once the foundation merges: home page and sign-in, reader, search, annotations, topic search and voting, Verse of the Day admin, Hebrew/Greek study, then AI suggestions.
+Build features one branch at a time, from `main` or from the latest unmerged branch: site icon and reader, search, annotations, topic search and voting, Verse of the Day, Hebrew/Greek study, then AI suggestions.
 
 ### Open Items
 
 - An Anthropic API key, a Secret Manager entry for it, and a $10 monthly spend limit are needed at the AI step.
 - Crossway's decision on the ESV API key. Once approved, the owner adds the key to Secret Manager and shares the secret's name.
 - App Check is not enforced on any service yet. See [DEPLOYMENT.md](docs/DEPLOYMENT.md#enforcement).
-- The main bundle is about 860 kB because every page loads Firebase. Signed-out reading should not need Firestore or Auth up front, so split them out when the reader is built.
+- The main bundle is about 1.1 MB because every page loads Firebase and Mantine. Signed-out reading should not need Firestore or Auth up front, so split them out when the reader is built.
 - The Verse of the Day automatic list needs the owner's review before launch.
 
 ## Mockups
@@ -130,7 +132,7 @@ flowchart LR
 | --- | --- |
 | UI | React, TypeScript, Mantine, SCSS |
 | Routing | React Router |
-| State | Zustand for app state, TanStack Query for fetched data, added with the first feature that needs them |
+| State | Zustand for app state. TanStack Query for fetched data, added with the first feature that needs it |
 | Backend | Firebase Authentication, Firestore, Hosting, App Check; Cloud Functions when needed |
 | Build | Vite, npm workspaces |
 | Tests | Vitest with React Testing Library, Playwright, Firebase emulators |
@@ -298,11 +300,17 @@ flowchart TD
   method -- "Google" --> verified{"Email verified?"}
   method -- "Email and password" --> register["Firebase stores a salted scrypt hash<br/>and sends a verification email"]
   register --> verified
-  verified -- "No" --> prompt["Ask them to verify"]
+  verified -- "No" --> prompt["status: unverified<br/>Ask them to verify"]
+  prompt -- "recheckAccess refreshes the token" --> verified
   verified -- "Yes" --> allowed{"In allowedUsers?"}
-  allowed -- "No" --> denied["Read only, shown a no-access message"]
-  allowed -- "Yes" --> access["Annotations and voting"]
+  allowed -- "No" --> denied["status: noAccess<br/>Read only, invite-only message"]
+  allowed -- "Check failed" --> failed["status: accessCheckFailed<br/>Read only, offer to retry"]
+  allowed -- "Yes" --> access["status: allowed<br/>Annotations and voting"]
+  denied -- "recheckAccess" --> allowed
+  failed -- "recheckAccess" --> allowed
 ```
+
+`apps/web/src/stores/auth.ts` holds this status, and `SignInPage` shows the panel for it. The status only shapes the interface; the security rules enforce access.
 
 **The verified-email check is what makes the allowlist safe.** Anyone can register a password account using someone else's address, so an unverified email proves nothing. `firestore.rules` requires `email_verified` before accepting one, and `tests/rules/allowedUsers.spec.ts` covers this.
 
@@ -351,5 +359,5 @@ Before finishing a change, check whether it touches a source below, and update t
 | [Reading Flow](#reading-flow) | The reader and `TranslationProvider` | Planned |
 | [Verse of the Day](#verse-of-the-day) | The home page, `dailyVerses` and `admins` rules, the automatic list | Planned |
 | [Topic Search](#topic-search) | Topic search, `packages/core/src/topicScore.ts`, `suggestVerses` | Planned |
-| [Authentication and Access](#authentication-and-access) | `firestore.rules`, sign-in code | Rules built, sign-in planned |
+| [Authentication and Access](#authentication-and-access) | `firestore.rules`, `apps/web/src/stores/auth.ts`, `apps/web/src/pages/SignInPage.tsx` | Built |
 | [Environments and Delivery](#environments-and-delivery) | `package.json`, `apps/web/.env.*`, `firebase.json`, `scripts/` | Built |

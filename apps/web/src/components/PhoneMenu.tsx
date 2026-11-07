@@ -1,0 +1,53 @@
+import {useState} from 'react';
+import {Link} from 'react-router';
+import {BIBLE_SECTIONS} from '@bible-center/core';
+import {Drawer} from '@mantine/core';
+import {ThemeToggle} from './ThemeToggle';
+import classes from './PhoneMenu.module.scss';
+
+interface PhoneMenuProps {
+  opened: boolean;
+  onClose: () => void;
+}
+
+/** The left-hand menu on phones, where the thumb index becomes tabs that open to list their books. */
+export function PhoneMenu({opened, onClose}: PhoneMenuProps) {
+  const [openSection, setOpenSection] = useState<string | null>(null);
+
+  return (
+    <Drawer opened={opened} onClose={onClose} position="left" size={334} title="Bible Center" classNames={{title: classes.title, body: classes.body}}>
+      <Link className={classes.link} to="/topics" onClick={onClose}>Topics</Link>
+
+      <h2 className={classes.heading}>Read the Bible</h2>
+      <div className={classes.sections}>
+        {BIBLE_SECTIONS.map(({name, books}) => {
+          const isOpen = name === openSection;
+
+          return (
+            <div key={name}>
+              <button
+                type="button"
+                className={isOpen ? classes.tabOpen : classes.tab}
+                aria-expanded={isOpen}
+                onClick={() => setOpenSection(isOpen ? null : name)}
+              >
+                {name}
+              </button>
+              {isOpen && (
+                <div className={classes.books}>
+                  {books.map((book) => (
+                    <Link key={book} className={classes.book} to="/read" onClick={onClose}>{book}</Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className={classes.footer}>
+        <ThemeToggle withLabel />
+      </div>
+    </Drawer>
+  );
+}

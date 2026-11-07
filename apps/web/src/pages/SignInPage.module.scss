@@ -1,0 +1,129 @@
+$phone-width: 760px;
+
+.page {
+  display: flex;
+  flex-wrap: wrap;
+  min-height: 100vh;
+}
+
+// Stays lapis in both modes, as it is the page's one bold element.
+.side {
+  display: flex;
+  flex: 1 1 380px;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 48px;
+  box-sizing: border-box;
+  padding: 48px 56px;
+  background: #1f3f94;
+  color: #fff;
+
+  a:focus-visible {
+    outline-color: #fff;
+  }
+
+  @media (max-width: $phone-width) {
+    gap: 24px;
+    padding: 24px 16px;
+  }
+}
+
+.mark {
+  color: inherit;
+  font-family: 'Literata', serif;
+  font-size: 21px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.sideText {
+  max-width: 13em;
+  margin: 0;
+  font-family: 'Literata', serif;
+  font-size: 38px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+
+  @media (max-width: $phone-width) {
+    font-size: 28px;
+  }
+}
+
+.sideNote {
+  max-width: 27em;
+  margin: 16px 0 0;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.formSide {
+  display: flex;
+  flex: 1 1 440px;
+  justify-content: center;
+  align-items: flex-start;
+  box-sizing: border-box;
+  padding: 64px 56px;
+
+  @media (max-width: $phone-width) {
+    padding: 28px 16px;
+  }
+}
+
+.form {
+  width: 100%;
+  max-width: 400px;
+}
+
+.title {
+  margin: 0 0 22px;
+  font-family: 'Literata', serif;
+  font-size: 34px;
+  font-weight: 400;
+}
+
+.or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+  color: var(--bc-muted);
+  font-size: 14px;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--bc-line);
+  }
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.body {
+  margin: 0 0 18px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.switch {
+  margin: 20px 0 0;
+  color: var(--bc-muted);
+  font-size: 15px;
+}
+
+.textButton {
+  padding: 8px 2px;
+  border: 0;
+  background: none;
+  color: var(--bc-accent);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}

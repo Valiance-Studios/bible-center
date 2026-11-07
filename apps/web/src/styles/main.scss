@@ -1,5 +1,30 @@
-$page-gutter: 1rem;
+// The design language's tokens; see `docs/UI.md`. Mantine's own colors are set in `theme/mantineTheme.ts`.
+[data-mantine-color-scheme='light'] {
+  --bc-page: #f6f7f5;
+  --bc-ink: #16213a;
+  --bc-muted: #55607a;
+  --bc-line: #d5dae3;
+  --bc-accent: #1f3f94;
+  --bc-on-accent: #fff;
+  --bc-rubric: #a8231c;
+  --bc-tab: #e2e7f1;
+  --bc-tab-ink: #1f3f94;
+}
 
-.placeholder-page {
-  padding: $page-gutter;
+[data-mantine-color-scheme='dark'] {
+  --bc-page: #0f1830;
+  --bc-ink: #e8eaf0;
+  --bc-muted: #a5aec4;
+  --bc-line: #2a3556;
+  --bc-accent: #9db4f5;
+  --bc-on-accent: #0f1830;
+  --bc-rubric: #f4978b;
+  --bc-tab: #1c2a52;
+  --bc-tab-ink: #c5d2f7;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--bc-accent);
+  outline-offset: 2px;
 }

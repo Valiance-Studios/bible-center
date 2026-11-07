@@ -1,0 +1,138 @@
+$phone-width: 900px;
+
+.app {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 28px;
+  padding: 18px 148px 18px 56px;
+
+  @media (max-width: $phone-width) {
+    gap: 8px;
+    padding: 8px 16px;
+  }
+}
+
+.mark {
+  margin-right: auto;
+  color: var(--bc-ink);
+  font-family: 'Literata', serif;
+  font-size: 21px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.navLink {
+  padding: 12px 4px;
+  color: var(--bc-ink);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--bc-accent);
+  }
+
+  @media (max-width: $phone-width) {
+    display: none;
+  }
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--bc-line);
+  border-radius: 22px;
+  background: none;
+  color: var(--bc-ink);
+  cursor: pointer;
+}
+
+.themeLabelled {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--bc-ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 22px;
+  background: var(--bc-accent);
+  color: var(--bc-on-accent);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.menuButton {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-left: -10px;
+  border: 0;
+  background: none;
+  color: var(--bc-ink);
+  cursor: pointer;
+
+  @media (max-width: $phone-width) {
+    display: flex;
+  }
+}
+
+.thumb {
+  position: absolute;
+  top: 96px;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  width: 124px;
+
+  a {
+    display: block;
+    box-sizing: border-box;
+    width: 100px;
+    min-height: 50px;
+    padding: 15px 12px 15px 14px;
+    border-radius: 10px 0 0 10px;
+    background: var(--bc-tab);
+    color: var(--bc-tab-ink);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+
+    &:hover {
+      width: 124px;
+      background: var(--bc-accent);
+      color: var(--bc-on-accent);
+    }
+  }
+
+  @media (max-width: $phone-width) {
+    display: none;
+  }
+}
