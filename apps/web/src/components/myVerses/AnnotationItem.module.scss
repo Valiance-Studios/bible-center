@@ -1,0 +1,90 @@
+$phone-width: 900px;
+
+.item {
+  padding: 20px 0;
+  border-top: 1px solid var(--bc-line);
+
+  @media (max-width: $phone-width) {
+    padding: 14px 0;
+  }
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.reference {
+  color: var(--bc-rubric);
+  font-size: 17px;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: $phone-width) {
+    font-size: 16px;
+  }
+}
+
+.kind {
+  color: var(--bc-muted);
+  font-size: 14px;
+}
+
+.text {
+  max-width: 38em;
+  margin: 6px 0 0;
+  font-family: 'Literata', serif;
+  font-size: 19px;
+  line-height: 1.6;
+
+  @media (max-width: $phone-width) {
+    margin-top: 4px;
+    font-size: 17px;
+    line-height: 1.55;
+  }
+}
+
+.highlight {
+  padding: 1px 2px;
+  border-radius: 3px;
+  background: var(--bc-mark);
+  color: inherit;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.missing {
+  margin: 6px 0 0;
+  color: var(--bc-muted);
+  font-size: 15px;
+}
+
+.note {
+  margin: 10px 0 0;
+  padding: 10px 14px;
+  border-radius: 4px;
+  background: var(--bc-panel);
+  font-size: 15px;
+  line-height: 1.5;
+  // Notes are plain text, so keep the line breaks someone typed.
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.remove {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--bc-muted);
+  font: 400 14px 'Schibsted Grotesk', sans-serif;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}

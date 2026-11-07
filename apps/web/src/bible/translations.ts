@@ -4,6 +4,8 @@ import type {ChapterRef, ChapterText, SearchableVerse} from '@bible-center/core'
 export interface TranslationProvider {
   id: string;
   name: string;
+  /** The initialism, such as "KJV", for where the name does not fit. */
+  abbreviation: string;
   /** The notice shown beneath the text. */
   credit: string;
   getChapter: (reference: ChapterRef) => Promise<ChapterText>;
@@ -22,10 +24,11 @@ async function fetchJson<T>(path: string, description: string): Promise<T> {
 }
 
 /** Reads the per-chapter files `scripts/build-bible-data.ts` writes. */
-function staticTranslation(id: string, name: string, credit: string): TranslationProvider {
+function staticTranslation(id: string, name: string, abbreviation: string, credit: string): TranslationProvider {
   return {
     id,
     name,
+    abbreviation,
     credit,
     getChapter: ({book, chapter}) => fetchJson(`/bible/${id}/${book.slug}/${chapter}.json`, `${name}, ${book.name} ${chapter}`),
     getSearchableVerses: () => fetchJson(`/bible/${id}/verses.json`, `${name} for searching`),
@@ -33,8 +36,8 @@ function staticTranslation(id: string, name: string, credit: string): Translatio
 }
 
 export const TRANSLATIONS: readonly [TranslationProvider, ...TranslationProvider[]] = [
-  staticTranslation('bsb', 'Berean Standard Bible', 'Berean Standard Bible, dedicated to the public domain.'),
-  staticTranslation('kjv', 'King James Version', 'King James Version, public domain in the United States.'),
+  staticTranslation('bsb', 'Berean Standard Bible', 'BSB', 'Berean Standard Bible, dedicated to the public domain.'),
+  staticTranslation('kjv', 'King James Version', 'KJV', 'King James Version, public domain in the United States.'),
 ];
 
 export const DEFAULT_TRANSLATION = TRANSLATIONS[0];

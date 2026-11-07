@@ -1,4 +1,5 @@
 import type {ChapterRef} from './bibleBooks.ts';
+import type {VerseReference} from './references.ts';
 import type {VerseId} from './verseId.ts';
 
 import {BIBLE_BOOKS} from './bibleBooks.ts';
@@ -29,6 +30,9 @@ export interface Annotation {
   /** Only on notes. */
   text?: string;
 }
+
+/** How My verses orders a user's annotations: newest first, or as they appear in the Bible. */
+export type AnnotationOrder = 'recent' | 'bible';
 
 export function verseIdIn({book, chapter}: ChapterRef, verse: number): VerseId {
   return formatVerseId({book: BIBLE_BOOKS.indexOf(book) + 1, chapter, verse});
@@ -64,4 +68,17 @@ export function selectVerse(current: VerseSpan | null, verse: number): VerseSpan
   }
 
   return {start: Math.min(current.start, verse), end: Math.max(current.start, verse)};
+}
+
+/** The reference an annotation covers, or null if its verse ids are malformed. */
+export function referenceOf({startVerse, endVerse}: Pick<Annotation, 'startVerse' | 'endVerse'>): VerseReference | null {
+  const start = parseVerseId(startVerse);
+  const end = parseVerseId(endVerse);
+  const book = start ? BIBLE_BOOKS[start.book - 1] : undefined;
+
+  if (!start || !end || !book) {
+    return null;
+  }
+
+  return {book, startChapter: start.chapter, startVerse: start.verse, endChapter: end.chapter, endVerse: end.verse};
 }

@@ -4,6 +4,7 @@ import type {NewAnnotation} from '@/firebase/annotations';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {chapterIdOf} from '@bible-center/core';
 import {addAnnotation, listChapterAnnotations, removeAnnotation, updateNoteText} from '@/firebase/annotations';
+import {annotationQueryKeys} from '@/components/annotationQueryKeys';
 
 const NO_ANNOTATIONS: Annotation[] = [];
 
@@ -11,9 +12,8 @@ const NO_ANNOTATIONS: Annotation[] = [];
 export function useChapterAnnotations(uid: string | undefined, reference: ChapterRef) {
   const queryClient = useQueryClient();
   const chapterId = chapterIdOf(reference);
-  const queryKey = ['annotations', uid, chapterId];
   const {data = NO_ANNOTATIONS, isError: hasLoadError, isLoading} = useQuery({
-    queryKey,
+    queryKey: annotationQueryKeys.chapter(uid, chapterId),
     queryFn: () => listChapterAnnotations(uid ?? '', chapterId),
     enabled: uid !== undefined,
     // Unlike Bible text, annotations change, and this browser may not be the only one changing them.
@@ -27,7 +27,7 @@ export function useChapterAnnotations(uid: string | undefined, reference: Chapte
         await run(uid);
       }
     },
-    onSettled: () => queryClient.invalidateQueries({queryKey}),
+    onSettled: () => queryClient.invalidateQueries({queryKey: annotationQueryKeys.forUser(uid)}),
   });
 
   return {

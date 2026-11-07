@@ -5,6 +5,7 @@ import {MantineProvider} from '@mantine/core';
 import {READER_START_PATH} from '@/bible/paths';
 import {AppLayout} from '@/components/AppLayout';
 import {ComingSoonPage, HomePage} from '@/pages/HomePage';
+import {MyVersesPage} from '@/pages/MyVersesPage';
 import {ReaderPage} from '@/pages/ReaderPage';
 import {SearchPage} from '@/pages/SearchPage';
 import {SignInPage} from '@/pages/SignInPage';
@@ -21,6 +22,7 @@ const router = createBrowserRouter([
       {path: '/read/:book/:chapter', element: <ReaderPage />},
       {path: '/search', element: <SearchPage />},
       {path: '/topics', element: <ComingSoonPage title="Topics" />},
+      {path: '/my-verses', element: <MyVersesPage />},
     ],
   },
   {path: '/sign-in', element: <SignInPage />},

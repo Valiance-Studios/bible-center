@@ -3,6 +3,7 @@ import {Link} from 'react-router';
 import {BIBLE_BOOKS, BIBLE_SECTIONS} from '@bible-center/core';
 import {Drawer} from '@mantine/core';
 import {chapterPath} from '@/bible/paths';
+import {useAuthStore} from '@/stores/auth';
 import {ThemeToggle} from './ThemeToggle';
 import classes from './PhoneMenu.module.scss';
 
@@ -14,11 +15,13 @@ interface PhoneMenuProps {
 /** The left-hand menu on phones, where the thumb index becomes tabs that open to list their books. */
 export function PhoneMenu({opened, onClose}: PhoneMenuProps) {
   const [openSection, setOpenSection] = useState<string | null>(null);
+  const canAnnotate = useAuthStore((state) => state.status === 'allowed');
 
   return (
     <Drawer opened={opened} onClose={onClose} position="left" size={334} title="Bible Center" classNames={{title: classes.title, body: classes.body}}>
       <Link className={classes.link} to="/search" onClick={onClose}>Search</Link>
       <Link className={classes.link} to="/topics" onClick={onClose}>Topics</Link>
+      {canAnnotate && <Link className={classes.link} to="/my-verses" onClick={onClose}>My verses</Link>}
 
       <h2 className={classes.heading}>Read the Bible</h2>
       <div className={classes.sections}>

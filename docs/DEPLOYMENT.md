@@ -10,7 +10,7 @@ The hosted app is [vs-bible-center-dev.web.app](https://vs-bible-center-dev.web.
 | `npm run deploy:hosting` | Hosting only |
 | `npm run deploy:rules` | Firestore rules and indexes only |
 
-Deploy Firestore rules along with any feature that changes them, or the live site's writes will be rejected. `npm run deploy` covers both, and `npm run deploy:rules` needs no debug token moved.
+Deploy Firestore rules and indexes along with any feature that changes them, or the live site's writes or queries will be rejected. `npm run deploy` covers both, and `npm run deploy:rules` needs no debug token moved. New indexes take a few minutes to build after deploying.
 
 Hosting deploys first run `scripts/check-firebase-config.ts staging`, then `npm run build:staging`. The check refuses a deploy with missing Firebase config, no App Check site key, an App Check debug token, or the emulators turned on.
 

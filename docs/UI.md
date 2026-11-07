@@ -50,7 +50,7 @@ Other rules:
 | Home (`/`) | Verse of the Day, the search box, and topics. Built with a fixed verse and without topics so far | No (admins can set the verse) |
 | Reader (`/read/:book/:chapter`) | One chapter of a translation, with book, chapter and translation pickers, and arrows that cross between books. Built. `/read` opens Genesis 1 | No |
 | Reader annotations | Tap a verse to select it and another to make a range, then highlight, bookmark or add a note. Highlights show on the text, a bookmark shows a marker on its first verse and the ribbon, and a note shows beneath its last verse with a link to edit it. Built | Yes |
-| My verses (`/my-verses`) | All of a user's highlights, bookmarks and notes, filtered by type and ordered by recently added or Bible order, in the selected translation. Reached from the account and phone menus | Yes |
+| My verses (`/my-verses`) | All of a user's highlights, bookmarks and notes, filtered by type and ordered by recently added or Bible order, in the selected translation, 20 at a time with "Show more". Removing one asks first. On narrow phones the translation picker shows initialisms, such as KJV. Reached from the account and phone menus, once allowed to annotate. Built | Yes |
 | Original languages | A panel in the reader with the verse's words: Hebrew (or Aramaic) in the Old Testament, Greek in the New | No |
 | Search (`/search?q=`) | Passages for references, or the closest verses for wording with matched words highlighted, in the selected translation. Opened from the home page box, the app bar or the phone menu. Built. A link to a topic of that name comes with topic search | No |
 | Topic | Ranked verses for "What does the Bible say about ___?" | To vote or report |
