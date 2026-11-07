@@ -31,11 +31,11 @@ describe('rankTopicVerses', () => {
   ];
 
   it('follows OpenBible without any upvotes', () => {
-    expect(rankTopicVerses(verses, new Map()).map(({startVerse}) => startVerse)).toEqual(['40005004', '19147003', '43011035']);
+    expect(rankTopicVerses(verses, []).map(({startVerse}) => startVerse)).toEqual(['40005004', '19147003', '43011035']);
   });
 
   it('lets upvotes overtake OpenBible votes', () => {
-    const ranked = rankTopicVerses(verses, new Map([['43011035', 15]]));
+    const ranked = rankTopicVerses(verses, [{startVerse: '43011035', endVerse: '43011035', upvotes: 15}]);
 
     expect(ranked[0]).toMatchObject({startVerse: '43011035', upvotes: 15, openBibleVotes: 30});
     expect(ranked[1]?.startVerse).toBe('40005004');
@@ -44,6 +44,17 @@ describe('rankTopicVerses', () => {
   it('breaks ties by OpenBible votes, then Bible order', () => {
     const tied: TopicFileVerse[] = [['43001002', '43001002', 0], ['43001001', '43001001', 0]];
 
-    expect(rankTopicVerses(tied, new Map()).map(({startVerse}) => startVerse)).toEqual(['43001001', '43001002']);
+    expect(rankTopicVerses(tied, []).map(({startVerse}) => startVerse)).toEqual(['43001001', '43001002']);
+  });
+
+  it('includes passages only Bible Center has, ranked by their upvotes alone', () => {
+    const ranked = rankTopicVerses(verses, [
+      {startVerse: '45012015', endVerse: '45012015', upvotes: 1},
+      {startVerse: '19147003', endVerse: '19147003', upvotes: 2},
+    ]);
+
+    expect(ranked.map(({startVerse}) => startVerse)).toEqual(['19147003', '40005004', '43011035', '45012015']);
+    expect(ranked.at(-1)).toMatchObject({openBibleVotes: 0, upvotes: 1, score: 1});
+    expect(ranked[0]).toMatchObject({openBibleVotes: 250, upvotes: 2});
   });
 });

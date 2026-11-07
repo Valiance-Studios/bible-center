@@ -54,6 +54,6 @@ Other rules:
 | Original languages | A panel in the reader with the verse's words: Hebrew (or Aramaic) in the Old Testament, Greek in the New | No |
 | Search (`/search?q=`) | Passages for references, or the closest verses for wording with matched words highlighted, in the selected translation. Opened from the home page box, the app bar or the phone menu. A search that is exactly a topic's name, such as "marriage", links to that topic first. Built | No |
 | Topics (`/topics`) | Find a topic by name, the common topics, and every topic from A to Z (`?letter=g`). A name with no topic offers to start it. Built | No |
-| Topic (`/topics/:slug`) | Ranked verses for "What does the Bible say about ___?", 20 at a time, with OpenBible's counts and credit. A topic with no verses says so. Built, except upvoting, adding a verse and reporting, which come next | To vote, add or report |
+| Topic (`/topics/:slug`) | Ranked verses for "What does the Bible say about ___?", 20 at a time, with OpenBible's counts and credit. Signed in, upvote or remove an upvote, add a verse (which counts as an upvote, and starts the topic if nobody has), and report one for review. Signed out, the vote boxes lead to sign in. A topic with no verses says so. Built | To vote, add or report |
 | Sign in (`/sign-in`) | Google or email and password, registering, password reset, confirming an email, and the invite-only message. Built | No |
 | About | A shorter version of the [README](../README.md), with data credits | No |

@@ -9,11 +9,16 @@ export interface PassageSection {
   verses: Verse[];
 }
 
-/** The verses of a reference in a translation, by chapter, loading each chapter it spans. */
-export function usePassage(reference: VerseReference, translation: TranslationProvider) {
-  const {book, startChapter, startVerse, endChapter, endVerse} = reference;
+/**
+ * The verses of a reference in a translation, by chapter, loading each chapter it spans.
+ * With no reference there are none, so a form can call it before anything is typed.
+ */
+export function usePassage(reference: VerseReference | null, translation: TranslationProvider) {
+  const {startChapter = 0, startVerse = null, endChapter = -1, endVerse = null} = reference ?? {};
   const chapters = Array.from({length: endChapter - startChapter + 1}, (_, index) => startChapter + index);
-  const results = useQueries({queries: chapters.map((chapter) => chapterQuery(translation, {book, chapter}))});
+  const results = useQueries({
+    queries: reference ? chapters.map((chapter) => chapterQuery(translation, {book: reference.book, chapter})) : [],
+  });
   const sections: PassageSection[] = chapters.map((chapter, index) => ({
     chapter,
     verses: (results[index]?.data?.verses ?? []).filter(({verse}) => {

@@ -1,25 +1,9 @@
-import type {RulesTestEnvironment} from '@firebase/rules-unit-testing';
 import type {Firestore} from 'firebase/firestore';
 
-import {readFileSync} from 'node:fs';
-import {afterAll, beforeAll, beforeEach, describe, it} from 'vitest';
-import {assertFails, assertSucceeds, initializeTestEnvironment} from '@firebase/rules-unit-testing';
+import {describe, it} from 'vitest';
+import {assertFails, assertSucceeds} from '@firebase/rules-unit-testing';
 import {addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where} from 'firebase/firestore';
-
-const ALICE = 'alice';
-const BOB = 'bob';
-/** Signed in and verified, but not on the allowlist. */
-const MALLORY = 'mallory';
-
-let testEnv: RulesTestEnvironment;
-
-function dbFor(uid: string | null, emailVerified = true): Firestore {
-  const context = uid
-    ? testEnv.authenticatedContext(uid, {email: `${uid}@example.com`, email_verified: emailVerified})
-    : testEnv.unauthenticatedContext();
-
-  return context.firestore() as unknown as Firestore;
-}
+import {ALICE, BOB, dbFor, MALLORY, useRulesTestEnvironment} from './support';
 
 function annotation(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
@@ -37,31 +21,9 @@ function annotationsOf(db: Firestore, uid: string) {
   return collection(db, 'users', uid, 'annotations');
 }
 
-beforeAll(async () => {
-  testEnv = await initializeTestEnvironment({
-    projectId: 'demo-bible-center',
-    firestore: {
-      rules: readFileSync('firestore.rules', 'utf8'),
-      host: '127.0.0.1',
-      port: 8080,
-    },
-  });
-});
-
-afterAll(async () => {
-  await testEnv.cleanup();
-});
-
-beforeEach(async () => {
-  await testEnv.clearFirestore();
-  await testEnv.withSecurityRulesDisabled(async (context) => {
-    const db = context.firestore() as unknown as Firestore;
-
-    await setDoc(doc(db, 'allowedUsers', `${ALICE}@example.com`), {});
-    await setDoc(doc(db, 'allowedUsers', `${BOB}@example.com`), {});
-    await setDoc(doc(db, 'users', ALICE, 'annotations', 'existing'), annotation());
-    await setDoc(doc(db, 'users', ALICE, 'annotations', 'existing-note'), annotation({type: 'note', text: 'Old words.'}));
-  });
+useRulesTestEnvironment(async (db) => {
+  await setDoc(doc(db, 'users', ALICE, 'annotations', 'existing'), annotation());
+  await setDoc(doc(db, 'users', ALICE, 'annotations', 'existing-note'), annotation({type: 'note', text: 'Old words.'}));
 });
 
 describe('annotations', () => {
