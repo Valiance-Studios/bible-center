@@ -1,8 +1,7 @@
 import type {Page} from '@playwright/test';
 
 import {expect, test} from '@playwright/test';
-import {allowEmail} from '../../../scripts/emulator-admin.ts';
-import {createTestUser, signInWithGoogle} from './support/auth';
+import {createTestUser, signInAsNewAllowedUser, signInWithGoogle} from './support/auth';
 
 const VERSE_1 = 'In the beginning was the Word';
 const VERSE_2 = 'He was with God in the beginning.';
@@ -11,11 +10,8 @@ const VERSE_4 = 'In Him was life';
 
 /** Signs in a new allowlisted user, who has no annotations, and opens John 1. */
 async function openChapterAsNewUser(page: Page) {
-  const user = createTestUser();
+  const user = await signInAsNewAllowedUser(page);
 
-  await allowEmail(user.email);
-  await signInWithGoogle(page, user);
-  await expect(page.getByRole('button', {name: 'Account menu'})).toBeVisible();
   await page.goto('/read/john/1');
   await expect(page.getByRole('button', {name: 'Account menu'})).toBeVisible();
   await expect(page.getByText(VERSE_1)).toBeVisible();

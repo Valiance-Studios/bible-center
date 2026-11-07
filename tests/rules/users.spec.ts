@@ -70,6 +70,8 @@ describe('annotations', () => {
 
     await assertSucceeds(addDoc(annotationsOf(db, ALICE), annotation()));
     await assertSucceeds(getDocs(query(annotationsOf(db, ALICE), where('chapterId', '==', '43003'))));
+    // My verses lists all of them at once.
+    await assertSucceeds(getDocs(annotationsOf(db, ALICE)));
     await assertSucceeds(deleteDoc(doc(annotationsOf(db, ALICE), 'existing')));
   });
 

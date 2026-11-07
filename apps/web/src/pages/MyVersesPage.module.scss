@@ -1,0 +1,123 @@
+$phone-width: 900px;
+
+.content {
+  max-width: 820px;
+  padding: 28px 180px 64px 56px;
+
+  @media (max-width: $phone-width) {
+    max-width: none;
+    padding: 8px 16px 40px;
+  }
+}
+
+.title {
+  margin: 0 0 20px;
+  font-family: 'Literata', serif;
+  font-size: 44px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+
+  @media (max-width: $phone-width) {
+    margin-bottom: 14px;
+    font-size: 34px;
+  }
+}
+
+.body {
+  max-width: 32em;
+  margin: 0 0 22px;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.loader {
+  margin-top: 8px;
+}
+
+.alertText {
+  margin: 0 0 12px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-bottom: 10px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-right: auto;
+
+  // On a phone the filters stay on one line and scroll, rather than pushing the list down.
+  @media (max-width: $phone-width) {
+    flex-wrap: nowrap;
+    max-width: 100%;
+    margin-right: 0;
+    overflow-x: auto;
+  }
+}
+
+.filter {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid var(--bc-line);
+  border-radius: 22px;
+  background: none;
+  color: var(--bc-ink);
+  font: 500 15px 'Schibsted Grotesk', sans-serif;
+  cursor: pointer;
+
+  @media (max-width: $phone-width) {
+    padding: 0 14px;
+    font-size: 14px;
+  }
+}
+
+.filterOn {
+  composes: filter;
+  border-color: var(--bc-accent);
+  background: var(--bc-accent);
+  color: var(--bc-on-accent);
+  font-weight: 600;
+}
+
+.selects {
+  display: flex;
+  gap: 8px 16px;
+
+  @media (max-width: $phone-width) {
+    width: 100%;
+    gap: 8px;
+
+    > * {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+}
+
+.more {
+  margin-top: 20px;
+}
+
+.none {
+  margin: 0;
+  padding: 20px 0;
+  border-top: 1px solid var(--bc-line);
+  color: var(--bc-muted);
+  font-size: 16px;
+}
+
+.credit {
+  margin: 24px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--bc-line);
+  color: var(--bc-muted);
+  font-size: 13px;
+}

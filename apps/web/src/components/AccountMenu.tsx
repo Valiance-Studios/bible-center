@@ -28,7 +28,9 @@ export function AccountMenu() {
       </Menu.Target>
       <Menu.Dropdown>
         <Menu.Label>{name}</Menu.Label>
-        {status !== 'allowed' && <Menu.Item component={Link} to="/sign-in">Account status</Menu.Item>}
+        {status === 'allowed'
+          ? <Menu.Item component={Link} to="/my-verses">My verses</Menu.Item>
+          : <Menu.Item component={Link} to="/sign-in">Account status</Menu.Item>}
         <Menu.Item onClick={() => void signOut()}>Sign out</Menu.Item>
       </Menu.Dropdown>
     </Menu>

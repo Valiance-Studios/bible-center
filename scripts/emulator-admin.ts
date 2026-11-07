@@ -90,3 +90,46 @@ export async function createGoogleAccount(account: EmulatorAccount): Promise<voi
 
   await request(url, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}, `create ${account.email}`);
 }
+
+/** The Auth emulator's user id for an email, as the security rules see it. */
+export async function uidOf(email: string): Promise<string> {
+  const url = `http://127.0.0.1:${ports.auth}/identitytoolkit.googleapis.com/v1/projects/${projectId}/accounts:lookup`;
+  const {users} = await request(url, {method: 'POST', headers: ADMIN_HEADERS, body: JSON.stringify({email: [email]})}, `look up ${email}`) as {
+    users?: {localId: string}[];
+  };
+  const uid = users?.[0]?.localId;
+
+  if (!uid) {
+    throw new Error(`No account exists for ${email}.`);
+  }
+
+  return uid;
+}
+
+export interface SeedAnnotation {
+  type: 'highlight' | 'bookmark' | 'note';
+  /** `bbcccvvv`, as in `packages/core/src/verseId.ts`. */
+  startVerse: string;
+  endVerse: string;
+  text?: string;
+  createdAt: Date;
+}
+
+/** Writes annotations straight to Firestore, for tests that need more than are quick to make in the reader. */
+export async function addAnnotations(uid: string, annotations: SeedAnnotation[]): Promise<void> {
+  const url = `http://127.0.0.1:${ports.firestore}/v1/projects/${projectId}/databases/(default)/documents/users/${uid}/annotations`;
+
+  await Promise.all(annotations.map(({type, startVerse, endVerse, text, createdAt}) => {
+    const fields = {
+      type: {stringValue: type},
+      chapterId: {stringValue: startVerse.slice(0, 5)},
+      startVerse: {stringValue: startVerse},
+      endVerse: {stringValue: endVerse},
+      ...(text === undefined ? {} : {text: {stringValue: text}}),
+      createdAt: {timestampValue: createdAt.toISOString()},
+      updatedAt: {timestampValue: createdAt.toISOString()},
+    };
+
+    return request(url, {method: 'POST', headers: ADMIN_HEADERS, body: JSON.stringify({fields})}, `add a ${type} for ${uid}`);
+  }));
+}

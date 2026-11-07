@@ -1,6 +1,7 @@
 import type {Page} from '@playwright/test';
 
 import {expect} from '@playwright/test';
+import {allowEmail} from '../../../../scripts/emulator-admin.ts';
 
 export interface TestUser {
   email: string;
@@ -54,6 +55,17 @@ export async function signInWithGoogle(page: Page, user: TestUser): Promise<void
   await expect(async () => {
     await attemptPopupSignIn(page, user);
   }).toPass({timeout: 30_000});
+}
+
+/** Signs in a new allowlisted user, who has no annotations, and waits until the app knows they are signed in. */
+export async function signInAsNewAllowedUser(page: Page): Promise<TestUser> {
+  const user = createTestUser();
+
+  await allowEmail(user.email);
+  await signInWithGoogle(page, user);
+  await expect(page.getByRole('button', {name: 'Account menu'})).toBeVisible();
+
+  return user;
 }
 
 export async function register(page: Page, user: TestUser, password: string): Promise<void> {

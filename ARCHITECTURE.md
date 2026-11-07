@@ -4,13 +4,13 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 ## Project Status
 
-**Current step: the My verses page.** All mockups are approved.
+**Current step: topic search, voting and reports.** All mockups are approved.
 
 | Area | Status |
 | --- | --- |
 | Monorepo, tooling, tests, env files, Firebase and App Check wiring, deploy check | Done |
-| GitHub Actions CI (`.github/workflows/ci.yml`) | Built in `feature/ci`. Its first run is on that branch's pull request |
-| Firestore rules: default deny, allowlist, user settings, annotations | Built and deployed |
+| GitHub Actions CI (`.github/workflows/ci.yml`) | Built. Runs on pull requests and pushes to `main` |
+| Firestore rules and indexes: default deny, allowlist, user settings, annotations | Rules deployed. The My verses indexes need deploying after it merges; see [Current State](#current-state) |
 | Topic score formula (`packages/core/src/topicScore.ts`) | Done, not yet used by any feature |
 | Design mockups | Approved |
 | Sign-in and registration | Built. Google sign-in is confirmed on the hosted site; email registration is tested against the emulators only |
@@ -22,7 +22,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | Reference and phrase search | Built |
 | Annotations: highlights, bookmarks, notes, on verses or ranges | Built |
 | Translation choice saved to the account | Built |
-| My verses page | Mockups approved. Next to build |
+| My verses page | Built |
 | About dialog | Planned, with no mockup yet. `CLAUDE.md` expects it, as a shorter version of the README with data credits |
 | Topic search, voting, reports | Planned |
 | Hebrew/Greek study | Planned |
@@ -34,8 +34,8 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 Last updated November 7, 2026.
 
-- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon, reader, search and annotations are merged. CI is in a pull request from `feature/ci`. Check what has merged before starting new work.
-- **Hosted project:** `vs-bible-center-dev`. The owner deploys it and deployed the annotation rules on November 6, 2026, while testing annotations. Before running `npm run deploy`, move the debug token out of `apps/web/.env.staging.local`, as the deploy check refuses it. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
+- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon, reader, search, annotations and CI are merged. My verses is in a pull request from `feature/my-verses`. Check what has merged before starting new work.
+- **Hosted project:** `vs-bible-center-dev`. The owner deploys it and deployed the annotation rules on November 6, 2026, while testing annotations. Before running `npm run deploy`, move the debug token out of `apps/web/.env.staging.local`, as the deploy check refuses it. **After My verses merges, deploy its indexes** with `npm run deploy:rules`, which sends `firestore.indexes.json` with the rules. Until they finish building, which can take a few minutes, My verses fails to load in Bible order or with a filter. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
 - **Set up in the project:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. `allowedUsers/bobbyjuba@gmail.com` exists.
 - **`gcloud` and Firebase CLI account:** `broden@valiance-studios.com`.
 
@@ -43,13 +43,12 @@ Last updated November 7, 2026.
 
 Build features one branch at a time, from `main` or from the latest unmerged branch, in this order:
 
-1. **My verses page:** one signed-in page listing all of a user's highlights, bookmarks and notes, reached from the account and phone menus, built to its approved mockups. It needs a new query listing all of a user's annotations.
-2. **Topic search, voting and reports:** build the OpenBible data script, the topic page, and the topic link and list on the search and home pages.
-3. **Verse of the Day:** `dailyVerses`, `admins`, the admin dialog and the automatic list.
-4. **Hebrew/Greek study:** the reader's word panel, using STEPBible data.
-5. **About dialog and final polish.**
-6. **AI suggestions:** the first Cloud Function.
-7. **ESV:** once Crossway approves the key.
+1. **Topic search, voting and reports:** build the OpenBible data script, the topic page, and the topic link and list on the search and home pages.
+2. **Verse of the Day:** `dailyVerses`, `admins`, the admin dialog and the automatic list.
+3. **Hebrew/Greek study:** the reader's word panel, using STEPBible data.
+4. **About dialog and final polish.**
+5. **AI suggestions:** the first Cloud Function.
+6. **ESV:** once Crossway approves the key.
 
 After V1: boards, plugins, and possibly embeddings for search by meaning.
 
@@ -292,6 +291,21 @@ stateDiagram-v2
 - **Toggling:** if a selection overlaps any highlight or bookmark, the action removes every one it touches, even if it extends beyond the selection. Otherwise it adds one. Selecting over a note opens that note for editing.
 - **Rules:** `firestore.rules` limits access to the owner on the allowlist, with a verified email. It also validates every field, requires server timestamps, keeps both ends of a range in the chapter, and only lets a note's text change. `tests/rules/users.spec.ts` covers this.
 - **Loading:** actions stay disabled until a chapter's annotations load, since they cannot know what is already marked, and could add a duplicate instead of removing. Offline, the Firestore SDK answers queries from its empty cache instead of failing, so `listChapterAnnotations` treats a cached answer as a failure and retries with backoff. That way an outage shows an error rather than looking like having no annotations.
+- **My verses:** `useAnnotationPages` reads 20 annotations at a time through `listAnnotationPage`, with Firestore doing the filtering and ordering, and "Show more" continues from the last one. Recently added orders by `createdAt`, and Bible order by `startVerse` then `endVerse`, since verse ids sort canonically as strings. Each ordering, alone and after a type filter, needs a composite index in `firestore.indexes.json`. The emulators do not check indexes, so a query added without one passes every test and fails only on the hosted project. Each entry loads its chapter in the selected translation through the same `chapterQuery` the reader uses, so a chapter is fetched once however many entries it has. The filter and order live in the URL (`?show=note&order=bible`), so they survive a trip to the reader and back. Removing asks for confirmation first, since a removed note's words cannot be recovered.
+- **Keeping pages in step:** every annotation query key starts with `annotationQueryKeys.forUser`, and every change invalidates that prefix, so a change on either page refreshes the other's cached data.
+
+```mermaid
+flowchart LR
+  reader["ReaderPage<br/>useChapterAnnotations"] -- "where chapterId ==" --> firestore[("users/{uid}/annotations")]
+  myVerses["MyVersesPage<br/>useAnnotationPages"] -- "listAnnotationPage<br/>20 at a time" --> firestore
+  myVerses -- "chapterQuery per entry" --> text["/bible/{translation}/..."]
+  reader -- "chapterQuery" --> text
+  reader -- "add, update, remove" --> invalidate["invalidate<br/>annotationQueryKeys.forUser"]
+  myVerses -- "remove" --> invalidate
+  invalidate -. "refetch" .-> reader
+  invalidate -. "refetch" .-> myVerses
+```
+
 - **Limits:** the rules do not cap how many annotations a user can create, which is worth revisiting before the allowlist is removed.
 
 ## Verse of the Day
@@ -462,7 +476,7 @@ Before finishing a change, check whether it touches a source below, and update t
 | [System Overview](#system-overview) | `firebase.json`, `apps/web/src/firebase/`, `functions/` | Partly built |
 | [Reading Flow](#reading-flow) | `apps/web/src/pages/ReaderPage.tsx`, `apps/web/src/bible/translations.ts`, `scripts/build-bible-data.ts` | Built, ESV planned |
 | [Search](#search) | `apps/web/src/pages/SearchPage.tsx`, `packages/core/src/references.ts`, `apps/web/src/bible/phraseSearch.ts`, `scripts/build-bible-data.ts` | Built, topic link planned |
-| [Annotations](#annotations), data model and selection | `firestore.rules`, `packages/core/src/annotations.ts`, `apps/web/src/firebase/annotations.ts`, `apps/web/src/firebase/settings.ts` | Built |
+| [Annotations](#annotations), data model, selection and pages | `firestore.rules`, `packages/core/src/annotations.ts`, `apps/web/src/firebase/annotations.ts`, `apps/web/src/firebase/settings.ts`, `firestore.indexes.json`, `apps/web/src/components/annotationQueryKeys.ts`, `apps/web/src/components/myVerses/`, `apps/web/src/pages/MyVersesPage.tsx` | Built |
 | [Verse of the Day](#verse-of-the-day) | The home page, `dailyVerses` and `admins` rules, the automatic list | Planned |
 | [Topic Search](#topic-search) | Topic search, `packages/core/src/topicScore.ts`, `suggestVerses` | Planned |
 | [Authentication and Access](#authentication-and-access) | `firestore.rules`, `apps/web/src/stores/auth.ts`, `apps/web/src/pages/SignInPage.tsx` | Built |

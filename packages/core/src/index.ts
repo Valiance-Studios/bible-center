@@ -1,10 +1,10 @@
-export type {Annotation, AnnotationType, VerseSpan} from './annotations';
+export type {Annotation, AnnotationOrder, AnnotationType, VerseSpan} from './annotations';
 export type {BibleBook, ChapterRef, ChapterText, SearchableVerse, Verse} from './bibleBooks';
 export type {BibleSection} from './bibleSections';
 export type {VerseReference} from './references';
 export type {VerseId, VerseLocation} from './verseId';
 
-export {chapterIdOf, NOTE_MAX_LENGTH, selectVerse, spanContains, spanOf, spansOverlap, verseIdIn} from './annotations';
+export {chapterIdOf, NOTE_MAX_LENGTH, referenceOf, selectVerse, spanContains, spanOf, spansOverlap, verseIdIn} from './annotations';
 export {BIBLE_BOOKS, chapterTitle, nextChapter, parseChapterRef, previousChapter} from './bibleBooks';
 export {BIBLE_SECTIONS} from './bibleSections';
 export {formatReference, parseReferences} from './references';

@@ -1,4 +1,30 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "annotations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "type", "order": "ASCENDING"},
+        {"fieldPath": "createdAt", "order": "DESCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "annotations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "startVerse", "order": "ASCENDING"},
+        {"fieldPath": "endVerse", "order": "ASCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "annotations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "type", "order": "ASCENDING"},
+        {"fieldPath": "startVerse", "order": "ASCENDING"},
+        {"fieldPath": "endVerse", "order": "ASCENDING"}
+      ]
+    }
+  ],
   "fieldOverrides": []
 }
