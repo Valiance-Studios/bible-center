@@ -15,6 +15,11 @@ interface ChapterVersesProps {
   verses: Verse[];
   /** The verse a link pointed to, if any. */
   targetVerse: number | null;
+  selection: VerseSpan | null;
+  /** Called with the new selection, and the verse that was tapped to make it. */
+  onSelectionChange: (selection: VerseSpan | null, tappedVerse: number | null) => void;
+  /** A button among the selection's tools that shows the original words, such as "Hebrew words", on phones. */
+  wordsTool?: {label: string; onClick: () => void};
 }
 
 interface NoteEditor {
@@ -32,15 +37,17 @@ function overlapping(annotations: Annotation[], span: VerseSpan): Annotation[] {
 
 const RibbonIcon = <svg width="13" height="16" viewBox="0 0 13 16" fill="currentColor" role="img" aria-label="Bookmarked"><path d="M0 0h13v16l-6.5-4L0 16z" /></svg>;
 
-/** A chapter's verses. For allowlisted users, verses can be selected, alone or as a range, and annotated. */
-export function ChapterVerses({reference, verses, targetVerse}: ChapterVersesProps) {
+/**
+ * A chapter's verses. Anyone can select a verse, alone or as a range, to study its original words.
+ * Allowlisted users can also annotate the selection.
+ */
+export function ChapterVerses({reference, verses, targetVerse, selection, onSelectionChange, wordsTool}: ChapterVersesProps) {
   const status = useAuthStore((state) => state.status);
   const user = useAuthStore((state) => state.user);
   const canAnnotate = status === 'allowed';
   const {annotations, hasLoadError, isLoading, isSaving, hasError, add, removeAll, updateNote} = useChapterAnnotations(canAnnotate ? user?.uid : undefined, reference);
   // Until annotations load, an action cannot know what is already marked, and could add a duplicate instead of removing.
   const areActionsDisabled = isLoading || isSaving || hasLoadError;
-  const [selection, setSelection] = useState<VerseSpan | null>(null);
   const [noteEditor, setNoteEditor] = useState<NoteEditor | null>(null);
   const highlights = ofType(annotations, 'highlight');
   const bookmarks = ofType(annotations, 'bookmark');
@@ -54,10 +61,16 @@ export function ChapterVerses({reference, verses, targetVerse}: ChapterVersesPro
     endVerse: end,
   });
 
+  function setSelection(next: VerseSpan | null) {
+    onSelectionChange(next, null);
+  }
+
   function tapVerse(verse: number): void {
     // Dragging across words to copy them should not also select the verse.
-    if (canAnnotate && !window.getSelection()?.toString()) {
-      setSelection(selectVerse(selection, verse));
+    if (!window.getSelection()?.toString()) {
+      const next = selectVerse(selection, verse);
+
+      onSelectionChange(next, next ? verse : null);
     }
   }
 
@@ -130,8 +143,8 @@ export function ChapterVerses({reference, verses, targetVerse}: ChapterVersesPro
               isMarked={isSelected || targetVerse === verse}
               isHighlighted={highlights.some((highlight) => spanContains(spanOf(highlight), verse))}
               marker={isBookmarkStart ? <span className={classes.bookmarkMarker}>{RibbonIcon}</span> : null}
-              onSelect={canAnnotate ? () => tapVerse(verse) : undefined}
-              isSelected={canAnnotate ? isSelected : undefined}
+              onSelect={() => tapVerse(verse)}
+              isSelected={isSelected}
             />
 
             {verseNotes.map((note) => (
@@ -148,25 +161,30 @@ export function ChapterVerses({reference, verses, targetVerse}: ChapterVersesPro
             {selection?.end === verse && (
               <div className={classes.tools} role="group" aria-label={`Actions for ${describe(selection)}`}>
                 <p className={classes.toolsLabel}>
-                  {selection.start === selection.end
+                  {selection.start === selection.end && canAnnotate
                     ? `${describe(selection)} selected. Select another verse to make a range.`
                     : `${describe(selection)} selected.`}
                 </p>
                 <div className={classes.toolButtons}>
-                  <button type="button" className={classes.tool} disabled={areActionsDisabled} onClick={() => void toggle('highlight', highlights, selection)}>
-                    {overlapping(highlights, selection).length > 0 ? 'Remove highlight' : 'Highlight'}
-                  </button>
-                  <button type="button" className={classes.tool} disabled={areActionsDisabled} onClick={() => void toggle('bookmark', bookmarks, selection)}>
-                    {overlapping(bookmarks, selection).length > 0 ? 'Remove bookmark' : 'Bookmark'}
-                  </button>
-                  <button
-                    type="button"
-                    className={classes.tool}
-                    disabled={areActionsDisabled}
-                    onClick={() => setNoteEditor({span: selection, note: overlapping(notes, selection)[0] ?? null})}
-                  >
-                    {overlapping(notes, selection).length > 0 ? 'Edit note' : 'Add note'}
-                  </button>
+                  {wordsTool && <button type="button" className={classes.tool} onClick={wordsTool.onClick}>{wordsTool.label}</button>}
+                  {canAnnotate && (
+                    <>
+                      <button type="button" className={classes.tool} disabled={areActionsDisabled} onClick={() => void toggle('highlight', highlights, selection)}>
+                        {overlapping(highlights, selection).length > 0 ? 'Remove highlight' : 'Highlight'}
+                      </button>
+                      <button type="button" className={classes.tool} disabled={areActionsDisabled} onClick={() => void toggle('bookmark', bookmarks, selection)}>
+                        {overlapping(bookmarks, selection).length > 0 ? 'Remove bookmark' : 'Bookmark'}
+                      </button>
+                      <button
+                        type="button"
+                        className={classes.tool}
+                        disabled={areActionsDisabled}
+                        onClick={() => setNoteEditor({span: selection, note: overlapping(notes, selection)[0] ?? null})}
+                      >
+                        {overlapping(notes, selection).length > 0 ? 'Edit note' : 'Add note'}
+                      </button>
+                    </>
+                  )}
                   <button type="button" className={classes.tool} onClick={() => setSelection(null)}>Clear selection</button>
                 </div>
               </div>

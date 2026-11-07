@@ -4,7 +4,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 ## Project Status
 
-**Current step: Hebrew/Greek study.** Admins and reviewers are in a pull request from `feature/admins-and-reviewers`. Topic search is complete.
+**Current step: Hebrew/Greek study, in review** in a pull request from `feature/hebrew-greek-study`. Next, Verse of the Day.
 
 | Area | Status |
 | --- | --- |
@@ -18,7 +18,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | Home page | Built with a fixed verse. Search and topics are added with those features |
 | Verse of the Day | Planned |
 | Site icon (tab and bookmark) | Built |
-| Reader (BSB, KJV), translation switching | Built. The mockup's word panel comes with Hebrew/Greek study |
+| Reader (BSB, KJV), translation switching | Built |
 | Reference and phrase search | Built |
 | Annotations: highlights, bookmarks, notes, on verses or ranges | Built |
 | Translation choice saved to the account | Built |
@@ -26,7 +26,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | About dialog | Planned, with no mockup yet. `CLAUDE.md` expects it, as a shorter version of the README with data credits |
 | Topic search, voting, reports | Built: topic pages, the Topics page, voting, adding verses, starting topics and reports |
 | Admins and reviewers | Built: roles on the allowlist, the People page for admins, and the Review page for reported verses and new topics |
-| Hebrew/Greek study | Planned |
+| Hebrew/Greek study | Built: the word panel beside the reader, or in a sheet on phones, from STEPBible data |
 | AI topic suggestions | Planned as the last V1 step |
 | ESV | Blocked: Crossway's review of the API key application, applied for November 2026, may take 3-4 weeks |
 | Scripture memorization | An idea to flesh out later; see [Scope](#scope) |
@@ -36,8 +36,8 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 Last updated November 7, 2026.
 
-- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon, reader, search, annotations, CI and My verses are merged. Topic search, including voting, is merged. Admins and reviewers are in a pull request from `feature/admins-and-reviewers`. Check what has merged before starting new work.
-- **Hosted project:** `vs-bible-center-dev`. The owner deploys it, and deployed the My verses rules and indexes on November 7, 2026. Before running `npm run deploy`, move the debug token out of `apps/web/.env.staging.local`, as the deploy check refuses it. `npm run deploy:rules` sends the rules and `firestore.indexes.json` and needs no token moved. The owner deployed the roles and review rules and indexes on November 7, 2026, ahead of the merge. The hosted site does not show Review or People until the app itself is deployed. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
+- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon, reader, search, annotations, CI and My verses are merged. Topic search, including voting, and admins and reviewers are merged. Hebrew/Greek study is in a pull request from `feature/hebrew-greek-study`. Check what has merged before starting new work.
+- **Hosted project:** `vs-bible-center-dev`. The owner deploys it, and deployed the My verses rules and indexes on November 7, 2026. Before running `npm run deploy`, move the debug token out of `apps/web/.env.staging.local`, as the deploy check refuses it. `npm run deploy:rules` sends the rules and `firestore.indexes.json` and needs no token moved. On November 7, 2026, the owner deployed the roles and review rules and indexes, and the site with admins, reviewers and the word panel, from the unmerged branches; all appear to work. The word panel's Strong's links to STEP Bible are confirmed working. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
 - **Set up in the project:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. `allowedUsers/bobbyjuba@gmail.com` exists, with the `admin` role.
 - **`gcloud` and Firebase CLI account:** `broden@valiance-studios.com`.
 
@@ -45,11 +45,10 @@ Last updated November 7, 2026.
 
 Build features one branch at a time, from `main` or from the latest unmerged branch, in this order:
 
-1. **Hebrew/Greek study:** the reader's word panel, using STEPBible data. The reader mockups already show it.
-2. **Verse of the Day:** `dailyVerses`, the admin dialog and the automatic list. Admins are the allowlist's `admin` role. When it is built, add "set the verse of the day" to what the People page says admins can do, as its mockup does.
-3. **About dialog and final polish.**
-4. **AI suggestions:** the first Cloud Function.
-5. **ESV:** once Crossway approves the key.
+1. **Verse of the Day:** `dailyVerses`, the admin dialog and the automatic list. Admins are the allowlist's `admin` role. When it is built, add "set the verse of the day" to what the People page says admins can do, as its mockup does.
+2. **About dialog and final polish.**
+3. **AI suggestions:** the first Cloud Function.
+4. **ESV:** once Crossway approves the key.
 
 After V1: boards, plugins, and possibly embeddings for search by meaning. Scripture memorization is wanted too, and is not yet placed or designed; see [Scope](#scope).
 
@@ -74,6 +73,7 @@ To do when reached:
 - Topics created by users start pending: they work by link but are not listed or linked from search until a reviewer approves them on the Review page. Anything else users can make public needs the same before the allowlist is removed.
 - A review decision cannot be undone in the app. A removed verse or a rejected topic can be restored by deleting its `removed` document or setting the topic back to `pending` in the console.
 - Roles live on the allowlist. When the allowlist is removed, they need a home of their own, such as `roles/{email}`.
+- The word panel should stay in view while the chapter scrolls. Selecting a verse far down, such as John 1:51, leaves the panel at the top of the page, so studying verses means scrolling up and down. Its `position: sticky` in `ReaderPage.module.scss` does not take effect in the hosted layout; explore a fix, or another arrangement, later.
 - Common topics are a fixed list for now. Later they could follow what people search for, which changes through the year (such as "resurrection" around Easter).
 
 ### Resuming in a New Session
@@ -88,6 +88,7 @@ Start with "Starting a Session" in `CLAUDE.md`, then the [Mockups](#mockups) sec
 | --- | --- |
 | `Main.dc.html` | Home with Verse of the Day, search and topics |
 | `Reader.dc.html` | Reader with annotations and the Hebrew word panel |
+| `ReaderGreek.dc.html` | The reader's Greek word panel, with the dictionary form, which the Hebrew panel shows too |
 | `ReaderDark.dc.html` | The reader in dark mode |
 | `Topic.dc.html` | Topic results. Upvoting re-ranks live with the real formula |
 | `TopicAi.dc.html` | A topic with few results, showing AI suggestions |
@@ -115,7 +116,7 @@ Start with "Starting a Session" in `CLAUDE.md`, then the [Mockups](#mockups) sec
 
 The canvas is the source of truth for the design. To work from it in a new session, read `project/canvas.json` and any `project/<artboard>` from that URL with the Artifact tool. The design language is in [UI.md](docs/UI.md#design-language).
 
-Scripture in the mockups is the public-domain BSB and OpenBible counts are real. Bible Center upvotes, dates and accounts are samples, and the Hebrew word entries are illustrative until they come from STEPBible's data.
+Scripture in the mockups is the public-domain BSB and OpenBible counts are real. Bible Center upvotes, dates and accounts are samples. The Hebrew word entries are illustrative; the Greek ones are from STEPBible's data, with meanings shortened by hand.
 
 ## Scope
 
@@ -227,6 +228,7 @@ Translations are interchangeable behind one interface. The reader never knows wh
 flowchart TD
   build["scripts/build-bible-data.ts"] --> files["apps/web/public/bible/translation/book/chapter.json"]
   reader["ReaderPage"] --> interface["TranslationProvider<br/>apps/web/src/bible/translations.ts"]
+  reader -- "selected verse" --> words["WordStudy<br/>see Original Languages"]
   interface --> staticProvider["staticTranslation<br/>BSB, KJV"]
   interface -.-> esvProvider["ESV provider (planned)"]
   staticProvider --> files
@@ -302,7 +304,7 @@ stateDiagram-v2
   Range --> None: annotate or clear
 ```
 
-- **Selecting:** `selectVerse` in `packages/core/src/annotations.ts` implements this state diagram, for taps and for the verse number buttons, which are how keyboards reach it. Dragging across words to copy them does not select a verse.
+- **Selecting:** `selectVerse` in `packages/core/src/annotations.ts` implements this state diagram, for taps and for the verse number buttons, which are how keyboards reach it. Dragging across words to copy them does not select a verse. Anyone can select a verse, to see its [original words](#original-languages); only allowlisted users get the annotation tools. `ReaderPage` holds the selection, so the word panel beside the text can follow it.
 - **Reading a chapter:** `useChapterAnnotations` queries by `chapterId`, the first five digits of a verse id. A range cannot cross chapters, since the reader shows one at a time.
 - **Toggling:** if a selection overlaps any highlight or bookmark, the action removes every one it touches, even if it extends beyond the selection. Otherwise it adds one. Selecting over a note opens that note for editing.
 - **Rules:** `firestore.rules` limits access to the owner on the allowlist, with a verified email. It also validates every field, requires server timestamps, keeps both ends of a range in the chapter, and only lets a note's text change. `tests/rules/users.spec.ts` covers this.
@@ -501,10 +503,37 @@ Estimated cost at the time of the decision is about $0.03 per new topic ($4 / $2
 
 | Data | Source | License |
 | --- | --- | --- |
-| Hebrew and Greek tagged text (TAHOT, TAGNT) | [STEPBible](https://github.com/STEPBible/STEPBible-Data) | CC BY 4.0, credit "STEP Bible" with a link |
-| Lexicons (TBESH, TBESG) | STEPBible | CC BY 4.0 |
+| Hebrew and Greek tagged text (TAHOT, TAGNT) | [STEPBible](https://github.com/STEPBible/STEPBible-Data), from Tyndale House | CC BY 4.0. Credit STEP Bible and Tyndale House with a link to [STEPBible.github.io/STEPBible-Data](https://stepbible.github.io/STEPBible-Data/), and note any changes |
+| Brief lexicons (TBESH, TBESG) and morphology expansions (TEHMC, TEGMC) | STEPBible | CC BY 4.0 |
 
-The first version is a word-by-word original-language panel for each verse. It follows the book being read: Hebrew for the Old Testament, including its Aramaic passages in Daniel and Ezra, labeled as Aramaic, and Greek for the New Testament. The mockup shows Hebrew only; Greek uses the same panel, reading left to right. Selecting an English word to see its source word requires tagging data for that translation; BSB's translation tables are the candidate, and their contents have yet to be checked.
+Anyone can select a verse in the reader, signed in or not, to see its words in the original language: Hebrew for the Old Testament, with Daniel's and Ezra's Aramaic labeled as Aramaic, and Greek for the New. Selecting a word shows its transliteration, English, dictionary form, main senses, grammar and Strong's number, which links to STEP Bible. On desktop the panel sits beside the text and follows the verse tapped last; on phones a "Hebrew words" or "Greek words" button among the verse's tools opens it in a sheet.
+
+Building the data, once:
+
+```mermaid
+flowchart LR
+  step["STEPBible-Data<br/>pinned commit"] --> script["scripts/build-word-data.ts"]
+  script --> chapters["word-data/book/chapter.json<br/>words, numbered as the BSB and KJV"]
+  script --> lexicon["word-data/_lexicon/group.json<br/>entries by Strong's hundreds"]
+  script --> grammar["word-data/_grammar/language.json"]
+```
+
+Reading it, for the selected verse:
+
+```mermaid
+flowchart LR
+  reader["ReaderPage<br/>selected verse"] --> panel["WordStudy<br/>useVerseWords"]
+  panel -- "wordChapterQuery, wordsOfVerse" --> chapters["word-data/book/chapter.json"]
+  panel -- "lexiconQuery per group" --> lexicon["word-data/_lexicon/group.json"]
+  panel -- "grammarQuery" --> grammar["word-data/_grammar/language.json"]
+```
+
+- **Building:** `scripts/build-word-data.ts` (`npm run word-data`) downloads a pinned commit of STEPBible-Data and writes about 28 MB across 1,346 files, committed and marked as generated in `.gitattributes`. A chapter's file holds its words; dictionary entries are shared in 155 files by Strong's number in hundreds (`lexiconGroup`), so a common word is stored once; and one file per language describes the grammar codes. To update, change `STEPBIBLE_COMMIT` and rerun.
+- **Changes to STEPBible's data,** which its license asks to be noted: Hebrew cantillation marks and STEPBible's prefix and suffix dividers are removed, vowels kept; lexicon definitions are shortened to up to three main senses; grammar codes are spelled out in plain English; and words are renumbered to the BSB's and KJV's verses, as below.
+- **Which Greek:** the panel follows the translation being read. The BSB translates the Nestle-Aland text and the KJV the Textus Receptus, so a word only one has is marked with that translation. Where they read differently at the same place, as in John 1:18 ("God" or "Son"), the KJV's word comes from STEPBible's meaning variants. The BSB also translates Mark 16:9-20 and John 7:53-8:11, which Nestle-Aland brackets.
+- **Numbering:** STEPBible numbers verses by the NRSV. A Psalm's title, its verse 0, joins verse 1, as the BSB and KJV print it. In 52 places the KJV puts Greek words in the next or previous verse; each word records the KJV's verse, and `BSB_FOLLOWS_KJV` lists the 20 where the BSB does the same, found by comparing its verses with the words' English. At Revelation 12:18 both start chapter 13. The script refuses to write anything if a verse of either translation has no words, or words land in a verse it does not have.
+- **Fonts:** Noto Serif Hebrew for Hebrew and Aramaic, read right to left, and Gentium Book Plus for Greek.
+- **Not yet:** selecting an English word to find its source word needs tagging data for each translation; BSB's translation tables are the candidate, and their contents have yet to be checked.
 
 ## Authentication and Access
 
@@ -633,7 +662,7 @@ Staging is production until a separate production project exists. Details are in
 
 The code is under [PolyForm Noncommercial 1.0.0](LICENSE): anyone may use, change and share it for noncommercial purposes, but not sell it or charge for it. It is source-available rather than OSI open source, and it does not require people to publish their changes.
 
-Bible text and datasets keep their own licenses, and the app must credit OpenBible and STEP Bible.
+Bible text and datasets keep their own licenses, and the app must credit OpenBible and STEP Bible. The word panel credits STEP Bible and Tyndale House with a link to STEPBible's data, and [Original Languages](#original-languages) notes the changes made to it.
 
 ## Diagram Index
 
@@ -648,6 +677,7 @@ Before finishing a change, check whether it touches a source below, and update t
 | [Verse of the Day](#verse-of-the-day) | The home page, `dailyVerses` rules, the automatic list | Planned |
 | [Topic Search](#topic-search) | `packages/core/src/topicScore.ts`, `packages/core/src/topics.ts`, `apps/web/src/pages/TopicPage.tsx`, `suggestVerses` | Built, AI suggestions planned |
 | [Voting](#voting), data model and upvoting | `firestore.rules`, `firestore.indexes.json`, `apps/web/src/firebase/topics.ts`, `apps/web/src/components/topics/` | Built |
+| [Original Languages](#original-languages) | `scripts/build-word-data.ts`, `packages/core/src/words.ts`, `apps/web/src/bible/wordData.ts`, `apps/web/src/components/reader/WordStudy.tsx`, `apps/web/src/components/reader/useVerseWords.ts`, `apps/web/src/pages/ReaderPage.tsx` | Built |
 | [Roles and Review](#roles-and-review), structure, statuses and resolving a report | `packages/core/src/roles.ts`, `packages/core/src/review.ts`, `apps/web/src/firebase/review.ts`, `apps/web/src/firebase/people.ts`, `apps/web/src/components/review/`, `apps/web/src/components/people/`, `apps/web/src/components/RoleGate.tsx`, `apps/web/src/components/useAccountLinks.ts`, `apps/web/src/pages/ReviewPage.tsx`, `apps/web/src/pages/PeoplePage.tsx`, `firestore.rules` | Built |
 | [OpenBible Data](#openbible-data) | `scripts/build-topic-data.ts`, `apps/web/src/topics/topicData.ts`, `apps/web/src/pages/TopicPage.tsx`, `apps/web/src/pages/TopicsPage.tsx`, `apps/web/src/pages/SearchPage.tsx` | Built |
 | [Authentication and Access](#authentication-and-access) | `firestore.rules`, `apps/web/src/stores/auth.ts`, `apps/web/src/firebase/access.ts`, `apps/web/src/pages/SignInPage.tsx` | Built |

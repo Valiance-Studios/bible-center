@@ -83,3 +83,11 @@ export function previousChapter({book, chapter}: ChapterRef): ChapterRef | null 
 export function chapterTitle({book, chapter}: ChapterRef): string {
   return `${book.name === 'Psalms' ? 'Psalm' : book.name} ${chapter}`;
 }
+
+/** Genesis to Malachi. */
+const OLD_TESTAMENT_BOOKS = 39;
+
+/** Whether a book is in the Old Testament, written in Hebrew (with some Aramaic), rather than the New, in Greek. */
+export function isOldTestament(book: BibleBook): boolean {
+  return BIBLE_BOOKS.findIndex(({slug}) => slug === book.slug) < OLD_TESTAMENT_BOOKS;
+}
