@@ -27,6 +27,7 @@
     "icons": "node scripts/generate-icons.ts",
     "bible-data": "node scripts/build-bible-data.ts",
     "topic-data": "node scripts/build-topic-data.ts",
+    "word-data": "node scripts/build-word-data.ts",
     "deploy": "firebase deploy --project dev --only hosting,firestore",
     "deploy:hosting": "firebase deploy --project dev --only hosting",
     "deploy:rules": "firebase deploy --project dev --only firestore"

@@ -36,6 +36,6 @@ Bible translations and datasets have their own licenses and are not covered by t
 ## Data Sources and Credits
 
 - [OpenBible.info](https://www.openbible.info/topics/) topic data, licensed under [CC BY](https://creativecommons.org/licenses/by/4.0/).
-- [STEP Bible](https://www.stepbible.org) Hebrew and Greek data, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- [STEP Bible](https://stepbible.github.io/STEPBible-Data/) Hebrew and Greek data from Tyndale House, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Bible Center shortens its definitions and renumbers its words to match each translation; see [Original Languages](ARCHITECTURE.md#original-languages).
 - [Berean Standard Bible](https://berean.bible), dedicated to the public domain.
 - King James Version, public domain in the United States. Text from [OpenBible](https://openbible.com/textfiles/kjv.txt).

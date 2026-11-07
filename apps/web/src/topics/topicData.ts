@@ -2,6 +2,7 @@ import type {TopicFile} from '@bible-center/core';
 
 import {normalizeTopicName, topicSlug} from '@bible-center/core';
 import {listApprovedTopicNames} from '@/firebase/topics';
+import {fetchStaticJson} from '@/staticData';
 
 /** Shown on the home page and the Topics page. A fixed list for now; see "Open Items" in ARCHITECTURE.md. */
 export const COMMON_TOPICS = ['marriage', 'forgiveness', 'anxiety', 'grief', 'money', 'prayer'] as const;
@@ -11,27 +12,11 @@ export function topicPath(name: string): string {
   return `/topics/${topicSlug(name)}`;
 }
 
-/**
- * Reads a file `scripts/build-topic-data.ts` wrote, or null if there is none. Hosting and the dev server answer
- * a missing file with the app's HTML page, so anything that is not JSON means the file does not exist.
- */
-async function fetchTopicData<T>(path: string): Promise<T | null> {
-  const response = await fetch(path);
-
-  if (!response.ok && response.status !== 404) {
-    throw new Error(`Could not load ${path}: ${response.status}`);
-  }
-
-  const isJson = response.headers.get('content-type')?.includes('json') ?? false;
-
-  return response.ok && isJson ? await response.json() as T : null;
-}
-
 /** A topic's OpenBible verses, or null for a topic OpenBible does not have. */
 export function topicQuery(slug: string) {
   return {
     queryKey: ['topic', slug],
-    queryFn: () => fetchTopicData<TopicFile>(`/topic-data/${slug}.json`),
+    queryFn: () => fetchStaticJson<TopicFile>(`/topic-data/${slug}.json`),
   };
 }
 
@@ -50,7 +35,7 @@ async function approvedTopicNames(): Promise<string[]> {
 export const topicNamesQuery = {
   queryKey: ['topicNames'],
   queryFn: async () => {
-    const [names, approved] = await Promise.all([fetchTopicData<string[]>('/topic-data/_index.json'), approvedTopicNames()]);
+    const [names, approved] = await Promise.all([fetchStaticJson<string[]>('/topic-data/_index.json'), approvedTopicNames()]);
 
     if (!names) {
       throw new Error('The list of topics is missing.');

@@ -1,3 +1,4 @@
 * text=auto eol=lf
 apps/web/public/bible/** linguist-generated
 apps/web/public/topic-data/** linguist-generated
+apps/web/public/word-data/** linguist-generated

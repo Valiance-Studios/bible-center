@@ -6,9 +6,10 @@ export type {OpenReport, ReportGroup, ReportOutcome, TopicDecision} from './revi
 export type {Role} from './roles';
 export type {CommunityTopicVerse, ReportReason, TopicFile, TopicFileVerse, TopicVerse} from './topics';
 export type {VerseId, VerseLocation} from './verseId';
+export type {GrammarFile, LexiconEntry, LexiconFile, VerseWord, WordFile, WordFileLanguage, WordFileWord, WordLanguage, WordTranslation} from './words';
 
 export {chapterIdOf, NOTE_MAX_LENGTH, selectVerse, spanContains, spanOf, spansOverlap, verseIdIn} from './annotations';
-export {BIBLE_BOOKS, chapterTitle, nextChapter, parseChapterRef, previousChapter} from './bibleBooks';
+export {BIBLE_BOOKS, chapterTitle, isOldTestament, nextChapter, parseChapterRef, previousChapter} from './bibleBooks';
 export {BIBLE_SECTIONS} from './bibleSections';
 export {formatReference, parseReferences, referenceOf} from './references';
 export {groupReports, parseTopicVerseKey} from './review';
@@ -16,3 +17,4 @@ export {canReview, isAdmin, isEmailAddress, normalizeEmail, parseRole, ROLE_NAME
 export {formatVerseId, parseVerseId} from './verseId';
 export {MAX_SEED_SCORE, seedScore, topicVerseScore} from './topicScore';
 export {normalizeTopicName, rankTopicVerses, REPORT_DETAILS_MAX_LENGTH, REPORT_REASONS, topicSlug, topicVerseKey} from './topics';
+export {languageOfWords, lexiconGroup, wordsOfVerse} from './words';

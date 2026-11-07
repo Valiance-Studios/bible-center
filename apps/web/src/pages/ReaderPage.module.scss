@@ -1,6 +1,20 @@
+.layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 0 28px;
+  padding-right: 28px;
+
+  @media (max-width: 900px) {
+    display: block;
+    padding-right: 0;
+  }
+}
+
 .reading {
   position: relative;
+  flex: 1 1 auto;
   box-sizing: border-box;
+  min-width: 0;
   max-width: 740px;
   padding: 28px 28px 64px 56px;
 
@@ -8,6 +22,37 @@
     max-width: none;
     padding: 12px 16px 40px;
   }
+}
+
+// The word panel beside the text. It stays in view while the chapter scrolls.
+.study {
+  position: sticky;
+  top: 16px;
+  flex: 0 1 380px;
+  box-sizing: border-box;
+  min-width: 280px;
+  max-height: calc(100vh - 32px);
+  margin-top: 28px;
+  padding: 24px;
+  overflow-y: auto;
+  border-radius: 4px;
+  background: var(--bc-panel);
+}
+
+// Names the sheet for screen readers. The panel inside has its own visible heading.
+.sheetTitle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+// The word panel's sheet on phones.
+.sheet {
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .controls {
