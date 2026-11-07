@@ -4,7 +4,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 ## Project Status
 
-**Current step: search.** The mockups are approved.
+**Current step: annotations.** The mockups are approved.
 
 | Area | Status |
 | --- | --- |
@@ -18,7 +18,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | Verse of the Day | Planned |
 | Site icon (tab and bookmark) | Built |
 | Reader (BSB, KJV), translation switching | Built. The mockup's annotation tools and word panel come with those features |
-| Reference and phrase search | Planned |
+| Reference and phrase search | Built |
 | Annotations | Planned |
 | Topic search, voting, reports | Planned |
 | Hebrew/Greek study | Planned |
@@ -30,14 +30,14 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 Last updated November 7, 2026.
 
-- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation and sign-in are merged. The icon and reader are in a pull request from `feature/reader`. Check what has merged before starting new work.
+- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon and reader are merged. Search is in a pull request from `feature/search`. Check what has merged before starting new work.
 - **Hosted project:** `vs-bible-center-dev`. The foundation and Firestore rules are deployed. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
 - **Set up in the project:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. `allowedUsers/bobbyjuba@gmail.com` exists.
 - **`gcloud` and Firebase CLI account:** `broden@valiance-studios.com`.
 
 ### Next Steps
 
-Build features one branch at a time, from `main` or from the latest unmerged branch: search, annotations, topic search and voting, Verse of the Day, Hebrew/Greek study, then AI suggestions.
+Build features one branch at a time, from `main` or from the latest unmerged branch: annotations, topic search and voting, Verse of the Day, Hebrew/Greek study, then AI suggestions.
 
 ### Open Items
 
@@ -63,6 +63,10 @@ Build features one branch at a time, from `main` or from the latest unmerged bra
 | `PhoneHome.dc.html` | Home on a phone |
 | `PhoneMenu.dc.html` | The phone menu, with sections and their books |
 | `PhoneReader.dc.html` | The reader and word panel on a phone |
+| `SearchReferences.dc.html` | Search results for references |
+| `SearchPhrase.dc.html` | Search results for a paraphrase, an exact phrase, and a word that is also a topic |
+| `SearchEmpty.dc.html` | A search with no matches |
+| `PhoneSearch.dc.html` | Search results on a phone |
 
 The canvas is the source of truth for the design. To work from it in a new session, read `project/canvas.json` and any `project/<artboard>` from that URL with the Artifact tool. The design language is in [UI.md](docs/UI.md#design-language).
 
@@ -196,9 +200,26 @@ Translations occasionally number verses differently. STEPBible's versification d
 
 ### Search
 
-- **References** are parsed in `packages/core` and need no index.
-- **Phrases** use a client-side fuzzy index over the static translations, loaded only when needed. ESV cannot be indexed because of the cache limit.
-- **Paraphrases**, where the wording differs from every translation, need embeddings and come after V1. The `I do not consider my life of any value nor as precious to myself` example for Acts 20:24 is close to the ESV's wording, so expect this limitation to show until then.
+One search box handles references and remembered wording, at `/search?q=` (`apps/web/src/pages/SearchPage.tsx`). It searches the selected translation only. Linking to a topic of the same name is added with topic search.
+
+```mermaid
+flowchart TD
+  query["Search box"] --> parse{"parseReferences:<br/>all valid references?"}
+  parse -- "Yes" --> chapters["Load each chapter through TranslationProvider"]
+  chapters --> passages["Show the passages"]
+  parse -- "No" --> load["Load the translation's verses.json<br/>once, on the first phrase search"]
+  load --> index["buildPhraseIndex"]
+  index --> matches["Closest verses, exact wording first"]
+  parse -- "No" --> topic{"Topic with this name?"}
+  topic -- "Yes" --> link["Also link to the topic (planned, with topic search)"]
+```
+
+- **References** (`packages/core/src/references.ts`) accept book names and common abbreviations, ranges, whole chapters, and lists like `John 1:1; Acts 2:3-4; Revelation 22:13`. A search counts as references only if all of it is valid, so everything else falls through to phrase search.
+- **Phrases** (`apps/web/src/bible/phraseSearch.ts`) use MiniSearch in the browser over `apps/web/public/bible/<translation>/verses.json`, about 4.5 MB per translation, or 1.3 MB compressed. Exact wording ranks first. Words of four or more letters tolerate typos and match by prefix, shorter ones must match exactly, and a verse needs at least half of the search's words.
+- **Paraphrases** often work without AI. Against the real BSB, `I do not consider my life of any value nor as precious to myself` ranks Acts 20:24 first, and `the lord is my sheperd` finds Psalm 23:1 in the top two. Embeddings remain a possible later addition for wording that shares few words with any translation.
+- **ESV** cannot be indexed because of the cache limit, so phrase search only covers translations offering `verses.json`.
+
+Indexing takes about 300 ms on a laptop and happens once per translation, and most searches take under 40 ms. It runs on the main thread, so move it to a Web Worker if it proves noticeable on phones. Selecting a phrase result opens the verse in the reader, scrolled to and marked via `#v<verse>`.
 
 ## Verse of the Day
 
@@ -365,6 +386,7 @@ Before finishing a change, check whether it touches a source below, and update t
 | --- | --- | --- |
 | [System Overview](#system-overview) | `firebase.json`, `apps/web/src/firebase/`, `functions/` | Partly built |
 | [Reading Flow](#reading-flow) | `apps/web/src/pages/ReaderPage.tsx`, `apps/web/src/bible/translations.ts`, `scripts/build-bible-data.ts` | Built, ESV planned |
+| [Search](#search) | `apps/web/src/pages/SearchPage.tsx`, `packages/core/src/references.ts`, `apps/web/src/bible/phraseSearch.ts`, `scripts/build-bible-data.ts` | Built, topic link planned |
 | [Verse of the Day](#verse-of-the-day) | The home page, `dailyVerses` and `admins` rules, the automatic list | Planned |
 | [Topic Search](#topic-search) | Topic search, `packages/core/src/topicScore.ts`, `suggestVerses` | Planned |
 | [Authentication and Access](#authentication-and-access) | `firestore.rules`, `apps/web/src/stores/auth.ts`, `apps/web/src/pages/SignInPage.tsx` | Built |

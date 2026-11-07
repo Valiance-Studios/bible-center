@@ -1,4 +1,4 @@
-import type {ChapterText} from '../../packages/core/src/bibleBooks.ts';
+import type {ChapterText, SearchableVerse} from '../../packages/core/src/bibleBooks.ts';
 
 import {readFileSync} from 'node:fs';
 import {describe, expect, it} from 'vitest';
@@ -61,6 +61,14 @@ describe('the committed Bible data', () => {
   it('holds the expected text', () => {
     expect(readChapter('bsb', 'john', 1).verses[0]?.text).toBe('In the beginning was the Word, and the Word was with God, and the Word was God.');
     expect(readChapter('kjv', 'genesis', 1).verses[0]?.text).toBe('In the beginning God created the heaven and the earth.');
+  });
+
+  it.each(['bsb', 'kjv'])('%s\'s whole-Bible search file matches its chapters', (translation) => {
+    const verses = JSON.parse(readFileSync(`apps/web/public/bible/${translation}/verses.json`, 'utf8')) as SearchableVerse[];
+
+    expect(verses).toHaveLength(allVerses(translation).length);
+    expect(verses[0]?.slice(0, 3)).toEqual(['genesis', 1, 1]);
+    expect(verses.at(-1)?.slice(0, 3)).toEqual(['revelation', 22, 21]);
   });
 
   it('has no leftover bracket markup in the KJV', () => {

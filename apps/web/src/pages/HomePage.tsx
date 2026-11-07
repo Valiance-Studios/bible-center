@@ -1,4 +1,5 @@
 import {Link} from 'react-router';
+import {SearchBox} from '@/components/SearchBox';
 import classes from './HomePage.module.scss';
 
 /** One fixed verse until the Verse of the Day feature exists; see "Verse of the Day" in `ARCHITECTURE.md`. */
@@ -16,6 +17,9 @@ export function HomePage() {
       <p className={classes.reference}>
         <Link to={PLACEHOLDER_VERSE.chapterPath}>{PLACEHOLDER_VERSE.reference}</Link>
       </p>
+      <div className={classes.search}>
+        <SearchBox showLabel placeholder="John 1:1-5, “mercies never fail”, or marriage" />
+      </div>
     </main>
   );
 }

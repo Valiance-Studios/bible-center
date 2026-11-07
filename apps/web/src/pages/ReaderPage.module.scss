@@ -47,30 +47,6 @@
   }
 }
 
-.verse {
-  margin: 0;
-  padding: 6px 0;
-  font-family: 'Literata', serif;
-  font-size: 20px;
-  line-height: 1.7;
-
-  @media (max-width: 900px) {
-    font-size: 18px;
-    line-height: 1.65;
-  }
-}
-
-.verseNumber {
-  position: relative;
-  top: -0.5em;
-  margin-right: 6px;
-  color: var(--bc-rubric);
-  font-family: 'Schibsted Grotesk', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  vertical-align: baseline;
-}
-
 .credit {
   margin: 28px 0 0;
   color: var(--bc-muted);

@@ -6,7 +6,7 @@
  * Only public-domain text may be added here, since the output is committed to a public repository.
  * See "Translations" and "ESV Rules" in ARCHITECTURE.md.
  */
-import type {ChapterText, Verse} from '../packages/core/src/bibleBooks.ts';
+import type {ChapterText, SearchableVerse, Verse} from '../packages/core/src/bibleBooks.ts';
 
 import {mkdirSync, rmSync, writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
@@ -82,6 +82,8 @@ async function buildTranslation({id, url, clean}: Source, outputDir: URL): Promi
 
   const translationDir = new URL(`${id}/`, outputDir);
 
+  const searchable: SearchableVerse[] = [];
+
   rmSync(translationDir, {recursive: true, force: true});
 
   for (const book of BIBLE_BOOKS) {
@@ -90,9 +92,18 @@ async function buildTranslation({id, url, clean}: Source, outputDir: URL): Promi
     mkdirSync(bookDir, {recursive: true});
 
     for (let chapter = 1; chapter <= book.chapters; chapter++) {
-      writeFileSync(new URL(`${chapter}.json`, bookDir), JSON.stringify(chapters.get(`${book.name} ${chapter}`)));
+      const text = chapters.get(`${book.name} ${chapter}`);
+
+      writeFileSync(new URL(`${chapter}.json`, bookDir), JSON.stringify(text));
+
+      for (const {verse, text: verseText} of text?.verses ?? []) {
+        searchable.push([book.slug, chapter, verse, verseText]);
+      }
     }
   }
+
+  // One file of the whole translation, loaded only when someone searches for a phrase.
+  writeFileSync(new URL('verses.json', translationDir), JSON.stringify(searchable));
 
   console.log(`Wrote ${chapters.size} chapters of ${id} to ${fileURLToPath(translationDir)}.`);
 }

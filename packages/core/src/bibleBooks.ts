@@ -24,6 +24,9 @@ export interface ChapterText {
   verses: Verse[];
 }
 
+/** A verse in a translation's whole-Bible file: book slug, chapter, verse, text. */
+export type SearchableVerse = [slug: string, chapter: number, verse: number, text: string];
+
 /** In the canonical order of `BIBLE_SECTIONS`. */
 const CHAPTER_COUNTS = [
   50, 40, 27, 36, 34,
