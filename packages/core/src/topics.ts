@@ -11,6 +11,25 @@ export interface TopicFile {
   verses: TopicFileVerse[];
 }
 
+/** A verse or passage's Bible Center upvotes on a topic, including ones people added that OpenBible does not have. */
+export interface CommunityTopicVerse {
+  startVerse: VerseId;
+  endVerse: VerseId;
+  upvotes: number;
+}
+
+/** Why someone reports a verse on a topic. Keep in sync with `reports` in `firestore.rules`. */
+export const REPORT_REASONS = {
+  fit: 'It does not fit this topic',
+  reference: 'The reference points to the wrong verse',
+  other: 'Something else',
+} as const;
+
+export type ReportReason = keyof typeof REPORT_REASONS;
+
+/** Keep in sync with `reports` in `firestore.rules`. */
+export const REPORT_DETAILS_MAX_LENGTH = 500;
+
 /** A verse or passage on a topic, with the votes that rank it. */
 export interface TopicVerse {
   startVerse: VerseId;
@@ -36,13 +55,18 @@ export function topicVerseKey(startVerse: VerseId, endVerse: VerseId): string {
 }
 
 /**
- * Ranks a topic's verses by `topicVerseScore`: OpenBible's votes as a starting score, plus Bible Center upvotes,
- * keyed by `topicVerseKey`. Ties go to more OpenBible votes, then Bible order.
+ * Ranks a topic's verses by `topicVerseScore`: OpenBible's votes as a starting score, plus Bible Center upvotes.
+ * Verses only Bible Center has start from their upvotes alone. Ties go to more OpenBible votes, then Bible order.
  */
-export function rankTopicVerses(verses: readonly TopicFileVerse[], upvotes: ReadonlyMap<string, number>): TopicVerse[] {
-  const topicMax = Math.max(0, ...verses.map(([, , votes]) => votes));
+export function rankTopicVerses(openBible: readonly TopicFileVerse[], community: readonly CommunityTopicVerse[]): TopicVerse[] {
+  const topicMax = Math.max(0, ...openBible.map(([, , votes]) => votes));
+  const upvotes = new Map(community.map(({startVerse, endVerse, upvotes: count}) => [topicVerseKey(startVerse, endVerse), count]));
+  const openBibleKeys = new Set(openBible.map(([startVerse, endVerse]) => topicVerseKey(startVerse, endVerse)));
+  const onlyOnBibleCenter = community
+    .filter(({startVerse, endVerse}) => !openBibleKeys.has(topicVerseKey(startVerse, endVerse)))
+    .map(({startVerse, endVerse}): TopicFileVerse => [startVerse, endVerse, 0]);
 
-  return verses
+  return [...openBible, ...onlyOnBibleCenter]
     .map(([startVerse, endVerse, openBibleVotes]) => {
       const verseUpvotes = upvotes.get(topicVerseKey(startVerse, endVerse)) ?? 0;
 

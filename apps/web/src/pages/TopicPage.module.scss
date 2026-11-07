@@ -68,13 +68,78 @@ $phone-width: 900px;
   margin: 0 0 12px;
 }
 
+.signInHint {
+  margin: 0 0 12px;
+  color: var(--bc-muted);
+  font-size: 14px;
+  line-height: 1.5;
+
+  a {
+    color: var(--bc-accent);
+    font-weight: 500;
+  }
+}
+
+.add {
+  margin-bottom: 12px;
+}
+
 .row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 18px;
   padding: 22px 0;
   border-top: 1px solid var(--bc-line);
 
   @media (max-width: $phone-width) {
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 12px;
     padding: 16px 0;
   }
+}
+
+.body {
+  min-width: 0;
+}
+
+.vote {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  box-sizing: border-box;
+  width: 64px;
+  height: 64px;
+  border: 1.5px solid var(--bc-line);
+  border-radius: 8px;
+  background: none;
+  color: var(--bc-ink);
+  font: 600 16px 'Schibsted Grotesk', sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--bc-accent);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.6;
+  }
+
+  @media (max-width: $phone-width) {
+    width: 48px;
+    height: 52px;
+    font-size: 15px;
+  }
+}
+
+.voteOn {
+  composes: vote;
+  border-color: var(--bc-accent);
+  background: var(--bc-accent);
+  color: var(--bc-on-accent);
 }
 
 .reference {
@@ -113,13 +178,32 @@ $phone-width: 900px;
 }
 
 .meta {
-  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 18px;
   color: var(--bc-muted);
   font-size: 14px;
 
   @media (max-width: $phone-width) {
     font-size: 13px;
   }
+}
+
+.report {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--bc-muted);
+  font: 400 14px 'Schibsted Grotesk', sans-serif;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.reported {
+  padding: 10px 0;
 }
 
 .showMore {

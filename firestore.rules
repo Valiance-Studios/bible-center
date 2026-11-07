@@ -71,5 +71,124 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'updatedAt']);
       }
     }
+
+    // Topics. Keep in sync with packages/core/src/topics.ts and apps/web/src/firebase/topics.ts.
+    // OpenBible's topics are static files; these documents hold Bible Center's own votes, and the topics people start.
+
+    // Matches topicSlug: lowercase letters and digits in hyphen-separated runs.
+    function isTopicSlug(slug) {
+      return slug is string && slug.size() <= 80 && slug.matches('[a-z0-9]+(-[a-z0-9]+)*');
+    }
+
+    // Matches normalizeTopicName, and names the topic whose slug it is.
+    function isTopicNameFor(name, slug) {
+      return name is string
+        && name.size() > 0 && name.size() <= 80
+        && name == name.trim().lower()
+        && !name.matches('.*\\s\\s.*')
+        && name.replace('[^a-z0-9]+', '-').replace('^-+|-+$', '') == slug;
+    }
+
+    function isVerseId(id) {
+      return id is string && id.matches('[0-9]{8}');
+    }
+
+    // Matches topicVerseKey.
+    function verseKeyOf(data) {
+      return data.startVerse == data.endVerse ? data.startVerse : data.startVerse + '-' + data.endVerse;
+    }
+
+    function voteOf(slug, key) {
+      return /databases/$(database)/documents/topics/$(slug)/verses/$(key)/votes/$(request.auth.uid);
+    }
+
+    function verseOf(slug, key) {
+      return /databases/$(database)/documents/topics/$(slug)/verses/$(key);
+    }
+
+    // A topic someone started. It works by link while pending; only a reviewer will list it.
+    match /topics/{slug} {
+      allow get: if true;
+
+      allow create: if isAllowed()
+        && isTopicSlug(slug)
+        && request.resource.data.keys().hasOnly(['name', 'status', 'createdBy', 'createdAt'])
+        && request.resource.data.keys().hasAll(['name', 'status', 'createdBy', 'createdAt'])
+        && isTopicNameFor(request.resource.data.name, slug)
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+
+      // A verse or passage on a topic, with its Bible Center upvotes. The count only ever moves by one,
+      // and only in the same write as the signed-in user's own vote appearing or disappearing.
+      match /verses/{key} {
+        allow read: if true;
+
+        allow create: if isAllowed()
+          && isTopicSlug(slug)
+          && request.resource.data.keys().hasOnly(['startVerse', 'endVerse', 'upvotes', 'createdBy', 'createdAt'])
+          && request.resource.data.keys().hasAll(['startVerse', 'endVerse', 'upvotes', 'createdBy', 'createdAt'])
+          && isVerseId(request.resource.data.startVerse)
+          && isVerseId(request.resource.data.endVerse)
+          && request.resource.data.startVerse <= request.resource.data.endVerse
+          && key == verseKeyOf(request.resource.data)
+          && request.resource.data.upvotes == 1
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.createdAt == request.time
+          && !exists(voteOf(slug, key))
+          && existsAfter(voteOf(slug, key));
+
+        allow update: if isAllowed()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes'])
+          && (
+            (request.resource.data.upvotes == resource.data.upvotes + 1
+              && !exists(voteOf(slug, key))
+              && existsAfter(voteOf(slug, key)))
+            || (request.resource.data.upvotes == resource.data.upvotes - 1
+              && exists(voteOf(slug, key))
+              && !existsAfter(voteOf(slug, key)))
+          );
+
+        // One per user, keyed by their id. Its verse's count must move with it.
+        match /votes/{voterId} {
+          allow create: if isAllowed()
+            && voterId == request.auth.uid
+            && request.resource.data.keys().hasOnly(['uid', 'topic', 'createdAt'])
+            && request.resource.data.keys().hasAll(['uid', 'topic', 'createdAt'])
+            && request.resource.data.uid == voterId
+            && request.resource.data.topic == slug
+            && request.resource.data.createdAt == request.time
+            && getAfter(verseOf(slug, key)).data.upvotes
+              == (exists(verseOf(slug, key)) ? get(verseOf(slug, key)).data.upvotes + 1 : 1);
+
+          allow delete: if isAllowed()
+            && voterId == request.auth.uid
+            && exists(verseOf(slug, key))
+            && getAfter(verseOf(slug, key)).data.upvotes == get(verseOf(slug, key)).data.upvotes - 1;
+        }
+      }
+    }
+
+    // A user's own votes, found across topics' verses with one query on `uid` and `topic`.
+    match /{path=**}/votes/{voterId} {
+      allow read: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // Reports wait for a reviewer. Nobody can read them from the app yet, and they do not change the ranking.
+    // Keep the reasons and limit in sync with REPORT_REASONS and REPORT_DETAILS_MAX_LENGTH in packages/core/src/topics.ts.
+    match /reports/{reportId} {
+      allow create: if isAllowed()
+        && request.resource.data.keys().hasOnly(['topic', 'verseKey', 'reason', 'details', 'reportedBy', 'createdAt', 'status'])
+        && request.resource.data.keys().hasAll(['topic', 'verseKey', 'reason', 'reportedBy', 'createdAt', 'status'])
+        && isTopicSlug(request.resource.data.topic)
+        && request.resource.data.verseKey is string
+        && request.resource.data.verseKey.matches('[0-9]{8}(-[0-9]{8})?')
+        && request.resource.data.reason in ['fit', 'reference', 'other']
+        && (!('details' in request.resource.data)
+          || (request.resource.data.details is string && request.resource.data.details.size() <= 500))
+        && request.resource.data.reportedBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.status == 'open';
+    }
   }
 }

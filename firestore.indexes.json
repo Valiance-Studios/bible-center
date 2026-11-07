@@ -24,6 +24,14 @@
         {"fieldPath": "startVerse", "order": "ASCENDING"},
         {"fieldPath": "endVerse", "order": "ASCENDING"}
       ]
+    },
+    {
+      "collectionGroup": "votes",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {"fieldPath": "uid", "order": "ASCENDING"},
+        {"fieldPath": "topic", "order": "ASCENDING"}
+      ]
     }
   ],
   "fieldOverrides": []

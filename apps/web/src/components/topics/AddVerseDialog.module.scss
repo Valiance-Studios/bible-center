@@ -1,0 +1,32 @@
+.preview {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 4px;
+  background: var(--bc-panel);
+}
+
+.reference {
+  color: var(--bc-rubric);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.text {
+  margin: 4px 0 0;
+  font-family: 'Literata', serif;
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.problem {
+  margin: 10px 0 0;
+  color: var(--bc-rubric);
+  font-size: 14px;
+}
+
+.note {
+  margin: 14px 0 0;
+  color: var(--bc-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}

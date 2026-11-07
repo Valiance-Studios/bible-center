@@ -1,12 +1,11 @@
 import type {Annotation, AnnotationOrder, AnnotationType} from '@bible-center/core';
-import type {Query, QueryConstraint, QueryDocumentSnapshot} from 'firebase/firestore';
+import type {QueryConstraint, QueryDocumentSnapshot} from 'firebase/firestore';
 
 import {
   addDoc,
   collection,
   deleteDoc,
   doc,
-  getDocs,
   limit,
   orderBy,
   query,
@@ -16,6 +15,7 @@ import {
   where,
 } from 'firebase/firestore';
 import {db} from './index';
+import {fetchFromServer} from './serverQuery';
 
 export type NewAnnotation = Omit<Annotation, 'id'>;
 
@@ -49,18 +49,6 @@ const ORDERINGS: Record<AnnotationOrder, QueryConstraint[]> = {
 /** Mirrors `users/{uid}/annotations` in `firestore.rules`. */
 function annotationsOf(uid: string) {
   return collection(db, 'users', uid, 'annotations');
-}
-
-/** The query's documents from the server. */
-async function fetchFromServer(annotationQuery: Query): Promise<QueryDocumentSnapshot[]> {
-  const snapshot = await getDocs(annotationQuery);
-
-  // Offline, Firestore answers from its empty cache rather than failing, which would look like having no annotations.
-  if (snapshot.metadata.fromCache) {
-    throw new Error('Could not reach Firestore to load annotations.');
-  }
-
-  return snapshot.docs;
 }
 
 function toAnnotation(document: QueryDocumentSnapshot): Annotation {

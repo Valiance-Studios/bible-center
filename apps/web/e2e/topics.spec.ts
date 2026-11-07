@@ -22,8 +22,8 @@ test('a common topic on the home page lists its verses, most-voted first', async
 
   const first = page.getByRole('article').first();
 
-  await expect(first.getByRole('link')).toHaveText(firstReference);
-  await expect(first).toContainText(`${firstVotes.toLocaleString('en-US')} on OpenBible`);
+  await expect(first.getByRole('link', {name: firstReference, exact: true})).toBeVisible();
+  await expect(first).toContainText(`on Bible Center, ${firstVotes.toLocaleString('en-US')} on OpenBible`);
   await expect(first.locator('p').first()).not.toBeEmpty();
   await expect(page.getByText('Topic votes from')).toContainText('licensed CC BY');
 });
@@ -38,7 +38,7 @@ test('a long topic shows 20 verses at a time', async ({page}) => {
 
 test('a verse links to its place in the reader', async ({page}) => {
   await page.goto('/topics/grief');
-  await page.getByRole('article').first().getByRole('link').click();
+  await page.getByRole('article').first().getByRole('link', {name: firstReference, exact: true}).click();
 
   await expect(page).toHaveURL(/\/read\/[a-z0-9-]+\/\d+#v\d+$/);
 });
