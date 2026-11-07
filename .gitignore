@@ -1,0 +1,23 @@
+node_modules
+dist
+*.local
+.env.local
+.env.*.local
+
+# Firebase
+.firebase
+*-debug.log
+firebase-export-*
+
+# Testing
+coverage
+test-results
+playwright-report
+playwright/.cache
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.tsbuildinfo
