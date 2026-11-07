@@ -29,7 +29,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | Hebrew/Greek study | Built: the word panel beside the reader, or in a sheet on phones, from STEPBible data |
 | AI topic suggestions | Planned as the last V1 step |
 | ESV | Blocked: Crossway's review of the API key application, applied for November 2026, may take 3-4 weeks |
-| Scripture memorization | An idea to flesh out later; see [Scope](#scope) |
+| Scripture memorization | Planned for V1, after Verse of the Day. Its details and mockups come first; see [Scope](#scope) |
 | Boards, plugins, paraphrase search (embeddings) | After V1 |
 
 ### Current State
@@ -46,11 +46,12 @@ Last updated November 7, 2026.
 Build features one branch at a time, from `main` or from the latest unmerged branch, in this order:
 
 1. **Verse of the Day:** `dailyVerses`, the admin dialog and the automatic list. Admins are the allowlist's `admin` role. When it is built, add "set the verse of the day" to what the People page says admins can do, as its mockup does.
-2. **About dialog and final polish.**
-3. **AI suggestions:** the first Cloud Function.
-4. **ESV:** once Crossway approves the key.
+2. **Scripture memorization:** flash cards at minimum, possibly speaking the verse aloud; see [Scope](#scope). Settle the details with the owner, then the mockups, before building.
+3. **About dialog and final polish.**
+4. **AI suggestions:** the first Cloud Function.
+5. **ESV:** once Crossway approves the key.
 
-After V1: boards, plugins, and possibly embeddings for search by meaning. Scripture memorization is wanted too, and is not yet placed or designed; see [Scope](#scope).
+After V1: boards, plugins, and possibly embeddings for search by meaning.
 
 ### Open Items
 
@@ -131,10 +132,11 @@ Bible Center is a free, public, one-stop Bible resource. The [README](README.md)
 - See the Hebrew and Greek behind the English.
 - "What does the Bible say about ___?" topic search, ranked by community upvotes.
 - Google sign-in and email/password registration, limited to an allowlist for now.
+- Memorize scripture (see below).
 
 **After V1: boards.** Signed-in users create titled, infinitely scrolling boards holding photos, text boxes, embedded videos, links to other boards, and titled photo carousels whose navigation wraps in both directions. Items can be tagged and searched. Selecting a result jumps to the item, and for a photo in a carousel, makes that photo active.
 
-**Wanted, to flesh out later: scripture memorization.** Help people memorize a verse. At minimum, something like flash cards: focus on one verse, then hide it or flip it over to test recall. It might use the microphone so people can say the verse aloud. Not yet designed or scheduled.
+**V1, after Verse of the Day: scripture memorization.** Help people memorize a verse. At minimum, something like flash cards: focus on one verse, then hide it or flip it over to test recall. It might use the microphone so people can say the verse aloud. The details are still to be settled with the owner, and it needs mockups before it is built.
 
 **Later, if there is demand: plugins.** Translations and search sit behind interfaces so a plugin system could be added. None is built now.
 
