@@ -4,7 +4,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 ## Project Status
 
-**Current step: the reader.** The mockups are approved.
+**Current step: search.** The mockups are approved.
 
 | Area | Status |
 | --- | --- |
@@ -16,7 +16,8 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | App layout: app bar, thumb index, phone menu, light and dark mode | Built |
 | Home page | Built with a fixed verse. Search and topics are added with those features |
 | Verse of the Day | Planned |
-| Reader (BSB, KJV), translation switching | Planned |
+| Site icon (tab and bookmark) | Built |
+| Reader (BSB, KJV), translation switching | Built. The mockup's annotation tools and word panel come with those features |
 | Reference and phrase search | Planned |
 | Annotations | Planned |
 | Topic search, voting, reports | Planned |
@@ -29,14 +30,14 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 Last updated November 7, 2026.
 
-- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation is merged. Sign-in is in a pull request from `feature/home-and-sign-in`. Check whether it has merged before starting new work.
+- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation and sign-in are merged. The icon and reader are in a pull request from `feature/reader`. Check what has merged before starting new work.
 - **Hosted project:** `vs-bible-center-dev`. The foundation and Firestore rules are deployed. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
 - **Set up in the project:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. `allowedUsers/bobbyjuba@gmail.com` exists.
 - **`gcloud` and Firebase CLI account:** `broden@valiance-studios.com`.
 
 ### Next Steps
 
-Build features one branch at a time, from `main` or from the latest unmerged branch: site icon and reader, search, annotations, topic search and voting, Verse of the Day, Hebrew/Greek study, then AI suggestions.
+Build features one branch at a time, from `main` or from the latest unmerged branch: search, annotations, topic search and voting, Verse of the Day, Hebrew/Greek study, then AI suggestions.
 
 ### Open Items
 
@@ -132,7 +133,7 @@ flowchart LR
 | --- | --- |
 | UI | React, TypeScript, Mantine, SCSS |
 | Routing | React Router |
-| State | Zustand for app state. TanStack Query for fetched data, added with the first feature that needs it |
+| State | Zustand for app state, TanStack Query for fetched data |
 | Backend | Firebase Authentication, Firestore, Hosting, App Check; Cloud Functions when needed |
 | Build | Vite, npm workspaces |
 | Tests | Vitest with React Testing Library, Playwright, Firebase emulators |
@@ -146,13 +147,15 @@ TypeScript stays on 6.0 until `typescript-eslint` supports 7.
 
 | Translation | Source | Delivery | Status |
 | --- | --- | --- | --- |
-| Berean Standard Bible (default) | [berean.bible](https://berean.bible/downloads.htm), public domain (CC0) | Static files | Planned |
-| King James Version | Public domain in the US; source to be chosen | Static files | Planned |
+| Berean Standard Bible (default) | [bereanbible.com/bsb.txt](https://bereanbible.com/bsb.txt), public domain (CC0) | Static files | Built |
+| King James Version | [openbible.com/textfiles/kjv.txt](https://openbible.com/textfiles/kjv.txt), the Pure Cambridge Edition. Public domain in the US; see below | Static files | Built |
 | English Standard Version | [Crossway API](https://api.esv.org/), non-commercial terms | Cloud Function | Waiting on Crossway |
 
 NIV and NKJV are out of scope: both need paid or publisher licensing.
 
-The default is BSB for everyone until a signed-in user picks another translation, which is then remembered. ESV is not the default because its limits are shared by all users (60 requests a minute, 5,000 a day).
+**KJV outside the US:** in the United Kingdom the KJV remains under a perpetual Crown patent, administered by Cambridge University Press, even though it is public domain elsewhere. The site is reachable from the UK, so review this before any wider launch. The source file brackets words its translators added; the build removes the brackets and keeps the words.
+
+The default is BSB until a visitor picks another translation, which is remembered in that browser (`apps/web/src/stores/translation.ts`). Saving it to a signed-in account, so it follows them between devices, comes with annotations. ESV is not the default because its limits are shared by all users (60 requests a minute, 5,000 a day).
 
 ### ESV Rules
 
@@ -171,14 +174,19 @@ Translations are interchangeable behind one interface. The reader never knows wh
 
 ```mermaid
 flowchart TD
-  reader["Reader page"] --> interface["TranslationProvider interface"]
-  interface --> staticProvider["Static provider<br/>BSB, KJV"]
-  interface --> esvProvider["ESV provider"]
-  staticProvider --> files["Per-chapter JSON on Hosting"]
-  esvProvider --> proxy["esv Cloud Function<br/>App Check, rate limit, cache within terms"]
-  proxy --> crossway["Crossway API"]
+  build["scripts/build-bible-data.ts"] --> files["apps/web/public/bible/translation/book/chapter.json"]
+  reader["ReaderPage"] --> interface["TranslationProvider<br/>apps/web/src/bible/translations.ts"]
+  interface --> staticProvider["staticTranslation<br/>BSB, KJV"]
+  interface -.-> esvProvider["ESV provider (planned)"]
+  staticProvider --> files
+  esvProvider -.-> proxy["esv Cloud Function (planned)<br/>App Check, rate limit, cache within terms"]
+  proxy -.-> crossway["Crossway API"]
   proxy -. "throttled or revoked" .-> fallback["Reader offers BSB instead"]
 ```
+
+`scripts/build-bible-data.ts` downloads each source, checks that every chapter is present, and writes one JSON file per chapter. The output is committed, so a build needs no network and every change to the text is reviewable. It adds about 14 MB across 2,378 small files, marked as generated in `.gitattributes`. Run `npm run bible-data` only to change a source.
+
+Source files run a psalm's title into verse 1 (`A Psalm of David. The LORD is my shepherd`), so the reader shows it that way rather than as the separate line in the mockup. A verse a translation omits, such as Matthew 17:21 in the BSB, is left out and the numbering shows the gap.
 
 ### Verse Identity
 
@@ -288,7 +296,7 @@ Estimated cost at the time of the decision is about $0.03 per new topic ($4 / $2
 | Hebrew and Greek tagged text (TAHOT, TAGNT) | [STEPBible](https://github.com/STEPBible/STEPBible-Data) | CC BY 4.0, credit "STEP Bible" with a link |
 | Lexicons (TBESH, TBESG) | STEPBible | CC BY 4.0 |
 
-The first version is a word-by-word original-language panel for each verse. Selecting an English word to see its source word requires tagging data for that translation; BSB's translation tables are the candidate, and their contents have yet to be checked.
+The first version is a word-by-word original-language panel for each verse. It follows the book being read: Hebrew for the Old Testament, including its Aramaic passages in Daniel and Ezra, labeled as Aramaic, and Greek for the New Testament. The mockup shows Hebrew only; Greek uses the same panel, reading left to right. Selecting an English word to see its source word requires tagging data for that translation; BSB's translation tables are the candidate, and their contents have yet to be checked.
 
 ## Authentication and Access
 
@@ -356,7 +364,7 @@ Before finishing a change, check whether it touches a source below, and update t
 | Diagram | Sources | State |
 | --- | --- | --- |
 | [System Overview](#system-overview) | `firebase.json`, `apps/web/src/firebase/`, `functions/` | Partly built |
-| [Reading Flow](#reading-flow) | The reader and `TranslationProvider` | Planned |
+| [Reading Flow](#reading-flow) | `apps/web/src/pages/ReaderPage.tsx`, `apps/web/src/bible/translations.ts`, `scripts/build-bible-data.ts` | Built, ESV planned |
 | [Verse of the Day](#verse-of-the-day) | The home page, `dailyVerses` and `admins` rules, the automatic list | Planned |
 | [Topic Search](#topic-search) | Topic search, `packages/core/src/topicScore.ts`, `suggestVerses` | Planned |
 | [Authentication and Access](#authentication-and-access) | `firestore.rules`, `apps/web/src/stores/auth.ts`, `apps/web/src/pages/SignInPage.tsx` | Built |

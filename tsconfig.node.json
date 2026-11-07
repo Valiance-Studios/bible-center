@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["scripts/**/*", "tests/**/*", "*.config.ts"],
+  "include": ["scripts/**/*", "tests/**/*", "*.config.ts", "packages/core/src/**/*"],
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
     "lib": ["ES2023", "DOM"],

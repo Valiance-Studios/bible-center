@@ -64,7 +64,8 @@ test.describe('on a phone', () => {
     await page.getByRole('button', {name: 'Wisdom'}).click();
     await page.getByRole('link', {name: 'Psalms'}).click();
 
-    await expect(page).toHaveURL(/\/read$/);
+    await expect(page).toHaveURL(/\/read\/psalms\/1$/);
+    await expect(page.getByRole('heading', {name: 'Psalm 1'})).toBeVisible();
   });
 
   test('the page does not scroll sideways', async ({page}) => {

@@ -1,7 +1,8 @@
 import {useState} from 'react';
 import {Link} from 'react-router';
-import {BIBLE_SECTIONS} from '@bible-center/core';
+import {BIBLE_BOOKS, BIBLE_SECTIONS} from '@bible-center/core';
 import {Drawer} from '@mantine/core';
+import {chapterPath} from '@/bible/paths';
 import {ThemeToggle} from './ThemeToggle';
 import classes from './PhoneMenu.module.scss';
 
@@ -20,8 +21,9 @@ export function PhoneMenu({opened, onClose}: PhoneMenuProps) {
 
       <h2 className={classes.heading}>Read the Bible</h2>
       <div className={classes.sections}>
-        {BIBLE_SECTIONS.map(({name, books}) => {
+        {BIBLE_SECTIONS.map(({name}) => {
           const isOpen = name === openSection;
+          const books = BIBLE_BOOKS.filter((book) => book.section === name);
 
           return (
             <div key={name}>
@@ -36,7 +38,7 @@ export function PhoneMenu({opened, onClose}: PhoneMenuProps) {
               {isOpen && (
                 <div className={classes.books}>
                   {books.map((book) => (
-                    <Link key={book} className={classes.book} to="/read" onClick={onClose}>{book}</Link>
+                    <Link key={book.slug} className={classes.book} to={chapterPath({book, chapter: 1})} onClick={onClose}>{book.name}</Link>
                   ))}
                 </div>
               )}

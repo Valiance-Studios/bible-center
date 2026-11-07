@@ -35,6 +35,8 @@ Other rules:
 - Use sentence case. Avoid all-caps labels and decorative numbering.
 - Hebrew reads right to left and is never reversed or flattened.
 
+**The site icon** is a white page with a red ribbon on a lapis tile, drawn in `apps/web/public/favicon.svg`. After changing it, run `npm run icons` to regenerate the PNGs that Safari and iOS use for bookmarks and the home screen.
+
 ## Global
 
 - Toggle between light and dark mode. The system setting applies until the user chooses.
@@ -46,9 +48,9 @@ Other rules:
 | Page | Purpose | Signed in? |
 | --- | --- | --- |
 | Home (`/`) | Verse of the Day, search and a way into reading. Built with a fixed verse so far | No (admins can set the verse) |
-| Reader | One chapter of a translation, with translation switching | No |
+| Reader (`/read/:book/:chapter`) | One chapter of a translation, with book, chapter and translation pickers, and arrows that cross between books. Built. `/read` opens Genesis 1 | No |
 | Reader annotations | Highlights and bookmarks in the reader | Yes |
-| Original languages | Word-by-word Hebrew or Greek for a verse | No |
+| Original languages | A panel in the reader with the verse's words: Hebrew (or Aramaic) in the Old Testament, Greek in the New | No |
 | Search results | Verses for a reference or phrase | No |
 | Topic | Ranked verses for "What does the Bible say about ___?" | To vote or report |
 | Sign in (`/sign-in`) | Google or email and password, registering, password reset, confirming an email, and the invite-only message. Built | No |
