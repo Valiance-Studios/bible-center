@@ -60,6 +60,8 @@ Before opening a pull request, run `npm run lint`, `npm run type-check`, `npm ru
 | `npm run test:emulator` | Security rules against the Firestore emulator | `tests/rules` |
 | `npm run test:e2e` | Playwright against the dev server and emulators, configured by `apps/web/playwright.config.ts` | `apps/web/e2e` |
 
+GitHub Actions runs the same checks on every pull request and push to `main` (`.github/workflows/ci.yml`). The `checks` job runs lint, type-check, build and unit tests. The `emulator-tests` job installs Java for the Firestore emulator, caches the emulator downloads, and runs the rules and E2E tests. When it fails, the Playwright HTML report, with traces from retried tests, is attached to the run as the `playwright-report` artifact.
+
 **Keep copyrighted text out of tests.** Fixtures must use public-domain translations or invented text. See [ESV Rules](../ARCHITECTURE.md#esv-rules).
 
 ## Linting
