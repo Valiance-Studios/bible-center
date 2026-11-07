@@ -140,3 +140,34 @@ $phone-width: 900px;
   font-size: 16px;
   line-height: 1.7;
 }
+
+.topic {
+  display: block;
+  margin: 22px 0 0;
+  padding: 16px 18px;
+  border-radius: 4px;
+  background: var(--bc-panel);
+  color: var(--bc-ink);
+  text-decoration: none;
+}
+
+.topicAsk {
+  display: block;
+  color: var(--bc-muted);
+  font-size: 14px;
+}
+
+.topicName {
+  display: block;
+  margin-top: 2px;
+  font-family: 'Literata', serif;
+  font-size: 24px;
+}
+
+.topicNote {
+  display: block;
+  margin-top: 6px;
+  color: var(--bc-accent);
+  font-size: 14px;
+  font-weight: 500;
+}

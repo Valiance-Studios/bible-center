@@ -10,7 +10,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | --- | --- |
 | Monorepo, tooling, tests, env files, Firebase and App Check wiring, deploy check | Done |
 | GitHub Actions CI (`.github/workflows/ci.yml`) | Built. Runs on pull requests and pushes to `main` |
-| Firestore rules and indexes: default deny, allowlist, user settings, annotations | Rules deployed. The My verses indexes need deploying after it merges; see [Current State](#current-state) |
+| Firestore rules and indexes: default deny, allowlist, user settings, annotations | Built and deployed |
 | Topic score formula (`packages/core/src/topicScore.ts`) | Done, not yet used by any feature |
 | Design mockups | Approved |
 | Sign-in and registration | Built. Google sign-in is confirmed on the hosted site; email registration is tested against the emulators only |
@@ -24,7 +24,8 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | Translation choice saved to the account | Built |
 | My verses page | Built |
 | About dialog | Planned, with no mockup yet. `CLAUDE.md` expects it, as a shorter version of the README with data credits |
-| Topic search, voting, reports | Planned |
+| Topic search, voting, reports | In progress in two pull requests: first the OpenBible data, topic pages and links (`feature/topic-search`), then voting, adding verses and reports |
+| Admins and reviewers | Planned: roles assigned in the app, and review of new topics and reports |
 | Hebrew/Greek study | Planned |
 | AI topic suggestions | Planned as the last V1 step |
 | ESV | Blocked: Crossway's review of the API key application, applied for November 2026, may take 3-4 weeks |
@@ -34,8 +35,8 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 Last updated November 7, 2026.
 
-- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon, reader, search, annotations and CI are merged. My verses is in a pull request from `feature/my-verses`. Check what has merged before starting new work.
-- **Hosted project:** `vs-bible-center-dev`. The owner deploys it and deployed the annotation rules on November 6, 2026, while testing annotations. Before running `npm run deploy`, move the debug token out of `apps/web/.env.staging.local`, as the deploy check refuses it. **After My verses merges, deploy its indexes** with `npm run deploy:rules`, which sends `firestore.indexes.json` with the rules. Until they finish building, which can take a few minutes, My verses fails to load in Bible order or with a filter. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
+- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon, reader, search, annotations, CI and My verses are merged. Topic search is being built on `feature/topic-search`. Check what has merged before starting new work.
+- **Hosted project:** `vs-bible-center-dev`. The owner deploys it, and deployed the My verses rules and indexes on November 7, 2026. Before running `npm run deploy`, move the debug token out of `apps/web/.env.staging.local`, as the deploy check refuses it. `npm run deploy:rules` sends the rules and `firestore.indexes.json` and needs no token moved. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
 - **Set up in the project:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. `allowedUsers/bobbyjuba@gmail.com` exists.
 - **`gcloud` and Firebase CLI account:** `broden@valiance-studios.com`.
 
@@ -43,18 +44,22 @@ Last updated November 7, 2026.
 
 Build features one branch at a time, from `main` or from the latest unmerged branch, in this order:
 
-1. **Topic search, voting and reports:** build the OpenBible data script, the topic page, and the topic link and list on the search and home pages.
-2. **Verse of the Day:** `dailyVerses`, `admins`, the admin dialog and the automatic list.
-3. **Hebrew/Greek study:** the reader's word panel, using STEPBible data.
-4. **About dialog and final polish.**
-5. **AI suggestions:** the first Cloud Function.
-6. **ESV:** once Crossway approves the key.
+1. **Topic search, voting and reports**, in two pull requests:
+   1. The OpenBible data script, topic pages ranked by `topicVerseScore`, the Topics page, and the topic link and list on the search and home pages.
+   2. Upvoting, adding a verse, starting a topic, and reports, with their security rules (see [Voting](#voting)).
+2. **Admins and reviewers:** assign admin and reviewer roles in the app, and let reviewers approve or reject new topics and resolve reports. Its mockups come first. Verse of the Day's `admins` builds on it.
+3. **Verse of the Day:** `dailyVerses`, `admins`, the admin dialog and the automatic list.
+4. **Hebrew/Greek study:** the reader's word panel, using STEPBible data.
+5. **About dialog and final polish.**
+6. **AI suggestions:** the first Cloud Function.
+7. **ESV:** once Crossway approves the key.
 
 After V1: boards, plugins, and possibly embeddings for search by meaning.
 
 ### Open Items
 
 Waiting on the owner:
+
 
 - Crossway's decision on the ESV API key. Once approved, the owner adds the key to Secret Manager and shares the secret's name.
 - Choose whether to keep the KJV source, the Pure Cambridge Edition from OpenBible, or swap to one with a clearer license statement. Review the UK Crown patent before a wider launch; see [Translations](#translations).
@@ -69,7 +74,8 @@ To do when reached:
 - Add a Content Security Policy once the app's external origins are settled.
 - Check the first phrase search on a real phone, and move indexing to a Web Worker if it is slow.
 - The 10-character password minimum is only enforced in the app. Firebase's password policy could enforce it server-side.
-- Topics created by users will need moderation before the allowlist is removed, as will anything else users can make public.
+- Topics created by users start pending: they work by link but are not listed or linked from search until a reviewer approves them. Anything else users can make public needs the same before the allowlist is removed.
+- Common topics are a fixed list for now. Later they could follow what people search for, which changes through the year (such as "resurrection" around Easter).
 
 ### Resuming in a New Session
 
@@ -98,6 +104,11 @@ Start with "Starting a Session" in `CLAUDE.md`, then the [Mockups](#mockups) sec
 | `MyVerses.dc.html` | All of a user's highlights, bookmarks and notes, with filters and ordering |
 | `MyVersesEmpty.dc.html` | My verses with nothing saved yet |
 | `PhoneMyVerses.dc.html` | My verses on a phone |
+| `Topics.dc.html` | All topics: find one, common topics, and A to Z |
+| `TopicAddVerse.dc.html` | Adding a verse to a topic, with a preview and the problems it can report |
+| `TopicReport.dc.html` | Reporting a verse on a topic |
+| `TopicEmpty.dc.html` | A topic nobody has added a verse to yet |
+| `PhoneTopic.dc.html` | A topic on a phone, signed out |
 
 The canvas is the source of truth for the design. To work from it in a new session, read `project/canvas.json` and any `project/<artboard>` from that URL with the Artifact tool. The design language is in [UI.md](docs/UI.md#design-language).
 
@@ -376,7 +387,7 @@ The app shows OpenBible and Bible Center counts separately rather than the combi
 - Upvotes only. Users can remove their own upvote, and can report an entry that does not belong.
 - Signed-in users can upvote an existing verse or associate a verse with a topic.
 - One vote per user for each verse and topic, enforced by the document path and security rules.
-- Counts are maintained server-side, since a client could otherwise write any count.
+- Counts are checked by the security rules rather than kept by a Cloud Function. A vote and its count change are written in one batch, and the rules use `existsAfter` to accept a count change only when that user's vote is created (+1) or deleted (-1) in the same batch. Adding a verse to a topic creates its count at 1 alongside the adder's vote. Concurrent votes retry against the newer count, so none are lost.
 - Reports go to a queue for review. They do not change the ranking automatically, so they cannot be used to bury verses.
 - Topic names are normalized (trimmed, lowercased). Free-text topics will need moderation before the allowlist is removed.
 
@@ -384,7 +395,20 @@ The app shows OpenBible and Bible Center counts separately rather than the combi
 
 [OpenBible.info's topic data](https://www.openbible.info/topics/) is licensed CC BY, so the app must credit it with a link wherever it is shown. The [vote file](https://a.openbible.info/data/topic-votes.txt) is refreshed weekly upstream and contains only topics, verse references and vote counts, with no scripture text. As of November 2026 it has about 470,000 rows across 6,751 topics. Each row may be a range (`Topic`, `Start Verse ID`, `End Verse ID`, `Votes`).
 
-A script will split it into one static JSON file per topic on Hosting, so it costs no Firestore writes. Refreshing means rerunning the script; Bible Center votes are unaffected.
+`scripts/build-topic-data.ts` (`npm run topic-data`) splits it into one static JSON file per topic on Hosting, so reading a topic costs no Firestore reads. Names are normalized (trimmed, lowercased, single spaces), and spellings that share a slug, such as "self control" and "self-control", become one topic named by the more-voted spelling, keeping a passage's higher count where both list it. That leaves 6,739 topics. Rows naming a verse that does not exist are dropped. `_index.json` lists every name, for the Topics page and for spotting a search that names a topic; no slug starts with an underscore, so it never collides with a topic. The output is committed, like the Bible text: about 13 MB across 6,740 small files, marked as generated in `.gitattributes`. Refreshing means rerunning the script and committing the result. Bible Center votes are unaffected, since they are keyed by topic slug and verse ids.
+
+```mermaid
+flowchart LR
+  source["topic-votes.txt<br/>OpenBible.info"] --> script["scripts/build-topic-data.ts<br/>parseTopicVotes"]
+  script --> files["apps/web/public/topic-data/slug.json"]
+  script --> index["apps/web/public/topic-data/_index.json"]
+  files -- "topicQuery" --> topicPage["TopicPage<br/>rankTopicVerses"]
+  index -- "topicNamesQuery" --> topicsPage["TopicsPage"]
+  index -- "findTopic" --> searchPage["SearchPage topic link"]
+  topicPage -- "usePassage" --> text["/bible/translation/..."]
+```
+
+Hosting and the dev server answer a missing file with the app's HTML page rather than a 404, so `fetchTopicData` treats any answer that is not JSON as "no such topic". A topic OpenBible does not have shows as empty, ready for someone to add the first verse.
 
 ### AI Suggestions
 
@@ -475,9 +499,10 @@ Before finishing a change, check whether it touches a source below, and update t
 | --- | --- | --- |
 | [System Overview](#system-overview) | `firebase.json`, `apps/web/src/firebase/`, `functions/` | Partly built |
 | [Reading Flow](#reading-flow) | `apps/web/src/pages/ReaderPage.tsx`, `apps/web/src/bible/translations.ts`, `scripts/build-bible-data.ts` | Built, ESV planned |
-| [Search](#search) | `apps/web/src/pages/SearchPage.tsx`, `packages/core/src/references.ts`, `apps/web/src/bible/phraseSearch.ts`, `scripts/build-bible-data.ts` | Built, topic link planned |
+| [Search](#search) | `apps/web/src/pages/SearchPage.tsx`, `packages/core/src/references.ts`, `apps/web/src/bible/phraseSearch.ts`, `scripts/build-bible-data.ts` | Built |
 | [Annotations](#annotations), data model, selection and pages | `firestore.rules`, `packages/core/src/annotations.ts`, `apps/web/src/firebase/annotations.ts`, `apps/web/src/firebase/settings.ts`, `firestore.indexes.json`, `apps/web/src/components/annotationQueryKeys.ts`, `apps/web/src/components/myVerses/`, `apps/web/src/pages/MyVersesPage.tsx` | Built |
 | [Verse of the Day](#verse-of-the-day) | The home page, `dailyVerses` and `admins` rules, the automatic list | Planned |
-| [Topic Search](#topic-search) | Topic search, `packages/core/src/topicScore.ts`, `suggestVerses` | Planned |
+| [Topic Search](#topic-search) | `packages/core/src/topicScore.ts`, `packages/core/src/topics.ts`, `apps/web/src/pages/TopicPage.tsx`, `suggestVerses` | Static file and ranking built. Upvote counts and AI suggestions planned |
+| [OpenBible Data](#openbible-data) | `scripts/build-topic-data.ts`, `apps/web/src/topics/topicData.ts`, `apps/web/src/pages/TopicPage.tsx`, `apps/web/src/pages/TopicsPage.tsx`, `apps/web/src/pages/SearchPage.tsx` | Built |
 | [Authentication and Access](#authentication-and-access) | `firestore.rules`, `apps/web/src/stores/auth.ts`, `apps/web/src/pages/SignInPage.tsx` | Built |
 | [Environments and Delivery](#environments-and-delivery) | `package.json`, `apps/web/.env.*`, `firebase.json`, `scripts/`, `.github/workflows/ci.yml` | Built |

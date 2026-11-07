@@ -1,5 +1,6 @@
 import {Link} from 'react-router';
 import {SearchBox} from '@/components/SearchBox';
+import {COMMON_TOPICS, topicPath} from '@/topics/topicData';
 import classes from './HomePage.module.scss';
 
 /** One fixed verse until the Verse of the Day feature exists; see "Verse of the Day" in `ARCHITECTURE.md`. */
@@ -20,17 +21,13 @@ export function HomePage() {
       <div className={classes.search}>
         <SearchBox showLabel placeholder="John 1:1-5, “mercies never fail”, or marriage" />
       </div>
-    </main>
-  );
-}
-
-/** Stands in for a page that is not built yet, so the app's navigation has somewhere to go. */
-export function ComingSoonPage({title}: {title: string}) {
-  return (
-    <main className={classes.content}>
-      <h1 className={classes.comingSoonTitle}>{title}</h1>
-      <p>This part of Bible Center is still being built.</p>
-      <Link to="/">Back to the home page</Link>
+      <section className={classes.topics}>
+        <h2 className={classes.topicsTitle}>What does the Bible say about</h2>
+        <div className={classes.topicLinks}>
+          {COMMON_TOPICS.map((name) => <Link key={name} to={topicPath(name)}>{name}</Link>)}
+          <Link to="/topics">more topics</Link>
+        </div>
+      </section>
     </main>
   );
 }

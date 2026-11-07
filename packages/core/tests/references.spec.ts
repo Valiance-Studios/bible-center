@@ -1,5 +1,6 @@
 import {describe, expect, it} from 'vitest';
-import {formatReference, parseReferences} from '../src/references';
+import {BIBLE_BOOKS} from '../src/bibleBooks';
+import {formatReference, parseReferences, referenceOf} from '../src/references';
 
 function formatted(query: string): string[] | null {
   return parseReferences(query)?.map(formatReference) ?? null;
@@ -52,5 +53,19 @@ describe('parseReferences', () => {
     ['Genesis 51:1'],
   ])('does not read "%s" as a reference', (query) => {
     expect(parseReferences(query)).toBeNull();
+  });
+});
+
+describe('referenceOf', () => {
+  const john = BIBLE_BOOKS.find(({name}) => name === 'John');
+
+  it('names the book, chapters and verses between two verse ids', () => {
+    expect(referenceOf({startVerse: '43001001', endVerse: '43001003'})).toEqual({book: john, startChapter: 1, startVerse: 1, endChapter: 1, endVerse: 3});
+    expect(referenceOf({startVerse: '43001051', endVerse: '43002002'})).toEqual({book: john, startChapter: 1, startVerse: 51, endChapter: 2, endVerse: 2});
+  });
+
+  it('is null for malformed verse ids', () => {
+    expect(referenceOf({startVerse: 'nonsense', endVerse: '43001003'})).toBeNull();
+    expect(referenceOf({startVerse: '67001001', endVerse: '67001001'})).toBeNull();
   });
 });

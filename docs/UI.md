@@ -47,12 +47,13 @@ Other rules:
 
 | Page | Purpose | Signed in? |
 | --- | --- | --- |
-| Home (`/`) | Verse of the Day, the search box, and topics. Built with a fixed verse and without topics so far | No (admins can set the verse) |
+| Home (`/`) | Verse of the Day, the search box, and the common topics with a link to more. Built with a fixed verse | No (admins can set the verse) |
 | Reader (`/read/:book/:chapter`) | One chapter of a translation, with book, chapter and translation pickers, and arrows that cross between books. Built. `/read` opens Genesis 1 | No |
 | Reader annotations | Tap a verse to select it and another to make a range, then highlight, bookmark or add a note. Highlights show on the text, a bookmark shows a marker on its first verse and the ribbon, and a note shows beneath its last verse with a link to edit it. Built | Yes |
 | My verses (`/my-verses`) | All of a user's highlights, bookmarks and notes, filtered by type and ordered by recently added or Bible order, in the selected translation, 20 at a time with "Show more". Removing one asks first. On narrow phones the translation picker shows initialisms, such as KJV. Reached from the account and phone menus, once allowed to annotate. Built | Yes |
 | Original languages | A panel in the reader with the verse's words: Hebrew (or Aramaic) in the Old Testament, Greek in the New | No |
-| Search (`/search?q=`) | Passages for references, or the closest verses for wording with matched words highlighted, in the selected translation. Opened from the home page box, the app bar or the phone menu. Built. A link to a topic of that name comes with topic search | No |
-| Topic | Ranked verses for "What does the Bible say about ___?" | To vote or report |
+| Search (`/search?q=`) | Passages for references, or the closest verses for wording with matched words highlighted, in the selected translation. Opened from the home page box, the app bar or the phone menu. A search that is exactly a topic's name, such as "marriage", links to that topic first. Built | No |
+| Topics (`/topics`) | Find a topic by name, the common topics, and every topic from A to Z (`?letter=g`). A name with no topic offers to start it. Built | No |
+| Topic (`/topics/:slug`) | Ranked verses for "What does the Bible say about ___?", 20 at a time, with OpenBible's counts and credit. A topic with no verses says so. Built, except upvoting, adding a verse and reporting, which come next | To vote, add or report |
 | Sign in (`/sign-in`) | Google or email and password, registering, password reset, confirming an email, and the invite-only message. Built | No |
 | About | A shorter version of the [README](../README.md), with data credits | No |

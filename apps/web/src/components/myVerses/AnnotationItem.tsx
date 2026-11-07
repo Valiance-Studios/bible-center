@@ -2,12 +2,11 @@ import type {Annotation, AnnotationType, VerseReference} from '@bible-center/cor
 import type {TranslationProvider} from '@/bible/translations';
 
 import {useState} from 'react';
-import {useQuery} from '@tanstack/react-query';
 import {Link} from 'react-router';
-import {formatReference, spanContains, spanOf} from '@bible-center/core';
+import {formatReference, spanOf} from '@bible-center/core';
 import {Button, Loader} from '@mantine/core';
 import {chapterPath} from '@/bible/paths';
-import {chapterQuery} from '@/bible/queries';
+import {usePassage} from '@/bible/usePassage';
 import {RemoveDialog} from './RemoveDialog';
 import classes from './AnnotationItem.module.scss';
 
@@ -26,8 +25,7 @@ interface AnnotationItemProps {
 export function AnnotationItem({annotation, reference, translation, isRemoving, onRemove}: AnnotationItemProps) {
   const chapter = {book: reference.book, chapter: reference.startChapter};
   const span = spanOf(annotation);
-  const {data, isPending, isError, refetch} = useQuery(chapterQuery(translation, chapter));
-  const text = (data?.verses ?? []).filter(({verse}) => spanContains(span, verse)).map(({text: verseText}) => verseText).join(' ');
+  const {text, isPending, isError, retry} = usePassage(reference, translation);
   const title = formatReference(reference);
   const label = TYPE_LABELS[annotation.type].toLowerCase();
   const [isConfirming, setIsConfirming] = useState(false);
@@ -44,11 +42,11 @@ export function AnnotationItem({annotation, reference, translation, isRemoving, 
       {isError && (
         <p className={classes.missing}>
           {'The text could not be loaded. '}
-          <Button variant="subtle" size="compact-sm" onClick={() => void refetch()}>Try again</Button>
+          <Button variant="subtle" size="compact-sm" onClick={retry}>Try again</Button>
         </p>
       )}
 
-      {data && (text
+      {!isPending && !isError && (text
         ? <p className={classes.text}>{annotation.type === 'highlight' ? <mark className={classes.highlight}>{text}</mark> : text}</p>
         : <p className={classes.missing}>{`The ${translation.name} has no verses at this reference.`}</p>)}
 
