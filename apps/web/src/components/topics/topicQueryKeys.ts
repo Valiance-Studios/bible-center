@@ -3,5 +3,6 @@ export const topicQueryKeys = {
   forTopic: (slug: string) => ['topicVotes', slug] as const,
   verses: (slug: string) => ['topicVotes', slug, 'verses'] as const,
   mine: (slug: string, uid: string | undefined) => ['topicVotes', slug, 'mine', uid] as const,
-  startedName: (slug: string) => ['topicVotes', slug, 'startedName'] as const,
+  started: (slug: string) => ['topicVotes', slug, 'started'] as const,
+  removed: (slug: string) => ['topicVotes', slug, 'removed'] as const,
 };

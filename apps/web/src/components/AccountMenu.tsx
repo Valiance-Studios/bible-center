@@ -1,6 +1,8 @@
 import {Link} from 'react-router';
 import {Button, Menu} from '@mantine/core';
 import {useAuthStore} from '@/stores/auth';
+import {AccountLinkLabel} from './AccountLinkLabel';
+import {useAccountLinks} from './useAccountLinks';
 import classes from './AppLayout.module.scss';
 
 /** The sign-in button, or the signed-in person's menu. Shows nothing until the auth state is known. */
@@ -8,6 +10,7 @@ export function AccountMenu() {
   const status = useAuthStore((state) => state.status);
   const user = useAuthStore((state) => state.user);
   const signOut = useAuthStore((state) => state.signOut);
+  const links = useAccountLinks();
 
   if (status === 'loading') {
     return null;
@@ -29,8 +32,9 @@ export function AccountMenu() {
       <Menu.Dropdown>
         <Menu.Label>{name}</Menu.Label>
         {status === 'allowed'
-          ? <Menu.Item component={Link} to="/my-verses">My verses</Menu.Item>
+          ? links.map((link) => <Menu.Item key={link.to} component={Link} to={link.to}><AccountLinkLabel {...link} /></Menu.Item>)
           : <Menu.Item component={Link} to="/sign-in">Account status</Menu.Item>}
+        <Menu.Divider />
         <Menu.Item onClick={() => void signOut()}>Sign out</Menu.Item>
       </Menu.Dropdown>
     </Menu>

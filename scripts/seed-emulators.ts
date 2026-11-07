@@ -1,5 +1,5 @@
 /**
- * Seeds the local emulators with an account that can use the app.
+ * Seeds the local emulators with an admin account that can use the whole app.
  *
  * Usage: node scripts/seed-emulators.ts (run by `npm run emulators` once the emulators are ready)
  *
@@ -14,6 +14,6 @@ import {allowEmail, createGoogleAccount} from './emulator-admin.ts';
 const DEV_ACCOUNT: EmulatorAccount = {email: 'dev@example.com', displayName: 'Dev User'};
 
 await createGoogleAccount(DEV_ACCOUNT);
-await allowEmail(DEV_ACCOUNT.email);
+await allowEmail(DEV_ACCOUNT.email, 'admin');
 
-console.log(`Seeded ${DEV_ACCOUNT.displayName} (${DEV_ACCOUNT.email}): pick it under "Choose an account" in the sign-in popup.`);
+console.log(`Seeded ${DEV_ACCOUNT.displayName} (${DEV_ACCOUNT.email}), an admin: pick it under "Choose an account" in the sign-in popup.`);

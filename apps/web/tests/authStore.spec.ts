@@ -2,13 +2,13 @@ import type {User} from 'firebase/auth';
 
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {onAuthStateChanged} from 'firebase/auth';
-import {isOnAllowlist} from '@/firebase/access';
+import {getAccess} from '@/firebase/access';
 import {useAuthStore} from '@/stores/auth';
 
 const firebaseState = vi.hoisted(() => ({auth: {currentUser: null as unknown}}));
 
 vi.mock('@/firebase', () => ({auth: firebaseState.auth, db: {}}));
-vi.mock('@/firebase/access', () => ({isOnAllowlist: vi.fn()}));
+vi.mock('@/firebase/access', () => ({getAccess: vi.fn()}));
 vi.mock('firebase/auth', () => ({
   GoogleAuthProvider: vi.fn(),
   createUserWithEmailAndPassword: vi.fn(),
@@ -60,20 +60,29 @@ describe('auth store', () => {
     await reportUser(makeUser({emailVerified: false}));
 
     expect(useAuthStore.getState().status).toBe('unverified');
-    expect(isOnAllowlist).not.toHaveBeenCalled();
+    expect(getAccess).not.toHaveBeenCalled();
   });
 
   it('allows a verified user on the allowlist', async () => {
-    vi.mocked(isOnAllowlist).mockResolvedValue(true);
+    vi.mocked(getAccess).mockResolvedValue('member');
 
     await reportUser(makeUser());
 
     expect(useAuthStore.getState().status).toBe('allowed');
     expect(useAuthStore.getState().user?.email).toBe('person@example.com');
+    expect(useAuthStore.getState().role).toBe('member');
+  });
+
+  it('keeps the role from the allowlist', async () => {
+    vi.mocked(getAccess).mockResolvedValue('reviewer');
+
+    await reportUser(makeUser());
+
+    expect(useAuthStore.getState().role).toBe('reviewer');
   });
 
   it('reports a verified user who is not on the allowlist', async () => {
-    vi.mocked(isOnAllowlist).mockResolvedValue(false);
+    vi.mocked(getAccess).mockResolvedValue(null);
 
     await reportUser(makeUser());
 
@@ -82,7 +91,7 @@ describe('auth store', () => {
 
   it('reports a failed check separately from having no access', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.mocked(isOnAllowlist).mockRejectedValue(new Error('offline'));
+    vi.mocked(getAccess).mockRejectedValue(new Error('offline'));
 
     await reportUser(makeUser());
 
@@ -92,7 +101,7 @@ describe('auth store', () => {
   it('refreshes the token when rechecking, since the rules read email_verified from it', async () => {
     const user = makeUser();
 
-    vi.mocked(isOnAllowlist).mockResolvedValue(true);
+    vi.mocked(getAccess).mockResolvedValue('member');
     firebaseState.auth.currentUser = user;
 
     await expect(useAuthStore.getState().recheckAccess()).resolves.toBe('allowed');

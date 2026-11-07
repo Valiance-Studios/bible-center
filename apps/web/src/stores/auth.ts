@@ -1,4 +1,5 @@
 import type {User} from 'firebase/auth';
+import type {Role} from '@bible-center/core';
 
 import {
   createUserWithEmailAndPassword,
@@ -13,7 +14,7 @@ import {
 } from 'firebase/auth';
 import {create} from 'zustand';
 import {auth} from '@/firebase';
-import {isOnAllowlist} from '@/firebase/access';
+import {getAccess} from '@/firebase/access';
 
 /**
  * Where the current visitor stands. Reading is open in every state; `allowed` is what will unlock
@@ -30,6 +31,8 @@ export interface SessionUser {
 interface AuthState {
   status: AuthStatus;
   user: SessionUser | null;
+  /** What the user can do once `allowed`. Only shapes the interface; the security rules check it. */
+  role: Role;
   /** Follows Firebase's auth state. Returns the function that stops following it. */
   init: () => () => void;
   signInWithGoogle: () => Promise<void>;
@@ -42,17 +45,24 @@ interface AuthState {
   signOut: () => Promise<void>;
 }
 
-async function statusFor(user: User): Promise<AuthStatus> {
+interface Access {
+  status: AuthStatus;
+  role: Role;
+}
+
+async function accessFor(user: User): Promise<Access> {
   if (!user.emailVerified) {
-    return 'unverified';
+    return {status: 'unverified', role: 'member'};
   }
 
   try {
-    return await isOnAllowlist(user) ? 'allowed' : 'noAccess';
+    const role = await getAccess(user);
+
+    return role ? {status: 'allowed', role} : {status: 'noAccess', role: 'member'};
   } catch (error) {
     console.error('Could not check access', error);
 
-    return 'accessCheckFailed';
+    return {status: 'accessCheckFailed', role: 'member'};
   }
 }
 
@@ -64,15 +74,15 @@ export const useAuthStore = create<AuthState>((set) => {
     const update = ++latestUpdate;
 
     if (!user) {
-      set({status: 'signedOut', user: null});
+      set({status: 'signedOut', user: null, role: 'member'});
 
       return 'signedOut';
     }
 
-    const status = await statusFor(user);
+    const {status, role} = await accessFor(user);
 
     if (update === latestUpdate) {
-      set({status, user: {uid: user.uid, email: user.email, displayName: user.displayName}});
+      set({status, role, user: {uid: user.uid, email: user.email, displayName: user.displayName}});
     }
 
     return status;
@@ -81,6 +91,7 @@ export const useAuthStore = create<AuthState>((set) => {
   return {
     status: 'loading',
     user: null,
+    role: 'member',
 
     init: () => onAuthStateChanged(auth, (user) => {
       void applyUser(user);

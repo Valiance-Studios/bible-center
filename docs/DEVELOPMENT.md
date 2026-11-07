@@ -19,9 +19,9 @@ Run every command from the repository root. The root holds the commands, shared 
 
 ### Seed Data
 
-`npm run emulators` seeds **Dev User (`dev@example.com`)**, a verified Google account on the allowlist, on every start, since emulator data is not kept between runs. Pick it under "Choose an account" in the sign-in popup. The rules are not relaxed for local work.
+`npm run emulators` seeds **Dev User (`dev@example.com`)**, a verified Google account on the allowlist as an admin, on every start, since emulator data is not kept between runs. Pick it under "Choose an account" in the sign-in popup. The rules are not relaxed for local work.
 
-To try another account, add `allowedUsers/<lowercase email>` with no fields in the Emulator UI.
+To try another account, add it on the People page, or add `allowedUsers/<lowercase email>` in the Emulator UI with a `role` of `member`, `reviewer` or `admin`.
 
 ### Emulator Scripts
 

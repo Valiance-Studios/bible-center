@@ -1,6 +1,7 @@
 import type {TopicFile} from '@bible-center/core';
 
 import {normalizeTopicName, topicSlug} from '@bible-center/core';
+import {listApprovedTopicNames} from '@/firebase/topics';
 
 /** Shown on the home page and the Topics page. A fixed list for now; see "Open Items" in ARCHITECTURE.md. */
 export const COMMON_TOPICS = ['marriage', 'forgiveness', 'anxiety', 'grief', 'money', 'prayer'] as const;
@@ -34,17 +35,28 @@ export function topicQuery(slug: string) {
   };
 }
 
-/** Every topic's name, sorted, loaded once when first needed. */
+/** The approved topics people started, or none if they cannot be loaded, so OpenBible's topics still show. */
+async function approvedTopicNames(): Promise<string[]> {
+  try {
+    return await listApprovedTopicNames();
+  } catch (error) {
+    console.error('Could not load the topics people started', error);
+
+    return [];
+  }
+}
+
+/** Every topic's name, OpenBible's and the approved ones people started, sorted, loaded once when first needed. */
 export const topicNamesQuery = {
   queryKey: ['topicNames'],
   queryFn: async () => {
-    const names = await fetchTopicData<string[]>('/topic-data/_index.json');
+    const [names, approved] = await Promise.all([fetchTopicData<string[]>('/topic-data/_index.json'), approvedTopicNames()]);
 
     if (!names) {
       throw new Error('The list of topics is missing.');
     }
 
-    return names;
+    return [...new Set([...names, ...approved])].sort((a, b) => a.localeCompare(b));
   },
 };
 

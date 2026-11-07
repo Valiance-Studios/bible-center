@@ -6,14 +6,14 @@ import {useQuery} from '@tanstack/react-query';
 import {Link, Navigate, useParams} from 'react-router';
 import {formatReference, rankTopicVerses, referenceOf, topicSlug, topicVerseKey} from '@bible-center/core';
 import {Alert, Button, Loader} from '@mantine/core';
-import {chapterPath} from '@/bible/paths';
+import {referencePath} from '@/bible/paths';
 import {findTranslation} from '@/bible/translations';
 import {usePassage} from '@/bible/usePassage';
 import {AddVerseDialog} from '@/components/topics/AddVerseDialog';
 import {ReportDialog} from '@/components/topics/ReportDialog';
-import {topicQueryKeys} from '@/components/topics/topicQueryKeys';
+import {startedTopicQuery} from '@/components/topics/startedTopicQuery';
 import {useTopicVotes} from '@/components/topics/useTopicVotes';
-import {getStartedTopicName, reportVerse} from '@/firebase/topics';
+import {reportVerse} from '@/firebase/topics';
 import {useAuthStore} from '@/stores/auth';
 import {useTranslationStore} from '@/stores/translation';
 import {nameFromSlug, topicQuery} from '@/topics/topicData';
@@ -86,7 +86,6 @@ interface TopicVerseRowProps {
 function TopicVerseRow({verseKey, verse, reference, translation, canVote, hasVoted, isSaving, isReported, onToggleVote, onReport}: TopicVerseRowProps) {
   const {text, isPending, isError, retry} = usePassage(reference, translation);
   const title = formatReference(reference);
-  const chapter = {book: reference.book, chapter: reference.startChapter};
   const counts = [`${verse.upvotes.toLocaleString('en-US')} on Bible Center`];
 
   if (verse.openBibleVotes > 0) {
@@ -97,7 +96,7 @@ function TopicVerseRow({verseKey, verse, reference, translation, canVote, hasVot
     <article id={rowIdOf(verseKey)} className={classes.row}>
       <VoteButton title={title} upvotes={verse.upvotes} canVote={canVote} hasVoted={hasVoted} isSaving={isSaving} onToggle={onToggleVote} />
       <div className={classes.body}>
-        <Link className={classes.reference} to={`${chapterPath(chapter)}#v${reference.startVerse ?? 1}`}>{title}</Link>
+        <Link className={classes.reference} to={referencePath(reference)}>{title}</Link>
 
         {isPending && <Loader size="sm" mt={8} aria-label={`Loading ${title}`} />}
 
@@ -144,14 +143,11 @@ function Topic({slug}: {slug: string}) {
   const openBible = useQuery(topicQuery(slug));
   const isOpenBibleTopic = openBible.data !== null && openBible.data !== undefined;
   // A topic OpenBible does not have may be one someone started, which names it.
-  const started = useQuery({
-    queryKey: topicQueryKeys.startedName(slug),
-    queryFn: () => getStartedTopicName(slug),
-    enabled: openBible.data === null,
-  });
+  const started = useQuery({...startedTopicQuery(slug), enabled: openBible.data === null});
   const votes = useTopicVotes(slug, uid);
-  const name = openBible.data?.name ?? started.data ?? nameFromSlug(slug);
-  const verses = rankTopicVerses(openBible.data?.verses ?? [], votes.community).flatMap((verse) => {
+  const name = openBible.data?.name ?? started.data?.name ?? nameFromSlug(slug);
+  const isRejected = started.data?.status === 'rejected';
+  const verses = rankTopicVerses(openBible.data?.verses ?? [], votes.community, votes.removedKeys).flatMap((verse) => {
     // The data script and the security rules keep only well-formed verse ids, so this drops nothing in practice.
     const reference = referenceOf(verse);
 
@@ -187,6 +183,17 @@ function Topic({slug}: {slug: string}) {
 
     await reportVerse(uid, {topic: slug, verseKey: reportTarget.key, reason, ...(details ? {details} : {})});
     setReportedKeys(new Set([...reportedKeys, reportTarget.key]));
+  }
+
+  if (isRejected) {
+    return (
+      <main className={classes.content}>
+        <title>Topic not available | Bible Center</title>
+        <h1 className={classes.title}>{name}</h1>
+        <p className={classes.notice}>This topic is not available.</p>
+        <p><Link className={classes.more} to="/topics">Browse all topics</Link></p>
+      </main>
+    );
   }
 
   const addButton = canVote && !isPending && !openBible.isError && (
@@ -274,6 +281,7 @@ function Topic({slug}: {slug: string}) {
         <AddVerseDialog
           topicName={name}
           existingKeys={new Set(verses.map(({key}) => key))}
+          removedKeys={votes.removedKeys}
           translation={translation}
           isSaving={votes.savingKey !== undefined}
           onAdd={async (span) => {

@@ -6,7 +6,9 @@ import {READER_START_PATH} from '@/bible/paths';
 import {AppLayout} from '@/components/AppLayout';
 import {HomePage} from '@/pages/HomePage';
 import {MyVersesPage} from '@/pages/MyVersesPage';
+import {PeoplePage} from '@/pages/PeoplePage';
 import {ReaderPage} from '@/pages/ReaderPage';
+import {ReviewPage} from '@/pages/ReviewPage';
 import {SearchPage} from '@/pages/SearchPage';
 import {SignInPage} from '@/pages/SignInPage';
 import {TopicPage} from '@/pages/TopicPage';
@@ -26,6 +28,8 @@ const router = createBrowserRouter([
       {path: '/topics', element: <TopicsPage />},
       {path: '/topics/:slug', element: <TopicPage />},
       {path: '/my-verses', element: <MyVersesPage />},
+      {path: '/review', element: <ReviewPage />},
+      {path: '/people', element: <PeoplePage />},
     ],
   },
   {path: '/sign-in', element: <SignInPage />},
