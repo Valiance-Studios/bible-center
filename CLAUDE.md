@@ -22,6 +22,9 @@ These were settled with the owner. Their reasoning is in `ARCHITECTURE.md`.
 - Code license is PolyForm Noncommercial 1.0.0.
 - Topic ranking is `seedScore + upvotes`, with a 0-20 OpenBible seed. Voting is upvote-only, with reports.
 - AI search uses Claude Opus 5.5 with a $10 monthly cap, and only fills gaps.
+- Annotations are highlights, bookmarks and plain-text notes on a verse or a range within a chapter, in one highlight color.
+- Search covers the selected translation only.
+- A signed-in My verses page will list all of a user's annotations. Its mockups need approval before it is built.
 - The Firebase project is `vs-bible-center-dev`. Boards come after V1.
 
 ### Coding Principles

@@ -10,6 +10,8 @@ The hosted app is [vs-bible-center-dev.web.app](https://vs-bible-center-dev.web.
 | `npm run deploy:hosting` | Hosting only |
 | `npm run deploy:rules` | Firestore rules and indexes only |
 
+Deploy Firestore rules along with any feature that changes them, or the live site's writes will be rejected. `npm run deploy` covers both, and `npm run deploy:rules` needs no debug token moved.
+
 Hosting deploys first run `scripts/check-firebase-config.ts staging`, then `npm run build:staging`. The check refuses a deploy with missing Firebase config, no App Check site key, an App Check debug token, or the emulators turned on.
 
 **The check reads `apps/web/.env.staging.local` too, so a machine with a debug token cannot deploy Hosting.** Temporarily move the token out of the file. This is deliberate, since a build containing a registered debug token would let anyone pass App Check.

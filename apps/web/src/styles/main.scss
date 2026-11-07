@@ -11,6 +11,8 @@
   --bc-tab-ink: #1f3f94;
   --bc-field: #fff;
   --bc-mark: #f7e7ae;
+  --bc-panel: #eceff4;
+  --bc-ribbon: #a8231c;
 }
 
 [data-mantine-color-scheme='dark'] {
@@ -25,6 +27,8 @@
   --bc-tab-ink: #c5d2f7;
   --bc-field: #16213f;
   --bc-mark: #51451c;
+  --bc-panel: #16213f;
+  --bc-ribbon: #d9584c;
 }
 
 a:focus-visible,

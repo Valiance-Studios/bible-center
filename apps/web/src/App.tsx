@@ -9,6 +9,7 @@ import {ReaderPage} from '@/pages/ReaderPage';
 import {SearchPage} from '@/pages/SearchPage';
 import {SignInPage} from '@/pages/SignInPage';
 import {useAuthStore} from '@/stores/auth';
+import {useTranslationSync} from '@/stores/useTranslationSync';
 import {mantineCssVariables, mantineTheme} from '@/theme/mantineTheme';
 
 const router = createBrowserRouter([
@@ -33,6 +34,7 @@ export function App() {
   const init = useAuthStore((state) => state.init);
 
   useEffect(() => init(), [init]);
+  useTranslationSync();
 
   return (
     <MantineProvider theme={mantineTheme} cssVariablesResolver={mantineCssVariables} defaultColorScheme="auto">

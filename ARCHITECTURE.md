@@ -4,22 +4,25 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 ## Project Status
 
-**Current step: annotations.** The mockups are approved.
+**Current step: the My verses page, waiting on approval of its mockups.** All other mockups are approved.
 
 | Area | Status |
 | --- | --- |
 | Monorepo, tooling, tests, env files, Firebase and App Check wiring, deploy check | Done |
-| Allowlist rule, default-deny Firestore rules | Done, not yet deployed |
+| Firestore rules: default deny, allowlist, user settings, annotations | Built. Deploy after merging annotations; see [Current State](#current-state) |
 | Topic score formula (`packages/core/src/topicScore.ts`) | Done, not yet used by any feature |
-| Design mockups | Approved |
+| Design mockups | Approved, except My verses |
 | Sign-in and registration | Built. Google sign-in is confirmed on the hosted site; email registration is tested against the emulators only |
 | App layout: app bar, thumb index, phone menu, light and dark mode | Built |
 | Home page | Built with a fixed verse. Search and topics are added with those features |
 | Verse of the Day | Planned |
 | Site icon (tab and bookmark) | Built |
-| Reader (BSB, KJV), translation switching | Built. The mockup's annotation tools and word panel come with those features |
+| Reader (BSB, KJV), translation switching | Built. The mockup's word panel comes with Hebrew/Greek study |
 | Reference and phrase search | Built |
-| Annotations | Planned |
+| Annotations: highlights, bookmarks, notes, on verses or ranges | Built |
+| Translation choice saved to the account | Built |
+| My verses page | Mockups await approval, then build |
+| About dialog | Planned, with no mockup yet. `CLAUDE.md` expects it, as a shorter version of the README with data credits |
 | Topic search, voting, reports | Planned |
 | Hebrew/Greek study | Planned |
 | AI topic suggestions | Planned as the last V1 step |
@@ -30,22 +33,49 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 Last updated November 7, 2026.
 
-- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon and reader are merged. Search is in a pull request from `feature/search`. Check what has merged before starting new work.
-- **Hosted project:** `vs-bible-center-dev`. The foundation and Firestore rules are deployed. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
+- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon, reader and search are merged. Annotations are in a pull request from `feature/annotations`. Check what has merged before starting new work.
+- **Hosted project:** `vs-bible-center-dev`. The live site was last deployed by the owner during sign-in testing, so it lags `main`. **Annotations need their rules deployed:** after merging, run `npm run deploy`, moving the debug token out of `apps/web/.env.staging.local` first. Until then, the live rules reject annotation writes. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
 - **Set up in the project:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. `allowedUsers/bobbyjuba@gmail.com` exists.
 - **`gcloud` and Firebase CLI account:** `broden@valiance-studios.com`.
 
 ### Next Steps
 
-Build features one branch at a time, from `main` or from the latest unmerged branch: annotations, topic search and voting, Verse of the Day, Hebrew/Greek study, then AI suggestions.
+Build features one branch at a time, from `main` or from the latest unmerged branch, in this order:
+
+1. **GitHub Actions CI:** add `.github/workflows/ci.yml`, copied from `schuetz-driving-school`. It runs on pull requests and pushes to `main`, with a `checks` job (lint, type-check, build, unit tests) and an `emulator-tests` job (rules and E2E tests, with Java and the emulator cache). Change the failure artifact's path to `apps/web/playwright-report/`, as this repository's Playwright config lives in `apps/web`.
+2. **My verses page:** one signed-in page listing all of a user's highlights, bookmarks and notes, reached from the account and phone menus. It needs its mockups approved first, and a new query listing all of a user's annotations.
+3. **Topic search, voting and reports:** build the OpenBible data script, the topic page, and the topic link and list on the search and home pages.
+4. **Verse of the Day:** `dailyVerses`, `admins`, the admin dialog and the automatic list.
+5. **Hebrew/Greek study:** the reader's word panel, using STEPBible data.
+6. **About dialog and final polish.**
+7. **AI suggestions:** the first Cloud Function.
+8. **ESV:** once Crossway approves the key.
+
+After V1: boards, plugins, and possibly embeddings for search by meaning.
 
 ### Open Items
 
-- An Anthropic API key, a Secret Manager entry for it, and a $10 monthly spend limit are needed at the AI step.
+Waiting on the owner:
+
+- Approve the My verses mockups.
 - Crossway's decision on the ESV API key. Once approved, the owner adds the key to Secret Manager and shares the secret's name.
+- Choose whether to keep the KJV source, the Pure Cambridge Edition from OpenBible, or swap to one with a clearer license statement. Review the UK Crown patent before a wider launch; see [Translations](#translations).
+- Review the Verse of the Day automatic list when it is built.
+- Test registering with a real email, including the confirmation and password reset emails. These have only run against the emulators.
+
+To do when reached:
+
+- An Anthropic API key, a Secret Manager entry for it, and a $10 monthly spend limit are needed at the AI step.
 - App Check is not enforced on any service yet. See [DEPLOYMENT.md](docs/DEPLOYMENT.md#enforcement).
-- The main bundle is about 1.1 MB because every page loads Firebase and Mantine. Signed-out reading should not need Firestore or Auth up front, so split them out when the reader is built.
-- The Verse of the Day automatic list needs the owner's review before launch.
+- The main bundle is about 1.2 MB because every page loads Firebase and Mantine. Signed-out reading should not need Firestore or Auth up front, so split them out.
+- Add a Content Security Policy once the app's external origins are settled.
+- Check the first phrase search on a real phone, and move indexing to a Web Worker if it is slow.
+- The 10-character password minimum is only enforced in the app. Firebase's password policy could enforce it server-side.
+- Topics created by users will need moderation before the allowlist is removed, as will anything else users can make public.
+
+### Resuming in a New Session
+
+Start with "Starting a Session" in `CLAUDE.md`, then the [Mockups](#mockups) section. Everything needed is in this repository, except the mockups, which live on the canvas linked there, and two local items: `apps/web/.env.staging.local`, which holds this machine's App Check debug token, and the owner's Google Cloud login. See [DEVELOPMENT.md](docs/DEVELOPMENT.md) to set up a new machine.
 
 ## Mockups
 
@@ -67,6 +97,9 @@ Build features one branch at a time, from `main` or from the latest unmerged bra
 | `SearchPhrase.dc.html` | Search results for a paraphrase, an exact phrase, and a word that is also a topic |
 | `SearchEmpty.dc.html` | A search with no matches |
 | `PhoneSearch.dc.html` | Search results on a phone |
+| `MyVerses.dc.html` | All of a user's highlights, bookmarks and notes, with filters and ordering (awaiting approval) |
+| `MyVersesEmpty.dc.html` | My verses with nothing saved yet (awaiting approval) |
+| `PhoneMyVerses.dc.html` | My verses on a phone (awaiting approval) |
 
 The canvas is the source of truth for the design. To work from it in a new session, read `project/canvas.json` and any `project/<artboard>` from that URL with the Artifact tool. The design language is in [UI.md](docs/UI.md#design-language).
 
@@ -159,7 +192,7 @@ NIV and NKJV are out of scope: both need paid or publisher licensing.
 
 **KJV outside the US:** in the United Kingdom the KJV remains under a perpetual Crown patent, administered by Cambridge University Press, even though it is public domain elsewhere. The site is reachable from the UK, so review this before any wider launch. The source file brackets words its translators added; the build removes the brackets and keeps the words.
 
-The default is BSB until a visitor picks another translation, which is remembered in that browser (`apps/web/src/stores/translation.ts`). Saving it to a signed-in account, so it follows them between devices, comes with annotations. ESV is not the default because its limits are shared by all users (60 requests a minute, 5,000 a day).
+The default is BSB until a visitor picks another translation, which is remembered in that browser (`apps/web/src/stores/translation.ts`). For allowlisted users it is also saved to `users/{uid}`, so it follows them between devices (`apps/web/src/stores/useTranslationSync.ts`). ESV is not the default because its limits are shared by all users (60 requests a minute, 5,000 a day).
 
 ### ESV Rules
 
@@ -220,6 +253,47 @@ flowchart TD
 - **ESV** cannot be indexed because of the cache limit, so phrase search only covers translations offering `verses.json`.
 
 Indexing takes about 300 ms on a laptop and happens once per translation, and most searches take under 40 ms. It runs on the main thread, so move it to a Web Worker if it proves noticeable on phones. Selecting a phrase result opens the verse in the reader, scrolled to and marked via `#v<verse>`.
+
+## Annotations
+
+Allowlisted users can highlight, bookmark and add notes to a verse or a range of verses within a chapter. Annotations store verse ids rather than text, so they appear in every translation and copy no scripture into Firestore.
+
+```mermaid
+erDiagram
+  USER ||--o| SETTINGS : "users/{uid}"
+  USER ||--o{ ANNOTATION : "users/{uid}/annotations/{id}"
+  SETTINGS {
+    string translationId
+  }
+  ANNOTATION {
+    string type "highlight, bookmark or note"
+    string chapterId "bbccc"
+    string startVerse "bbcccvvv"
+    string endVerse "bbcccvvv"
+    string text "notes only, up to 2000 characters"
+    timestamp createdAt
+    timestamp updatedAt
+  }
+```
+
+```mermaid
+stateDiagram-v2
+  direction LR
+  [*] --> None
+  None --> OneVerse: tap a verse
+  OneVerse --> None: tap it again
+  OneVerse --> Range: tap another verse
+  Range --> OneVerse: tap any verse
+  OneVerse --> None: annotate or clear
+  Range --> None: annotate or clear
+```
+
+- **Selecting:** `selectVerse` in `packages/core/src/annotations.ts` implements this state diagram, for taps and for the verse number buttons, which are how keyboards reach it. Dragging across words to copy them does not select a verse.
+- **Reading a chapter:** `useChapterAnnotations` queries by `chapterId`, the first five digits of a verse id. A range cannot cross chapters, since the reader shows one at a time.
+- **Toggling:** if a selection overlaps any highlight or bookmark, the action removes every one it touches, even if it extends beyond the selection. Otherwise it adds one. Selecting over a note opens that note for editing.
+- **Rules:** `firestore.rules` limits access to the owner on the allowlist, with a verified email. It also validates every field, requires server timestamps, keeps both ends of a range in the chapter, and only lets a note's text change. `tests/rules/users.spec.ts` covers this.
+- **Loading:** actions stay disabled until a chapter's annotations load, since they cannot know what is already marked, and could add a duplicate instead of removing. Offline, the Firestore SDK answers queries from its empty cache instead of failing, so `listChapterAnnotations` treats a cached answer as a failure and retries with backoff. That way an outage shows an error rather than looking like having no annotations.
+- **Limits:** the rules do not cap how many annotations a user can create, which is worth revisiting before the allowlist is removed.
 
 ## Verse of the Day
 
@@ -387,6 +461,7 @@ Before finishing a change, check whether it touches a source below, and update t
 | [System Overview](#system-overview) | `firebase.json`, `apps/web/src/firebase/`, `functions/` | Partly built |
 | [Reading Flow](#reading-flow) | `apps/web/src/pages/ReaderPage.tsx`, `apps/web/src/bible/translations.ts`, `scripts/build-bible-data.ts` | Built, ESV planned |
 | [Search](#search) | `apps/web/src/pages/SearchPage.tsx`, `packages/core/src/references.ts`, `apps/web/src/bible/phraseSearch.ts`, `scripts/build-bible-data.ts` | Built, topic link planned |
+| [Annotations](#annotations), data model and selection | `firestore.rules`, `packages/core/src/annotations.ts`, `apps/web/src/firebase/annotations.ts`, `apps/web/src/firebase/settings.ts` | Built |
 | [Verse of the Day](#verse-of-the-day) | The home page, `dailyVerses` and `admins` rules, the automatic list | Planned |
 | [Topic Search](#topic-search) | Topic search, `packages/core/src/topicScore.ts`, `suggestVerses` | Planned |
 | [Authentication and Access](#authentication-and-access) | `firestore.rules`, `apps/web/src/stores/auth.ts`, `apps/web/src/pages/SignInPage.tsx` | Built |

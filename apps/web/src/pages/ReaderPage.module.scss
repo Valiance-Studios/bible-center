@@ -1,6 +1,7 @@
 .reading {
+  position: relative;
   box-sizing: border-box;
-  max-width: 696px;
+  max-width: 740px;
   padding: 28px 28px 64px 56px;
 
   @media (max-width: 900px) {
@@ -14,7 +15,14 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
+  // Leaves room for the bookmark ribbon.
   margin-bottom: 28px;
+  padding-right: 32px;
+}
+
+.chapterArrows {
+  display: flex;
+  gap: 10px;
 }
 
 .chapterNav,

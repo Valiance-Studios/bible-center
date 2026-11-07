@@ -4,12 +4,14 @@ A free, one-stop Bible resource: read the Bible, search it, study the original l
 
 > **Status:** early development. See [Project Status](ARCHITECTURE.md#project-status).
 
-## Planned Features
+## Features
+
+Some of these are still being built; see [Project Status](ARCHITECTURE.md#project-status).
 
 - **Verse of the Day** on the home page.
 - **Read** the Bible and switch between translations.
 - **Search** by reference, such as `John 1:1; Acts 2:3-4`, or by a phrase you remember.
-- **Annotate** with highlights and bookmarks when signed in.
+- **Annotate** verses and ranges with highlights, bookmarks and notes when signed in, and keep them in every translation.
 - **Study** the Hebrew and Greek behind the English.
 - **Explore topics** by asking "What does the Bible say about ___?", with results ranked by community upvotes.
 - **Build boards** to gather related photos, notes and videos (after the first release).

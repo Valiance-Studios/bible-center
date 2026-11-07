@@ -8,8 +8,8 @@ import {Alert, Button, Loader, NativeSelect} from '@mantine/core';
 import {chapterPath} from '@/bible/paths';
 import {chapterQuery} from '@/bible/queries';
 import {findTranslation} from '@/bible/translations';
+import {ChapterVerses} from '@/components/reader/ChapterVerses';
 import {TranslationSelect} from '@/components/TranslationSelect';
-import {VerseText} from '@/components/VerseText';
 import {useTranslationStore} from '@/stores/translation';
 import classes from './ReaderPage.module.scss';
 
@@ -59,8 +59,10 @@ function Chapter({reference}: {reference: ChapterRef}) {
           onChange={(event) => void navigate(`/read/${book.slug}/${event.currentTarget.value}`)}
         />
         <TranslationSelect />
-        <ChapterLink target={previousChapter(reference)} label="Previous chapter" path="M15 5l-7 7 7 7" />
-        <ChapterLink target={nextChapter(reference)} label="Next chapter" path="M9 5l7 7-7 7" />
+        <div className={classes.chapterArrows}>
+          <ChapterLink target={previousChapter(reference)} label="Previous chapter" path="M15 5l-7 7 7 7" />
+          <ChapterLink target={nextChapter(reference)} label="Next chapter" path="M9 5l7 7-7 7" />
+        </div>
       </div>
 
       <h1 className={classes.title}>{title}</h1>
@@ -76,9 +78,13 @@ function Chapter({reference}: {reference: ChapterRef}) {
 
       {data && (
         <>
-          {data.verses.map(({verse, text}) => (
-            <VerseText key={verse} id={`v${verse}`} verse={verse} text={text} isTarget={hash === `#v${verse}`} />
-          ))}
+          {/* Keyed by chapter so a selection does not carry over to the next one. */}
+          <ChapterVerses
+            key={`${book.slug}-${chapter}`}
+            reference={reference}
+            verses={data.verses}
+            targetVerse={hash.startsWith('#v') ? Number(hash.slice(2)) : null}
+          />
           <p className={classes.credit}>{translation.credit}</p>
         </>
       )}
