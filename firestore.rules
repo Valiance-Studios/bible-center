@@ -1,0 +1,16 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Everything not matched below is denied, so each new collection must opt in with its own rules.
+
+    // The allowlist, keyed by lowercase email and managed in the Firebase console. Users may only check
+    // themselves. The email must be verified: anyone can register a password account with someone else's
+    // address, and it stays unverified until they prove they own it.
+    match /allowedUsers/{email} {
+      allow get: if request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() == email;
+    }
+  }
+}

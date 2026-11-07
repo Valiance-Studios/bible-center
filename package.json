@@ -1,0 +1,56 @@
+{
+  "name": "bible-center",
+  "version": "0.1.0",
+  "private": true,
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=26.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @bible-center/web",
+    "dev:staging": "npm run dev:staging -w @bible-center/web",
+    "build": "npm run type-check && npm run build -w @bible-center/web",
+    "build:staging": "npm run type-check && npm run build:staging -w @bible-center/web",
+    "type-check": "tsc --build",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test:unit": "vitest",
+    "test:emulator": "node scripts/with-emulators.ts --project demo-bible-center --only firestore -- vitest run --config vitest.emulator.config.ts",
+    "test:e2e": "node scripts/with-emulators.ts --project demo-bible-center --only auth,firestore -- playwright test --config apps/web/playwright.config.ts",
+    "emulators": "node scripts/with-emulators.ts --keep-running --project demo-bible-center --only auth,firestore -- node scripts/seed-emulators.ts",
+    "emulators:stop": "node scripts/stop-emulators.ts",
+    "deploy": "firebase deploy --project dev --only hosting,firestore",
+    "deploy:hosting": "firebase deploy --project dev --only hosting",
+    "deploy:rules": "firebase deploy --project dev --only firestore"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.14.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "firebase": "^13.2.0",
+    "firebase-tools": "^15.35.0",
+    "globals": "^17.14.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
+  },
+  "overrides": {
+    "@firebase/firestore": {
+      "@grpc/grpc-js": "^1.14.6"
+    },
+    "@google-cloud/pubsub@5": {
+      "@opentelemetry/core": "^2.8.0"
+    },
+    "gaxios@6": {
+      "uuid": "^11.1.1"
+    }
+  }
+}
