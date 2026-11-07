@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "demo-bible-center",
+    "dev": "vs-bible-center-dev"
+  }
+}
