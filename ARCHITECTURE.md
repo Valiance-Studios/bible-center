@@ -4,14 +4,15 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 ## Project Status
 
-**Current step: the My verses page, waiting on approval of its mockups.** All other mockups are approved.
+**Current step: the My verses page.** All mockups are approved.
 
 | Area | Status |
 | --- | --- |
 | Monorepo, tooling, tests, env files, Firebase and App Check wiring, deploy check | Done |
-| Firestore rules: default deny, allowlist, user settings, annotations | Built. Deploy after merging annotations; see [Current State](#current-state) |
+| GitHub Actions CI (`.github/workflows/ci.yml`) | Built in `feature/ci`. Its first run is on that branch's pull request |
+| Firestore rules: default deny, allowlist, user settings, annotations | Built and deployed |
 | Topic score formula (`packages/core/src/topicScore.ts`) | Done, not yet used by any feature |
-| Design mockups | Approved, except My verses |
+| Design mockups | Approved |
 | Sign-in and registration | Built. Google sign-in is confirmed on the hosted site; email registration is tested against the emulators only |
 | App layout: app bar, thumb index, phone menu, light and dark mode | Built |
 | Home page | Built with a fixed verse. Search and topics are added with those features |
@@ -21,7 +22,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | Reference and phrase search | Built |
 | Annotations: highlights, bookmarks, notes, on verses or ranges | Built |
 | Translation choice saved to the account | Built |
-| My verses page | Mockups await approval, then build |
+| My verses page | Mockups approved. Next to build |
 | About dialog | Planned, with no mockup yet. `CLAUDE.md` expects it, as a shorter version of the README with data credits |
 | Topic search, voting, reports | Planned |
 | Hebrew/Greek study | Planned |
@@ -33,8 +34,8 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 Last updated November 7, 2026.
 
-- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon, reader and search are merged. Annotations are in a pull request from `feature/annotations`. Check what has merged before starting new work.
-- **Hosted project:** `vs-bible-center-dev`. The live site was last deployed by the owner during sign-in testing, so it lags `main`. **Annotations need their rules deployed:** after merging, run `npm run deploy`, moving the debug token out of `apps/web/.env.staging.local` first. Until then, the live rules reject annotation writes. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
+- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon, reader, search and annotations are merged. CI is in a pull request from `feature/ci`. Check what has merged before starting new work.
+- **Hosted project:** `vs-bible-center-dev`. The owner deploys it and deployed the annotation rules on November 6, 2026, while testing annotations. Before running `npm run deploy`, move the debug token out of `apps/web/.env.staging.local`, as the deploy check refuses it. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
 - **Set up in the project:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. `allowedUsers/bobbyjuba@gmail.com` exists.
 - **`gcloud` and Firebase CLI account:** `broden@valiance-studios.com`.
 
@@ -42,14 +43,13 @@ Last updated November 7, 2026.
 
 Build features one branch at a time, from `main` or from the latest unmerged branch, in this order:
 
-1. **GitHub Actions CI:** add `.github/workflows/ci.yml`, copied from `schuetz-driving-school`. It runs on pull requests and pushes to `main`, with a `checks` job (lint, type-check, build, unit tests) and an `emulator-tests` job (rules and E2E tests, with Java and the emulator cache). Change the failure artifact's path to `apps/web/playwright-report/`, as this repository's Playwright config lives in `apps/web`.
-2. **My verses page:** one signed-in page listing all of a user's highlights, bookmarks and notes, reached from the account and phone menus. It needs its mockups approved first, and a new query listing all of a user's annotations.
-3. **Topic search, voting and reports:** build the OpenBible data script, the topic page, and the topic link and list on the search and home pages.
-4. **Verse of the Day:** `dailyVerses`, `admins`, the admin dialog and the automatic list.
-5. **Hebrew/Greek study:** the reader's word panel, using STEPBible data.
-6. **About dialog and final polish.**
-7. **AI suggestions:** the first Cloud Function.
-8. **ESV:** once Crossway approves the key.
+1. **My verses page:** one signed-in page listing all of a user's highlights, bookmarks and notes, reached from the account and phone menus, built to its approved mockups. It needs a new query listing all of a user's annotations.
+2. **Topic search, voting and reports:** build the OpenBible data script, the topic page, and the topic link and list on the search and home pages.
+3. **Verse of the Day:** `dailyVerses`, `admins`, the admin dialog and the automatic list.
+4. **Hebrew/Greek study:** the reader's word panel, using STEPBible data.
+5. **About dialog and final polish.**
+6. **AI suggestions:** the first Cloud Function.
+7. **ESV:** once Crossway approves the key.
 
 After V1: boards, plugins, and possibly embeddings for search by meaning.
 
@@ -57,7 +57,6 @@ After V1: boards, plugins, and possibly embeddings for search by meaning.
 
 Waiting on the owner:
 
-- Approve the My verses mockups.
 - Crossway's decision on the ESV API key. Once approved, the owner adds the key to Secret Manager and shares the secret's name.
 - Choose whether to keep the KJV source, the Pure Cambridge Edition from OpenBible, or swap to one with a clearer license statement. Review the UK Crown patent before a wider launch; see [Translations](#translations).
 - Review the Verse of the Day automatic list when it is built.
@@ -97,9 +96,9 @@ Start with "Starting a Session" in `CLAUDE.md`, then the [Mockups](#mockups) sec
 | `SearchPhrase.dc.html` | Search results for a paraphrase, an exact phrase, and a word that is also a topic |
 | `SearchEmpty.dc.html` | A search with no matches |
 | `PhoneSearch.dc.html` | Search results on a phone |
-| `MyVerses.dc.html` | All of a user's highlights, bookmarks and notes, with filters and ordering (awaiting approval) |
-| `MyVersesEmpty.dc.html` | My verses with nothing saved yet (awaiting approval) |
-| `PhoneMyVerses.dc.html` | My verses on a phone (awaiting approval) |
+| `MyVerses.dc.html` | All of a user's highlights, bookmarks and notes, with filters and ordering |
+| `MyVersesEmpty.dc.html` | My verses with nothing saved yet |
+| `PhoneMyVerses.dc.html` | My verses on a phone |
 
 The canvas is the source of truth for the design. To work from it in a new session, read `project/canvas.json` and any `project/<artboard>` from that URL with the Artifact tool. The design language is in [UI.md](docs/UI.md#design-language).
 
@@ -437,6 +436,8 @@ flowchart LR
   dev["npm run dev"] -- ".env.development" --> emulators["Local emulators<br/>demo-bible-center"]
   e2e["npm run test:e2e"] -- ".env.development" --> emulators
   rules["npm run test:emulator"] --> emulators
+  ci["GitHub Actions ci.yml<br/>pull requests, pushes to main"] --> e2e
+  ci --> rules
   staging["npm run dev:staging"] -- ".env.staging<br/>.env.staging.local" --> project["vs-bible-center-dev"]
   deploy["npm run deploy"] --> check["check-firebase-config.ts"]
   check --> build["vite build --mode staging"]
@@ -465,4 +466,4 @@ Before finishing a change, check whether it touches a source below, and update t
 | [Verse of the Day](#verse-of-the-day) | The home page, `dailyVerses` and `admins` rules, the automatic list | Planned |
 | [Topic Search](#topic-search) | Topic search, `packages/core/src/topicScore.ts`, `suggestVerses` | Planned |
 | [Authentication and Access](#authentication-and-access) | `firestore.rules`, `apps/web/src/stores/auth.ts`, `apps/web/src/pages/SignInPage.tsx` | Built |
-| [Environments and Delivery](#environments-and-delivery) | `package.json`, `apps/web/.env.*`, `firebase.json`, `scripts/` | Built |
+| [Environments and Delivery](#environments-and-delivery) | `package.json`, `apps/web/.env.*`, `firebase.json`, `scripts/`, `.github/workflows/ci.yml` | Built |
