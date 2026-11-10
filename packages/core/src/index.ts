@@ -1,4 +1,5 @@
 export type {Annotation, AnnotationOrder, AnnotationType, VerseSpan} from './annotations';
+export type {DailyVerse, DailyVerseList} from './dailyVerses';
 export type {BibleBook, ChapterRef, ChapterText, SearchableVerse, Verse} from './bibleBooks';
 export type {BibleSection} from './bibleSections';
 export type {VerseReference} from './references';
@@ -9,6 +10,7 @@ export type {VerseId, VerseLocation} from './verseId';
 export type {GrammarFile, LexiconEntry, LexiconFile, VerseWord, WordFile, WordFileLanguage, WordFileWord, WordLanguage, WordTranslation} from './words';
 
 export {chapterIdOf, NOTE_MAX_LENGTH, selectVerse, spanContains, spanOf, spansOverlap, verseIdIn} from './annotations';
+export {automaticDailyVerse, DAILY_VERSE_COUNT, dateKeyOf, dayOfLeapYear, isDateKey} from './dailyVerses';
 export {BIBLE_BOOKS, chapterTitle, isOldTestament, nextChapter, parseChapterRef, previousChapter} from './bibleBooks';
 export {BIBLE_SECTIONS} from './bibleSections';
 export {formatReference, parseReferences, referenceOf} from './references';

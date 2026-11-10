@@ -1,0 +1,52 @@
+.label {
+  margin: 0 0 20px;
+  color: var(--bc-muted);
+  font-size: 15px;
+}
+
+.verse,
+.loading {
+  max-width: 17em;
+  margin: 0;
+  font-family: 'Literata', serif;
+  font-size: clamp(29px, 4.6vw, 56px);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 20px;
+  margin: 24px 0 0;
+}
+
+.reference {
+  color: var(--bc-rubric);
+  font-size: 17px;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.quiet {
+  padding: 10px 0;
+  border: 0;
+  background: none;
+  color: var(--bc-accent);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.error p {
+  margin: 0 0 12px;
+  font-size: 16px;
+}

@@ -122,7 +122,7 @@ export function PeoplePage() {
         <li>
           <strong>Admins</strong>
           {' '}
-          can also manage people.
+          can also set the verse of the day and manage people.
         </li>
       </ul>
       <RoleGate canSee={isAdmin} audience="admins">{(uid) => <PeopleList uid={uid} />}</RoleGate>

@@ -1,11 +1,10 @@
-import type {VerseReference} from '@bible-center/core';
 import type {TranslationProvider} from '@/bible/translations';
 import type {TopicSpan} from '@/firebase/topics';
 
 import {useState} from 'react';
-import {formatReference, parseReferences, topicVerseKey, verseIdIn} from '@bible-center/core';
+import {topicVerseKey} from '@bible-center/core';
 import {Alert, Button, Group, Modal, Text, TextInput} from '@mantine/core';
-import {usePassage} from '@/bible/usePassage';
+import {useReferenceSpan} from '@/bible/useReferenceSpan';
 import classes from './AddVerseDialog.module.scss';
 
 interface AddVerseDialogProps {
@@ -21,46 +20,17 @@ interface AddVerseDialogProps {
   onClose: () => void;
 }
 
-/** One reference, or null if the text is not exactly one. */
-function parseOneReference(text: string): VerseReference | null {
-  const references = text.trim() ? parseReferences(text) : null;
-
-  return references?.length === 1 ? references[0] ?? null : null;
-}
-
 /** Adds a verse or passage to a topic, which counts as the person's upvote. */
 export function AddVerseDialog({topicName, existingKeys, removedKeys, translation, isSaving, onAdd, onClose}: AddVerseDialogProps) {
   const [text, setText] = useState('');
   const [hasError, setHasError] = useState(false);
-  const reference = parseOneReference(text);
-  const passage = usePassage(reference, translation);
-  const isLoaded = reference !== null && !passage.isPending && !passage.isError;
-  const firstSection = passage.sections[0];
-  const lastSection = passage.sections.at(-1);
-  const firstVerse = firstSection?.verses[0]?.verse;
-  const lastVerse = lastSection?.verses.at(-1)?.verse;
-  // Every verse it names must exist, so "John 1:1-99" is not stored as a passage that runs past the chapter.
-  const isWhole = isLoaded
-    && firstVerse !== undefined && lastVerse !== undefined
-    && (reference.startVerse === null || reference.startVerse === firstVerse)
-    && (reference.endVerse === null || reference.endVerse === lastVerse);
-  const span: TopicSpan | null = reference && isWhole && firstSection && lastSection
-    ? {
-        startVerse: verseIdIn({book: reference.book, chapter: firstSection.chapter}, firstVerse),
-        endVerse: verseIdIn({book: reference.book, chapter: lastSection.chapter}, lastVerse),
-      }
-    : null;
-  const title = reference ? formatReference(reference) : '';
+  const {span, title, passage, problem: referenceProblem} = useReferenceSpan(text, translation);
   const spanKey = span ? topicVerseKey(span.startVerse, span.endVerse) : null;
   const isListed = spanKey !== null && existingKeys.has(spanKey);
   const isRemoved = spanKey !== null && removedKeys.has(spanKey);
-  let problem: string | null = null;
+  let problem = referenceProblem;
 
-  if (text.trim() && !reference) {
-    problem = 'Enter one reference, such as Romans 12:15 or Psalm 23:1-4.';
-  } else if (isLoaded && !isWhole) {
-    problem = `There is no ${title} in the ${translation.name}.`;
-  } else if (isListed) {
+  if (isListed) {
     problem = `${title} is already on this topic. Upvote it there instead.`;
   } else if (isRemoved) {
     problem = `A reviewer removed ${title} from this topic.`;

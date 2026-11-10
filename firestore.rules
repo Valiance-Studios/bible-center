@@ -117,6 +117,26 @@ service cloud.firestore {
       }
     }
 
+    // The verse of the day an admin chose for a date, keyed `YYYY-MM-DD`. A date without one gets the automatic
+    // list's pick, so choosing automatically deletes it. Anyone can read a date, but not list them.
+    // Keep in sync with DailyVerse and isDateKey in packages/core/src/dailyVerses.ts.
+    match /dailyVerses/{date} {
+      allow get: if true;
+
+      allow create, update: if isAdmin()
+        && date.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+        && request.resource.data.keys().hasOnly(['startVerse', 'endVerse', 'setBy', 'setAt'])
+        && request.resource.data.keys().hasAll(['startVerse', 'endVerse', 'setBy', 'setAt'])
+        && isVerseId(request.resource.data.startVerse)
+        && isVerseId(request.resource.data.endVerse)
+        && request.resource.data.startVerse <= request.resource.data.endVerse
+        && request.resource.data.startVerse[0:2] == request.resource.data.endVerse[0:2]
+        && request.resource.data.setBy == request.auth.uid
+        && request.resource.data.setAt == request.time;
+
+      allow delete: if isAdmin();
+    }
+
     // Topics. Keep in sync with packages/core/src/topics.ts and apps/web/src/firebase/topics.ts.
     // OpenBible's topics are static files; these documents hold Bible Center's own votes, and the topics people start.
 

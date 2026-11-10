@@ -35,6 +35,7 @@ All are committed, so a normal build does not regenerate them.
 
 - `npm run bible-data` rebuilds `apps/web/public/bible` from its online sources. Only add public-domain text; see [Translations](../ARCHITECTURE.md#translations).
 - `npm run topic-data` rebuilds `apps/web/public/topic-data` from OpenBible.info's topic votes; see [OpenBible Data](../ARCHITECTURE.md#openbible-data).
+- `npm run daily-verses` rebuilds `apps/web/public/daily-verses.json`, the Verse of the Day's automatic list, from the committed topic data and BSB text, so run it after `npm run topic-data`; see [Verse of the Day](../ARCHITECTURE.md#verse-of-the-day).
 - `npm run word-data` rebuilds `apps/web/public/word-data` from a pinned commit of STEPBible's data; see [Original Languages](../ARCHITECTURE.md#original-languages).
 - `npm run icons` rebuilds the icon PNGs in `apps/web/public` from `favicon.svg`.
 
