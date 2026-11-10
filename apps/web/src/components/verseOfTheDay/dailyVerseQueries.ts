@@ -1,9 +1,7 @@
 import type {DailyVerse, DailyVerseList} from '@bible-center/core';
-import type {TranslationProvider} from '@/bible/translations';
 
-import {automaticDailyVerse, formatReference, referenceOf} from '@bible-center/core';
+import {automaticDailyVerse} from '@bible-center/core';
 import {useQuery} from '@tanstack/react-query';
-import {usePassage} from '@/bible/usePassage';
 import {getChosenDailyVerse} from '@/firebase/dailyVerses';
 import {fetchStaticJson} from '@/staticData';
 
@@ -34,18 +32,6 @@ export function useAutomaticDailyVerse(date: string) {
   const list = useQuery(automaticListQuery);
 
   return {...list, data: list.data ? automaticDailyVerse(list.data, date) : undefined};
-}
-
-/** A daily verse's text in a translation, and how to label it, such as "Lamentations 3:22–23, BSB". */
-export function useDailyVerseText(verse: DailyVerse | null | undefined, translation: TranslationProvider) {
-  const reference = verse ? referenceOf(verse) : null;
-  const passage = usePassage(reference, translation);
-
-  return {
-    reference,
-    label: reference ? `${formatReference(reference)}, ${translation.abbreviation}` : '',
-    passage,
-  };
 }
 
 export interface VerseOfTheDay {

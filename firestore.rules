@@ -115,6 +115,29 @@ service cloud.firestore {
           && isValidAnnotation(request.resource.data)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'updatedAt']);
       }
+
+      // The verses someone is memorizing, keyed like a topic's verses. Keep in sync with MemoryVerse and
+      // MEMORY_STATUSES in packages/core/src/memorize.ts. Only the status and when it was last practiced change.
+      match /memoryVerses/{key} {
+        allow read, delete: if isAllowedOwner(uid);
+
+        allow create: if isAllowedOwner(uid)
+          && request.resource.data.keys().hasOnly(['startVerse', 'endVerse', 'status', 'createdAt', 'practicedAt'])
+          && request.resource.data.keys().hasAll(['startVerse', 'endVerse', 'status', 'createdAt', 'practicedAt'])
+          && isVerseId(request.resource.data.startVerse)
+          && isVerseId(request.resource.data.endVerse)
+          && request.resource.data.startVerse <= request.resource.data.endVerse
+          && request.resource.data.startVerse[0:2] == request.resource.data.endVerse[0:2]
+          && key == verseKeyOf(request.resource.data)
+          && request.resource.data.status == 'learning'
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.practicedAt == request.time;
+
+        allow update: if isAllowedOwner(uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'practicedAt'])
+          && request.resource.data.status in ['learning', 'memorized']
+          && request.resource.data.practicedAt == request.time;
+      }
     }
 
     // The verse of the day an admin chose for a date, keyed `YYYY-MM-DD`. A date without one gets the automatic

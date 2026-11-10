@@ -1,9 +1,10 @@
-import type {Annotation, AnnotationType, ChapterRef, Verse, VerseSpan} from '@bible-center/core';
+import type {Annotation, AnnotationType, ChapterRef, Verse, VerseReference, VerseSpan} from '@bible-center/core';
 
 import {useState} from 'react';
 import {Link} from 'react-router';
 import {chapterIdOf, formatReference, selectVerse, spanContains, spanOf, spansOverlap, verseIdIn} from '@bible-center/core';
 import {Alert} from '@mantine/core';
+import {memorizePath} from '@/bible/paths';
 import {VerseText} from '@/components/VerseText';
 import {useAuthStore} from '@/stores/auth';
 import {NoteDialog} from './NoteDialog';
@@ -53,13 +54,14 @@ export function ChapterVerses({reference, verses, targetVerse, selection, onSele
   const bookmarks = ofType(annotations, 'bookmark');
   const notes = ofType(annotations, 'note');
 
-  const describe = ({start, end}: VerseSpan) => formatReference({
+  const referenceTo = ({start, end}: VerseSpan): VerseReference => ({
     book: reference.book,
     startChapter: reference.chapter,
     startVerse: start,
     endChapter: reference.chapter,
     endVerse: end,
   });
+  const describe = (span: VerseSpan) => formatReference(referenceTo(span));
 
   function setSelection(next: VerseSpan | null) {
     onSelectionChange(next, null);
@@ -185,6 +187,7 @@ export function ChapterVerses({reference, verses, targetVerse, selection, onSele
                       </button>
                     </>
                   )}
+                  <Link className={classes.tool} to={memorizePath(referenceTo(selection))}>Memorize</Link>
                   <button type="button" className={classes.tool} onClick={() => setSelection(null)}>Clear selection</button>
                 </div>
               </div>

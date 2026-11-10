@@ -4,13 +4,13 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 ## Project Status
 
-**Current step: Verse of the Day, in review** in a pull request from `feature/verse-of-the-day`. Next, scripture memorization.
+**Current step: scripture memorization, in review** in a pull request from `feature/memorization`. Next, the About dialog and final polish, which completes V1.
 
 | Area | Status |
 | --- | --- |
 | Monorepo, tooling, tests, env files, Firebase and App Check wiring, deploy check | Done |
 | GitHub Actions CI (`.github/workflows/ci.yml`) | Built. Runs on pull requests and pushes to `main` |
-| Firestore rules and indexes: default deny, allowlist, user settings, annotations, topics | Built and deployed, including roles and review |
+| Firestore rules and indexes: default deny, allowlist, user settings, annotations, topics, daily verses, memory lists | Built. Deployed through roles and review; daily verses and memory lists need `npm run deploy:rules` |
 | Topic score formula (`packages/core/src/topicScore.ts`) | Done, not yet used by any feature |
 | Design mockups | Approved |
 | Sign-in and registration | Built. Google sign-in is confirmed on the hosted site; email registration is tested against the emulators only |
@@ -23,20 +23,20 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | Annotations: highlights, bookmarks, notes, on verses or ranges | Built |
 | Translation choice saved to the account | Built |
 | My verses page | Built |
-| About dialog | Planned, with no mockup yet. `CLAUDE.md` expects it, as a shorter version of the README with data credits |
+| About dialog | Planned for V1; its mockup is approved. A shorter version of the README with data credits, opened from a footer link |
 | Topic search, voting, reports | Built: topic pages, the Topics page, voting, adding verses, starting topics and reports |
 | Admins and reviewers | Built: roles on the allowlist, the People page for admins, and the Review page for reported verses and new topics |
 | Hebrew/Greek study | Built: the word panel beside the reader, or in a sheet on phones, from STEPBible data |
-| AI topic suggestions | Planned as the last V1 step |
-| ESV | Blocked: Crossway's review of the API key application, applied for November 2026, may take 3-4 weeks |
-| Scripture memorization | Planned for V1, after Verse of the Day. Its details and mockups come first; see [Scope](#scope) |
+| Scripture memorization | Built: flash cards, fading words, and the memory list; see [Memorization](#memorization) |
+| AI topic suggestions | After V1, as the owner decided on November 10, 2026 |
+| ESV | After V1. Crossway's review of the API key application, applied for November 2026, may take 3-4 weeks |
 | Boards, plugins, paraphrase search (embeddings) | After V1 |
 
 ### Current State
 
 Last updated November 10, 2026.
 
-- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon, reader, search, annotations, CI and My verses are merged. Topic search, including voting, admins and reviewers, and Hebrew/Greek study are merged. Verse of the Day is in a pull request from `feature/verse-of-the-day`, and needs its `dailyVerses` rules deployed with `npm run deploy:rules`. Check what has merged before starting new work.
+- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon, reader, search, annotations, CI and My verses are merged. Topic search, including voting, admins and reviewers, Hebrew/Greek study and Verse of the Day are merged. Memorization is in a pull request from `feature/memorization`. The `dailyVerses` and `memoryVerses` rules need deploying with `npm run deploy:rules`. Check what has merged before starting new work.
 - **Hosted project:** `vs-bible-center-dev`. The owner deploys it, and deployed the My verses rules and indexes on November 7, 2026. Before running `npm run deploy`, move the debug token out of `apps/web/.env.staging.local`, as the deploy check refuses it. `npm run deploy:rules` sends the rules and `firestore.indexes.json` and needs no token moved. On November 7, 2026, the owner deployed the roles and review rules and indexes, and the site with admins, reviewers and the word panel, from the unmerged branches; all appear to work. The word panel's Strong's links to STEP Bible are confirmed working. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
 - **Set up in the project:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. `allowedUsers/bobbyjuba@gmail.com` exists, with the `admin` role.
 - **`gcloud` and Firebase CLI account:** `broden@valiance-studios.com`.
@@ -45,12 +45,9 @@ Last updated November 10, 2026.
 
 Build features one branch at a time, from `main` or from the latest unmerged branch, in this order:
 
-1. **Scripture memorization:** flash cards at minimum, possibly speaking the verse aloud; see [Scope](#scope). Settle the details with the owner, then the mockups, before building.
-2. **About dialog and final polish.**
-3. **AI suggestions:** the first Cloud Function.
-4. **ESV:** once Crossway approves the key.
+1. **About dialog and final polish,** which completes V1. The `About` mockup opens it from a footer link.
 
-After V1: boards, plugins, and possibly embeddings for search by meaning.
+After V1: AI topic suggestions (the first Cloud Function), the ESV once Crossway approves the key, boards, plugins, and possibly embeddings for search by meaning.
 
 ### Open Items
 
@@ -64,7 +61,7 @@ Waiting on the owner:
 
 To do when reached:
 
-- An Anthropic API key, a Secret Manager entry for it, and a $10 monthly spend limit are needed at the AI step.
+- An Anthropic API key, a Secret Manager entry for it, and a $10 monthly spend limit are needed at the AI step, after V1.
 - App Check is not enforced on any service yet. See [DEPLOYMENT.md](docs/DEPLOYMENT.md#enforcement).
 - The main bundle is about 1.2 MB because every page loads Firebase and Mantine. Signed-out reading should not need Firestore or Auth up front, so split them out.
 - Add a Content Security Policy once the app's external origins are settled.
@@ -113,6 +110,11 @@ Start with "Starting a Session" in `CLAUDE.md`, then the [Mockups](#mockups) sec
 | `People.dc.html` | Admins add people, set their roles and remove access |
 | `AccountMenuRoles.dc.html` | The account menu for an admin, with Review and People |
 | `PhoneReview.dc.html` | Review on a phone |
+| `Memorize.dc.html` | Memorize: start a verse, and the memory list in its sections, or empty, or signed out |
+| `MemorizeCard.dc.html` | Practicing with a flash card, and the memory list box |
+| `MemorizeFading.dc.html` | Practicing with fading words, in five steps |
+| `PhoneMemorize.dc.html` | A flash card on a phone |
+| `About.dc.html` | The About dialog, from the home page's footer |
 
 The canvas is the source of truth for the design. To work from it in a new session, read `project/canvas.json` and any `project/<artboard>` from that URL with the Artifact tool. The design language is in [UI.md](docs/UI.md#design-language).
 
@@ -131,11 +133,12 @@ Bible Center is a free, public, one-stop Bible resource. The [README](README.md)
 - See the Hebrew and Greek behind the English.
 - "What does the Bible say about ___?" topic search, ranked by community upvotes.
 - Google sign-in and email/password registration, limited to an allowlist for now.
-- Memorize scripture (see below).
+- Memorize scripture with flash cards and fading words, and keep a memory list; see [Memorization](#memorization).
+- An About dialog with the data credits.
+
+**After V1: AI topic suggestions and the ESV.** Both are designed below, and wait until V1 is done.
 
 **After V1: boards.** Signed-in users create titled, infinitely scrolling boards holding photos, text boxes, embedded videos, links to other boards, and titled photo carousels whose navigation wraps in both directions. Items can be tagged and searched. Selecting a result jumps to the item, and for a photo in a carousel, makes that photo active.
-
-**V1, after Verse of the Day: scripture memorization.** Help people memorize a verse. At minimum, something like flash cards: focus on one verse, then hide it or flip it over to test recall. It might use the microphone so people can say the verse aloud. The details are still to be settled with the owner, and it needs mockups before it is built.
 
 **Later, if there is demand: plugins.** Translations and search sit behind interfaces so a plugin system could be added. None is built now.
 
@@ -150,7 +153,7 @@ flowchart LR
   subgraph firebase["Firebase project: vs-bible-center-dev"]
     hosting["Hosting<br/>app and static data"]
     auth["Authentication<br/>Google, email/password"]
-    firestore[("Firestore<br/>allowlist, annotations, votes,<br/>reports, daily verses, AI cache")]
+    firestore[("Firestore<br/>allowlist, annotations, votes, reports,<br/>daily verses, memory lists, AI cache")]
     appcheck["App Check<br/>reCAPTCHA Enterprise"]
     functions["Cloud Functions<br/>(planned)"]
     secrets["Secret Manager<br/>(planned)"]
@@ -515,6 +518,43 @@ Claude Opus 5.5 fills gaps only. OpenBible already covers the common topics.
 
 Estimated cost at the time of the decision is about $0.03 per new topic ($4 / $20 per million input / output tokens, about 500 input and 1,500 output tokens). Replace this with measured numbers once it runs.
 
+## Memorization
+
+Anyone can practice a verse or passage by heart at `/memorize/practice?passage=Psalm 23:1-2`, reached from the Memorize page, the reader's verse tools, or beside the verse of the day. Allowlisted users also keep a memory list.
+
+```mermaid
+flowchart LR
+  reader["Reader verse tools"] -- "memorizePath" --> practice["MemorizePracticePage<br/>useReferenceSpan"]
+  votd["Verse of the day"] -- "memorizePath" --> practice
+  memorize["MemorizePage<br/>start form"] -- "memorizePath" --> practice
+  practice -- "?mode=card" --> card["FlashCard"]
+  practice -- "?mode=fading" --> fading["FadingWords<br/>fadeWords"]
+  card -- "an answer" --> record["recordPractice<br/>if on the list"]
+  fading -- "the last step" --> record
+  practice --> box["MemoryListBox<br/>add, mark memorized"]
+  box --> list[("users/uid/memoryVerses")]
+  record --> list
+  memorize -- "useMemoryList<br/>groupMemoryVerses" --> list
+```
+
+- **Flash card:** the reference, then the verse when turned over, and "Did you have it?" with "Not yet" and "I knew it". A count of answers lasts for the visit only.
+- **Fading words:** `fadeWords` in `packages/core/src/memorize.ts` gives five steps: every word, one in three hidden, two in three, first letters only, then none. Punctuation stays in view, and selecting a blank shows that word.
+- **The passage** is any one reference, checked with `useReferenceSpan`, the same check as adding a verse to a topic, and shown in the selected translation. A psalm's first verse includes its title, as the source text runs them together.
+- **The memory list:** each entry is learning or memorized. A memorized verse is due for review `REVIEW_AFTER_DAYS` (7) after it was last practiced, and `groupMemoryVerses` lists due verses first, then learning, then memorized. Answering the flash card or reaching the last fading step updates `practicedAt` for a verse on the list, so practicing a due verse moves it back among the memorized ones. There is no spaced-repetition schedule beyond this.
+- **Rules:** as with annotations, only the owner on the allowlist with a verified email can read or change their list. An entry is keyed like a topic's verse, starts as learning, and only its `status` and `practicedAt` can change, with `practicedAt` set by the server. `tests/rules/memoryVerses.spec.ts` covers this. Like annotations, the list is not capped in size.
+
+```mermaid
+erDiagram
+  USER ||--o{ MEMORY_VERSE : "users/{uid}/memoryVerses/{key}"
+  MEMORY_VERSE {
+    string startVerse "bbcccvvv"
+    string endVerse "bbcccvvv, same book"
+    string status "learning or memorized"
+    timestamp createdAt
+    timestamp practicedAt "server time, on adding and practicing"
+  }
+```
+
 ## Original Languages
 
 | Data | Source | License |
@@ -690,6 +730,7 @@ Before finishing a change, check whether it touches a source below, and update t
 | [Reading Flow](#reading-flow) | `apps/web/src/pages/ReaderPage.tsx`, `apps/web/src/bible/translations.ts`, `scripts/build-bible-data.ts` | Built, ESV planned |
 | [Search](#search) | `apps/web/src/pages/SearchPage.tsx`, `packages/core/src/references.ts`, `apps/web/src/bible/phraseSearch.ts`, `scripts/build-bible-data.ts` | Built |
 | [Annotations](#annotations), data model, selection and pages | `firestore.rules`, `packages/core/src/annotations.ts`, `apps/web/src/firebase/annotations.ts`, `apps/web/src/firebase/settings.ts`, `firestore.indexes.json`, `apps/web/src/components/annotationQueryKeys.ts`, `apps/web/src/components/myVerses/`, `apps/web/src/pages/MyVersesPage.tsx` | Built |
+| [Memorization](#memorization), flow and data model | `packages/core/src/memorize.ts`, `apps/web/src/firebase/memoryVerses.ts`, `apps/web/src/components/memorize/`, `apps/web/src/pages/MemorizePage.tsx`, `apps/web/src/pages/MemorizePracticePage.tsx`, `firestore.rules` | Built |
 | [Verse of the Day](#verse-of-the-day), choosing and building the list | `packages/core/src/dailyVerses.ts`, `apps/web/src/firebase/dailyVerses.ts`, `apps/web/src/components/verseOfTheDay/`, `scripts/build-daily-verses.ts`, `firestore.rules` | Built |
 | [Topic Search](#topic-search) | `packages/core/src/topicScore.ts`, `packages/core/src/topics.ts`, `apps/web/src/pages/TopicPage.tsx`, `suggestVerses` | Built, AI suggestions planned |
 | [Voting](#voting), data model and upvoting | `firestore.rules`, `firestore.indexes.json`, `apps/web/src/firebase/topics.ts`, `apps/web/src/components/topics/` | Built |

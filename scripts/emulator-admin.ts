@@ -184,3 +184,28 @@ export async function addReport({topic, verseKey, reason, details, createdAt}: S
 
   await request(documentsUrl('reports'), {method: 'POST', headers: ADMIN_HEADERS, body: JSON.stringify({fields})}, `report ${verseKey} on ${topic}`);
 }
+
+export interface SeedMemoryVerse {
+  /** `bbcccvvv`, as in `packages/core/src/verseId.ts`. */
+  startVerse: string;
+  endVerse: string;
+  status: 'learning' | 'memorized';
+  createdAt: Date;
+  practicedAt: Date;
+}
+
+/** Puts verses on someone's memory list, for tests that need them practiced in the past. */
+export async function addMemoryVerses(uid: string, verses: SeedMemoryVerse[]): Promise<void> {
+  await Promise.all(verses.map(({startVerse, endVerse, status, createdAt, practicedAt}) => {
+    const key = startVerse === endVerse ? startVerse : `${startVerse}-${endVerse}`;
+    const fields = {
+      startVerse: {stringValue: startVerse},
+      endVerse: {stringValue: endVerse},
+      status: {stringValue: status},
+      createdAt: {timestampValue: createdAt.toISOString()},
+      practicedAt: {timestampValue: practicedAt.toISOString()},
+    };
+
+    return request(documentsUrl(`users/${uid}/memoryVerses/${key}`), {method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields})}, `add ${key} to ${uid}'s memory list`);
+  }));
+}

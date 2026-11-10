@@ -1,0 +1,385 @@
+// The Memorize page and practicing a verse.
+$phone-width: 900px;
+
+.back {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 10px 0;
+  color: var(--bc-accent);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin-bottom: 22px;
+
+  h1 {
+    margin: 0 auto 0 0;
+  }
+}
+
+.translation {
+  min-width: 200px;
+}
+
+.problem {
+  margin: 0 0 14px;
+  color: var(--bc-rubric);
+  font-size: 16px;
+}
+
+.modes {
+  margin-bottom: 22px;
+}
+
+.credit {
+  margin: 22px 0 0;
+  color: var(--bc-muted);
+  font-size: 13px;
+}
+
+// Flash card
+
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+  box-sizing: border-box;
+  min-height: 280px;
+  padding: 36px 40px;
+  border: 1px solid var(--bc-line);
+  border-top: 5px solid var(--bc-accent);
+  border-radius: 6px;
+  background: var(--bc-field);
+
+  @media (max-width: $phone-width) {
+    padding: 24px 20px;
+  }
+}
+
+.cardTitle {
+  margin: 0;
+  font-family: 'Literata', serif;
+  font-size: clamp(30px, 4vw, 40px);
+  line-height: 1.15;
+  text-align: center;
+}
+
+.cardHint {
+  margin: 0;
+  color: var(--bc-muted);
+  font-size: 15px;
+  text-align: center;
+}
+
+.cardText {
+  margin: 0;
+  font-family: 'Literata', serif;
+  font-size: clamp(21px, 2.6vw, 26px);
+  line-height: 1.45;
+
+  sup {
+    position: relative;
+    top: -0.5em;
+    margin-right: 5px;
+    color: var(--bc-rubric);
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    vertical-align: baseline;
+  }
+}
+
+.cardLabel {
+  margin: 14px 0 0;
+  color: var(--bc-rubric);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.check {
+  margin-top: 26px;
+  text-align: center;
+
+  p {
+    margin: 0 0 10px;
+    color: var(--bc-muted);
+    font-size: 15px;
+  }
+}
+
+.tally {
+  min-height: 1.4em;
+  margin: 10px 0 0;
+  color: var(--bc-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+// Fading words
+
+.step {
+  margin: 0 0 12px;
+
+  strong {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  span {
+    color: var(--bc-muted);
+    font-size: 15px;
+  }
+}
+
+.dots {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 16px;
+}
+
+.dot {
+  width: 36px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--bc-line);
+}
+
+.dotDone {
+  composes: dot;
+  background: var(--bc-accent);
+}
+
+.fadingCard {
+  padding: 30px 34px;
+  border: 1px solid var(--bc-line);
+  border-radius: 6px;
+  background: var(--bc-field);
+
+  @media (max-width: $phone-width) {
+    padding: 20px;
+  }
+}
+
+.words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.32em;
+  margin: 0;
+  font-family: 'Literata', serif;
+  font-size: clamp(21px, 2.6vw, 26px);
+  line-height: 1.9;
+}
+
+.word {
+  white-space: nowrap;
+}
+
+.blank {
+  display: inline-block;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 2px solid var(--bc-muted);
+  background: none;
+  color: var(--bc-muted);
+  font: inherit;
+  line-height: 1.5;
+  text-align: left;
+  vertical-align: bottom;
+  cursor: pointer;
+
+  &:hover {
+    border-bottom-color: var(--bc-accent);
+  }
+}
+
+.tip {
+  margin: 14px 0 0;
+  color: var(--bc-muted);
+  font-size: 14px;
+}
+
+.finished {
+  margin-top: 22px;
+  padding: 16px 18px;
+  border-radius: 6px;
+  background: var(--bc-panel);
+  font-size: 15px;
+  line-height: 1.5;
+
+  p {
+    margin: 0;
+  }
+}
+
+// The memory list
+
+.listBox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  margin-top: 34px;
+  padding: 16px 18px;
+  border-radius: 6px;
+  background: var(--bc-panel);
+
+  p {
+    flex: 1 1 300px;
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  strong {
+    font-weight: 600;
+  }
+}
+
+.saveError {
+  flex-basis: 100%;
+  margin: 8px 0 0;
+  color: var(--bc-rubric);
+  font-size: 14px;
+}
+
+.start {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 18px;
+  border-radius: 6px;
+  background: var(--bc-panel);
+
+  > button {
+    margin-top: 27px;
+  }
+}
+
+.startInput {
+  flex: 1 1 260px;
+}
+
+.hint {
+  margin: 0 0 36px;
+  color: var(--bc-muted);
+  font-size: 13px;
+}
+
+.listTitle {
+  margin: 0 0 4px;
+  font-family: 'Literata', serif;
+  font-size: 26px;
+  font-weight: 400;
+}
+
+.signedOut {
+  margin-top: 8px;
+  padding: 18px 20px;
+  border-radius: 6px;
+  background: var(--bc-panel);
+
+  p {
+    margin: 0 0 12px;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+}
+
+.empty {
+  max-width: 34em;
+  margin: 8px 0 0;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.group {
+  margin: 22px 0 0;
+}
+
+.groupTitle {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+
+  span {
+    color: var(--bc-muted);
+    font-weight: 400;
+  }
+}
+
+.groupNote {
+  margin: 0 0 6px;
+  color: var(--bc-muted);
+  font-size: 14px;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 6px 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--bc-line);
+
+  @media (max-width: $phone-width) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+.entryMain {
+  min-width: 0;
+
+  @media (max-width: $phone-width) {
+    grid-column: 1 / -1;
+  }
+}
+
+.entryReference {
+  color: var(--bc-rubric);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.entryText {
+  overflow: hidden;
+  margin: 3px 0 2px;
+  font-family: 'Literata', serif;
+  font-size: 17px;
+  line-height: 1.5;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.entryWhen {
+  margin: 0;
+  color: var(--bc-muted);
+  font-size: 13px;
+}
+
+.remove {
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--bc-muted);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}

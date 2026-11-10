@@ -7,7 +7,8 @@ import {Alert, Button, Group, Loader, Modal, Radio, Text, TextInput} from '@mant
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {useReferenceSpan} from '@/bible/useReferenceSpan';
 import {clearDailyVerse, setDailyVerse} from '@/firebase/dailyVerses';
-import {chosenDailyVerseQuery, useAutomaticDailyVerse, useDailyVerseText} from './dailyVerseQueries';
+import {useSpanText} from '@/bible/useSpanText';
+import {chosenDailyVerseQuery, useAutomaticDailyVerse} from './dailyVerseQueries';
 import classes from './SetVerseDialog.module.scss';
 
 type Choice = 'automatic' | 'chosen';
@@ -23,7 +24,7 @@ interface DailyVerseFormProps {
 
 /** What visitors will see, in the admin's translation. */
 function Preview({verse, translation}: {verse: DailyVerse | null | undefined; translation: TranslationProvider}) {
-  const {label, passage} = useDailyVerseText(verse, translation);
+  const {label, passage} = useSpanText(verse, translation);
   const isReady = verse && !passage.isPending && !passage.isError;
 
   return (

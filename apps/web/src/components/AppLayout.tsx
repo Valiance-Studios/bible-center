@@ -34,6 +34,7 @@ export function AppLayout() {
         <Link className={classes.navLink} to="/search">Search</Link>
         <Link className={classes.navLink} to="/read">Read</Link>
         <Link className={classes.navLink} to="/topics">Topics</Link>
+        <Link className={classes.navLink} to="/memorize">Memorize</Link>
         <ThemeToggle />
         <AccountMenu />
       </header>

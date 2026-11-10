@@ -75,7 +75,10 @@ $phone-width: 900px;
 }
 
 .tool {
+  display: inline-flex;
+  align-items: center;
   min-height: 44px;
+  text-decoration: none;
   padding: 0 10px;
   border: 0;
   border-radius: 6px;

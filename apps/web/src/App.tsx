@@ -2,9 +2,11 @@ import {useEffect} from 'react';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {createBrowserRouter, Navigate, RouterProvider} from 'react-router';
 import {MantineProvider} from '@mantine/core';
-import {READER_START_PATH} from '@/bible/paths';
+import {MEMORIZE_PRACTICE_PATH, READER_START_PATH} from '@/bible/paths';
 import {AppLayout} from '@/components/AppLayout';
 import {HomePage} from '@/pages/HomePage';
+import {MemorizePage} from '@/pages/MemorizePage';
+import {MemorizePracticePage} from '@/pages/MemorizePracticePage';
 import {MyVersesPage} from '@/pages/MyVersesPage';
 import {PeoplePage} from '@/pages/PeoplePage';
 import {ReaderPage} from '@/pages/ReaderPage';
@@ -27,6 +29,8 @@ const router = createBrowserRouter([
       {path: '/search', element: <SearchPage />},
       {path: '/topics', element: <TopicsPage />},
       {path: '/topics/:slug', element: <TopicPage />},
+      {path: '/memorize', element: <MemorizePage />},
+      {path: MEMORIZE_PRACTICE_PATH, element: <MemorizePracticePage />},
       {path: '/my-verses', element: <MyVersesPage />},
       {path: '/review', element: <ReviewPage />},
       {path: '/people', element: <PeoplePage />},
