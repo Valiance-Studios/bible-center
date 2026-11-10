@@ -4,17 +4,16 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 ## Project Status
 
-**Current step: scripture memorization, in review** in a pull request from `feature/memorization`. Next, the About dialog and final polish, which completes V1.
+**Current step: the About dialog and final polish, in review** in a pull request from `feature/about-and-polish`. Merging it completes V1. Next come the features planned for after V1.
 
 | Area | Status |
 | --- | --- |
 | Monorepo, tooling, tests, env files, Firebase and App Check wiring, deploy check | Done |
 | GitHub Actions CI (`.github/workflows/ci.yml`) | Built. Runs on pull requests and pushes to `main` |
-| Firestore rules and indexes: default deny, allowlist, user settings, annotations, topics, daily verses, memory lists | Built. Deployed through roles and review; daily verses and memory lists need `npm run deploy:rules` |
-| Topic score formula (`packages/core/src/topicScore.ts`) | Done, not yet used by any feature |
+| Firestore rules and indexes: default deny, allowlist, user settings, annotations, topics, daily verses, memory lists | Built and deployed |
 | Design mockups | Approved |
 | Sign-in and registration | Built. Google sign-in is confirmed on the hosted site; email registration is tested against the emulators only |
-| App layout: app bar, thumb index, phone menu, light and dark mode | Built |
+| App layout: app bar, thumb index, phone menu, footer, light and dark mode | Built |
 | Home page | Built, with Verse of the Day, search and the common topics |
 | Verse of the Day | Built: the automatic list, the admin dialog, and `dailyVerses` rules. The list awaits the owner's review |
 | Site icon (tab and bookmark) | Built |
@@ -23,36 +22,36 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | Annotations: highlights, bookmarks, notes, on verses or ranges | Built |
 | Translation choice saved to the account | Built |
 | My verses page | Built |
-| About dialog | Planned for V1; its mockup is approved. A shorter version of the README with data credits, opened from a footer link |
-| Topic search, voting, reports | Built: topic pages, the Topics page, voting, adding verses, starting topics and reports |
+| About dialog | Built: a shorter version of the README with data credits, from the footer and the phone menu |
+| Topic search, voting, reports | Built: topic pages, the Topics page, voting ranked by `topicVerseScore`, adding verses, starting topics and reports |
 | Admins and reviewers | Built: roles on the allowlist, the People page for admins, and the Review page for reported verses and new topics |
 | Hebrew/Greek study | Built: the word panel beside the reader, or in a sheet on phones, from STEPBible data |
 | Scripture memorization | Built: flash cards, fading words, and the memory list; see [Memorization](#memorization) |
-| AI topic suggestions | After V1, as the owner decided on November 10, 2026 |
-| ESV | After V1. Crossway's review of the API key application, applied for November 2026, may take 3-4 weeks |
+| AI topic suggestions | After V1 |
+| ESV | After V1, once Crossway approves the API key |
 | Boards, plugins, paraphrase search (embeddings) | After V1 |
 
 ### Current State
 
 Last updated November 10, 2026.
 
-- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon, reader, search, annotations, CI and My verses are merged. Topic search, including voting, admins and reviewers, Hebrew/Greek study and Verse of the Day are merged. Memorization is in a pull request from `feature/memorization`. The `dailyVerses` and `memoryVerses` rules need deploying with `npm run deploy:rules`. Check what has merged before starting new work.
-- **Hosted project:** `vs-bible-center-dev`. The owner deploys it, and deployed the My verses rules and indexes on November 7, 2026. Before running `npm run deploy`, move the debug token out of `apps/web/.env.staging.local`, as the deploy check refuses it. `npm run deploy:rules` sends the rules and `firestore.indexes.json` and needs no token moved. On November 7, 2026, the owner deployed the roles and review rules and indexes, and the site with admins, reviewers and the word panel, from the unmerged branches; all appear to work. The word panel's Strong's links to STEP Bible are confirmed working. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
-- **Set up in the project:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. `allowedUsers/bobbyjuba@gmail.com` exists, with the `admin` role.
-- **`gcloud` and Firebase CLI account:** `broden@valiance-studios.com`.
+- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. Everything through memorization is merged. Check what has merged before starting new work.
+- **Hosted project:** `vs-bible-center-dev`, at [vs-bible-center-dev.web.app](https://vs-bible-center-dev.web.app). The owner deploys it; see [DEPLOYMENT.md](docs/DEPLOYMENT.md), which also covers the API key's restrictions and moving the debug token aside before deploying Hosting.
+- **Set up in the project:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. The owner's account is the first admin, set in the console as [DEPLOYMENT.md](docs/DEPLOYMENT.md#allowlist-and-roles) describes.
 
 ### Next Steps
 
-Build features one branch at a time, from `main` or from the latest unmerged branch, in this order:
+V1 is complete. Build what comes after it one branch at a time, from `main` or from the latest unmerged branch, in this order:
 
-1. **About dialog and final polish,** which completes V1. The `About` mockup opens it from a footer link.
+1. **AI topic suggestions:** the first Cloud Function; see [AI Suggestions](#ai-suggestions).
+2. **ESV:** once Crossway approves the key; see [ESV Rules](#esv-rules).
+3. **Boards;** see [Scope](#scope).
 
-After V1: AI topic suggestions (the first Cloud Function), the ESV once Crossway approves the key, boards, plugins, and possibly embeddings for search by meaning.
+Later, if there is demand: plugins, and embeddings for search by meaning.
 
 ### Open Items
 
 Waiting on the owner:
-
 
 - Crossway's decision on the ESV API key. Once approved, the owner adds the key to Secret Manager and shares the secret's name.
 - Choose whether to keep the KJV source, the Pure Cambridge Edition from OpenBible, or swap to one with a clearer license statement. Review the UK Crown patent before a wider launch; see [Translations](#translations).
@@ -61,7 +60,7 @@ Waiting on the owner:
 
 To do when reached:
 
-- An Anthropic API key, a Secret Manager entry for it, and a $10 monthly spend limit are needed at the AI step, after V1.
+- An Anthropic API key, a Secret Manager entry for it, and a $10 monthly spend limit are needed at the AI step.
 - App Check is not enforced on any service yet. See [DEPLOYMENT.md](docs/DEPLOYMENT.md#enforcement).
 - The main bundle is about 1.2 MB because every page loads Firebase and Mantine. Signed-out reading should not need Firestore or Auth up front, so split them out.
 - Add a Content Security Policy once the app's external origins are settled.
@@ -253,7 +252,7 @@ Translations occasionally number verses differently. STEPBible's versification d
 
 ### Search
 
-One search box handles references and remembered wording, at `/search?q=` (`apps/web/src/pages/SearchPage.tsx`). It searches the selected translation only. Linking to a topic of the same name is added with topic search.
+One search box handles references and remembered wording, at `/search?q=` (`apps/web/src/pages/SearchPage.tsx`). It searches the selected translation only. A search that is exactly a topic's name also links to that topic, through `findTopic`.
 
 ```mermaid
 flowchart TD
@@ -264,7 +263,7 @@ flowchart TD
   load --> index["buildPhraseIndex"]
   index --> matches["Closest verses, exact wording first"]
   parse -- "No" --> topic{"Topic with this name?"}
-  topic -- "Yes" --> link["Also link to the topic (planned, with topic search)"]
+  topic -- "Yes" --> link["Also link to the topic first<br/>findTopic"]
 ```
 
 - **References** (`packages/core/src/references.ts`) accept book names and common abbreviations, ranges, whole chapters, and lists like `John 1:1; Acts 2:3-4; Revelation 22:13`. A search counts as references only if all of it is valid, so everything else falls through to phrase search.

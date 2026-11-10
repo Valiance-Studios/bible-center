@@ -20,15 +20,15 @@ import {topicVerseKey} from '../packages/core/src/topics.ts';
 import {parseVerseId} from '../packages/core/src/verseId.ts';
 
 /** The home page shows the verse in large type, so a passage runs to a few verses and a few lines at most. */
-export const MAX_VERSES = 3;
-export const MAX_CHARACTERS = 160;
+const MAX_VERSES = 3;
+const MAX_CHARACTERS = 160;
 
 /**
  * The topics whose votes count, by slug. OpenBible's votes measure how well a verse fits a topic, not how
  * encouraging it is, so counting every topic would bring in verses on divorce or idolatry. These are the ones
  * people look to for a verse to start the day with.
  */
-export const DEVOTIONAL_TOPICS: ReadonlySet<string> = new Set([
+const DEVOTIONAL_TOPICS: ReadonlySet<string> = new Set([
   'anxiety', 'blessings', 'comfort', 'contentment', 'courage', 'depression', 'difficult-times', 'encouragement',
   'eternal-life', 'faith', 'forgiveness', 'gentleness', 'gods-faithfulness', 'gods-grace', 'gods-love', 'gods-plan',
   'gods-promises', 'goodness', 'grace', 'gratitude', 'guidance', 'hard-times', 'healing', 'holy-spirit', 'hope',
@@ -41,7 +41,7 @@ export const DEVOTIONAL_TOPICS: ReadonlySet<string> = new Set([
  * Passages left out after reading the list, by `topicVerseKey`, because they do not stand alone as a verse for the
  * day despite their votes. Add to it when reviewing the list, then rebuild.
  */
-export const EXCLUDED_PASSAGES: ReadonlySet<string> = new Set([
+const EXCLUDED_PASSAGES: ReadonlySet<string> = new Set([
   '03020013', // Leviticus 20:13, a penalty under the law
   '40008024', // Matthew 8:24, the middle of a story
   '54001007', // 1 Timothy 1:7, about false teachers

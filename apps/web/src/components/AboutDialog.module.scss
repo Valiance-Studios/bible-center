@@ -1,0 +1,33 @@
+.title {
+  font-family: 'Literata', serif;
+  font-size: 28px;
+  font-weight: 400;
+}
+
+.lead {
+  font-family: 'Literata', serif;
+  font-size: 19px;
+  line-height: 1.55;
+}
+
+.heading {
+  margin: 20px 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.foot {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--bc-line);
+
+  a {
+    padding: 10px 0;
+    font-size: 15px;
+    font-weight: 500;
+  }
+}
+
+.body a {
+  color: var(--bc-accent);
+}
