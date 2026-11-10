@@ -88,10 +88,3 @@ test('a chapter that fails to load says so and can be retried', async ({page}) =
 
   await expect(page.getByText('In the days when the judges ruled')).toBeVisible();
 });
-
-test('the home page\'s verse links to its chapter', async ({page}) => {
-  await page.goto('/');
-  await page.getByRole('link', {name: 'Lamentations 3:22–23, BSB'}).click();
-
-  await expect(page.getByRole('heading', {name: 'Lamentations 3'})).toBeVisible();
-});

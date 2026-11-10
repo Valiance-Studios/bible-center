@@ -4,7 +4,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 ## Project Status
 
-**Current step: Hebrew/Greek study, in review** in a pull request from `feature/hebrew-greek-study`. Next, Verse of the Day.
+**Current step: Verse of the Day, in review** in a pull request from `feature/verse-of-the-day`. Next, scripture memorization.
 
 | Area | Status |
 | --- | --- |
@@ -15,8 +15,8 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | Design mockups | Approved |
 | Sign-in and registration | Built. Google sign-in is confirmed on the hosted site; email registration is tested against the emulators only |
 | App layout: app bar, thumb index, phone menu, light and dark mode | Built |
-| Home page | Built with a fixed verse. Search and topics are added with those features |
-| Verse of the Day | Planned |
+| Home page | Built, with Verse of the Day, search and the common topics |
+| Verse of the Day | Built: the automatic list, the admin dialog, and `dailyVerses` rules. The list awaits the owner's review |
 | Site icon (tab and bookmark) | Built |
 | Reader (BSB, KJV), translation switching | Built |
 | Reference and phrase search | Built |
@@ -34,9 +34,9 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 ### Current State
 
-Last updated November 7, 2026.
+Last updated November 10, 2026.
 
-- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon, reader, search, annotations, CI and My verses are merged. Topic search, including voting, and admins and reviewers are merged. Hebrew/Greek study is in a pull request from `feature/hebrew-greek-study`. Check what has merged before starting new work.
+- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. The foundation, sign-in, icon, reader, search, annotations, CI and My verses are merged. Topic search, including voting, admins and reviewers, and Hebrew/Greek study are merged. Verse of the Day is in a pull request from `feature/verse-of-the-day`, and needs its `dailyVerses` rules deployed with `npm run deploy:rules`. Check what has merged before starting new work.
 - **Hosted project:** `vs-bible-center-dev`. The owner deploys it, and deployed the My verses rules and indexes on November 7, 2026. Before running `npm run deploy`, move the debug token out of `apps/web/.env.staging.local`, as the deploy check refuses it. `npm run deploy:rules` sends the rules and `firestore.indexes.json` and needs no token moved. On November 7, 2026, the owner deployed the roles and review rules and indexes, and the site with admins, reviewers and the word panel, from the unmerged branches; all appear to work. The word panel's Strong's links to STEP Bible are confirmed working. Its Firebase API key is restricted to the hosted domains and `localhost:5173`; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#api-key-restrictions).
 - **Set up in the project:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. `allowedUsers/bobbyjuba@gmail.com` exists, with the `admin` role.
 - **`gcloud` and Firebase CLI account:** `broden@valiance-studios.com`.
@@ -45,11 +45,10 @@ Last updated November 7, 2026.
 
 Build features one branch at a time, from `main` or from the latest unmerged branch, in this order:
 
-1. **Verse of the Day:** `dailyVerses`, the admin dialog and the automatic list. Admins are the allowlist's `admin` role. When it is built, add "set the verse of the day" to what the People page says admins can do, as its mockup does.
-2. **Scripture memorization:** flash cards at minimum, possibly speaking the verse aloud; see [Scope](#scope). Settle the details with the owner, then the mockups, before building.
-3. **About dialog and final polish.**
-4. **AI suggestions:** the first Cloud Function.
-5. **ESV:** once Crossway approves the key.
+1. **Scripture memorization:** flash cards at minimum, possibly speaking the verse aloud; see [Scope](#scope). Settle the details with the owner, then the mockups, before building.
+2. **About dialog and final polish.**
+3. **AI suggestions:** the first Cloud Function.
+4. **ESV:** once Crossway approves the key.
 
 After V1: boards, plugins, and possibly embeddings for search by meaning.
 
@@ -60,7 +59,7 @@ Waiting on the owner:
 
 - Crossway's decision on the ESV API key. Once approved, the owner adds the key to Secret Manager and shares the secret's name.
 - Choose whether to keep the KJV source, the Pure Cambridge Edition from OpenBible, or swap to one with a clearer license statement. Review the UK Crown patent before a wider launch; see [Translations](#translations).
-- Review the Verse of the Day automatic list when it is built.
+- Review the Verse of the Day automatic list, `apps/web/public/daily-verses.json`. To leave a passage out, add it to `EXCLUDED_PASSAGES` in `scripts/build-daily-verses.ts` and run `npm run daily-verses`; to change which topics count, edit `DEVOTIONAL_TOPICS`. An admin can also override any single date from the home page.
 - Test registering with a real email, including the confirmation and password reset emails. These have only run against the emulators.
 
 To do when reached:
@@ -151,7 +150,7 @@ flowchart LR
   subgraph firebase["Firebase project: vs-bible-center-dev"]
     hosting["Hosting<br/>app and static data"]
     auth["Authentication<br/>Google, email/password"]
-    firestore[("Firestore<br/>allowlist, annotations,<br/>votes, reports, AI cache")]
+    firestore[("Firestore<br/>allowlist, annotations, votes,<br/>reports, daily verses, AI cache")]
     appcheck["App Check<br/>reCAPTCHA Enterprise"]
     functions["Cloud Functions<br/>(planned)"]
     secrets["Secret Manager<br/>(planned)"]
@@ -334,19 +333,34 @@ The home page shows one verse or short passage each day. An admin can choose it 
 
 ```mermaid
 flowchart TD
-  home["Home page, using the viewer's local date"] --> read["Read dailyVerses/YYYY-MM-DD"]
-  admin["Admin saves a verse for a date"] --> doc[("dailyVerses in Firestore")]
-  doc --> read
-  read --> chosen{"Admin chose one?"}
-  chosen -- "Yes" --> show["Show the verse in the viewer's translation"]
-  chosen -- "No" --> list["Pick by day of the year from the static list on Hosting"]
-  list --> show
+  home["VerseOfTheDay on the home page<br/>dateKeyOf: the viewer's local date"] --> hook["useVerseOfTheDay"]
+  hook -- "chosenDailyVerseQuery" --> doc[("dailyVerses/YYYY-MM-DD")]
+  hook -- "automaticListQuery" --> list["/daily-verses.json on Hosting"]
+  doc --> chosen{"Admin chose one?"}
+  chosen -- "Yes" --> show["useDailyVerseText: the passage<br/>in the viewer's translation"]
+  chosen -- "No, or it could not be loaded" --> pick["automaticDailyVerse:<br/>the date's place in a leap year"]
+  list --> pick
+  pick --> show
+  dialog["SetVerseDialog, admins only"] -- "setDailyVerse" --> doc
+  dialog -- "clearDailyVerse: choose automatically" --> doc
 ```
 
-- **Setting it:** admins get a "Set verse of the day" dialog on the home page. An admin is an allowlist entry with the `admin` role (see [Roles and Review](#roles-and-review)). Only admins can write to `dailyVerses`, enforced by security rules with `isAdmin`.
-- **Automatic picks:** a static list of about 366 verse ranges, indexed by day of the year, so everyone on the same date sees the same verse and nothing runs on a schedule. The list starts from OpenBible's most-voted short passages and needs a person's review before launch.
-- **Storage:** a `VerseId` range, not text, so the verse appears in the viewer's translation. The list and documents hold no scripture.
-- **Reading:** anyone can read a single date's document, but not list the collection.
+- **Choosing:** admins get "Set verse of the day" beside the verse, which opens `SetVerseDialog` on today's date. It loads what is set for the chosen date, then offers "Choose automatically" or a verse or passage, checked with `useReferenceSpan` (shared with adding a verse to a topic), and previews what visitors will see. Choosing automatically deletes the date's document. An admin is an allowlist entry with the `admin` role (see [Roles and Review](#roles-and-review)); `firestore.rules` lets only `isAdmin` write to `dailyVerses`, and `tests/rules/dailyVerses.spec.ts` covers it.
+- **Dates:** each viewer sees the verse for their own date (`dateKeyOf`), so it changes at their midnight. `dayOfLeapYear` gives each month and day a fixed place from 0 to 365, so a date gets the same automatic verse every year, and only February 29 is skipped outside leap years. Everyone on the same date sees the same verse, and nothing runs on a schedule.
+- **Storage:** a `VerseId` range, not text, so the verse appears in the viewer's translation. The list and documents hold no scripture. A document holds `startVerse`, `endVerse`, `setBy` and `setAt`, and a passage stays within one book.
+- **Reading:** anyone can read a single date's document, but not list the collection. If it cannot be read, the automatic pick shows instead, so the home page always has a verse.
+
+Building the automatic list, once:
+
+```mermaid
+flowchart LR
+  topics["topic-data/slug.json<br/>DEVOTIONAL_TOPICS only"] --> script["scripts/build-daily-verses.ts<br/>chooseDailyVerses"]
+  bsb["bible/bsb/book/chapter.json"] --> script
+  excluded["EXCLUDED_PASSAGES"] --> script
+  script --> list["apps/web/public/daily-verses.json<br/>366 verse id ranges"]
+```
+
+`npm run daily-verses` adds up each passage's OpenBible votes across about 50 encouraging topics, such as hope, comfort, strength and God's love. Counting every topic brought in verses on divorce and idolatry, since OpenBible's votes measure how well a verse fits a topic, not how encouraging it is. It keeps passages of up to 3 verses and 160 BSB characters that read as whole sentences, with no quotation left open. It leaves out a psalm's first verse, which often begins with the psalm's title, and anything in `EXCLUDED_PASSAGES`. Of overlapping passages, it keeps the most-voted. The top 366 are shuffled with a fixed seed, so the best-loved verses are spread across the year and a rebuild from the same data gives the same order. The list is committed and needs a person's review before launch; see [Open Items](#open-items).
 
 ## Topic Search
 
@@ -571,7 +585,7 @@ Everyone on the allowlist has a role, stored as `role` on their `allowedUsers/{l
 | --- | --- |
 | Member | Highlight, bookmark, take notes, vote, add verses, start topics and report verses |
 | Reviewer | Remove reported verses or keep them, and approve or reject topics people start, on the Review page (`/review`) |
-| Admin | Add people, change their roles and remove them, on the People page (`/people`). Verse of the Day will add setting the verse |
+| Admin | Add people, change their roles and remove them, on the People page (`/people`), and set the [verse of the day](#verse-of-the-day) from the home page |
 
 - **Roles in code:** `ROLES`, `canReview` and `isAdmin` in `packages/core/src/roles.ts`. `getAccess` in `apps/web/src/firebase/access.ts` reads the role with the allowlist check, and the auth store keeps it. `RoleGate` shows a page only to its roles and `useAccountLinks` lists the pages each role can open. These only shape the interface; `myRole`, `isReviewer` and `isAdmin` in `firestore.rules` enforce it.
 - **Managing people:** only admins can read or change the allowlist, and never their own entry, so there is always an admin and nobody can promote themselves. Each write records `updatedBy` and `updatedAt`. Adding someone already on it is refused rather than changing their role. The first admin is set in the console; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#allowlist-and-roles). Removing someone keeps their annotations and votes, which are keyed by their account.
@@ -676,7 +690,7 @@ Before finishing a change, check whether it touches a source below, and update t
 | [Reading Flow](#reading-flow) | `apps/web/src/pages/ReaderPage.tsx`, `apps/web/src/bible/translations.ts`, `scripts/build-bible-data.ts` | Built, ESV planned |
 | [Search](#search) | `apps/web/src/pages/SearchPage.tsx`, `packages/core/src/references.ts`, `apps/web/src/bible/phraseSearch.ts`, `scripts/build-bible-data.ts` | Built |
 | [Annotations](#annotations), data model, selection and pages | `firestore.rules`, `packages/core/src/annotations.ts`, `apps/web/src/firebase/annotations.ts`, `apps/web/src/firebase/settings.ts`, `firestore.indexes.json`, `apps/web/src/components/annotationQueryKeys.ts`, `apps/web/src/components/myVerses/`, `apps/web/src/pages/MyVersesPage.tsx` | Built |
-| [Verse of the Day](#verse-of-the-day) | The home page, `dailyVerses` rules, the automatic list | Planned |
+| [Verse of the Day](#verse-of-the-day), choosing and building the list | `packages/core/src/dailyVerses.ts`, `apps/web/src/firebase/dailyVerses.ts`, `apps/web/src/components/verseOfTheDay/`, `scripts/build-daily-verses.ts`, `firestore.rules` | Built |
 | [Topic Search](#topic-search) | `packages/core/src/topicScore.ts`, `packages/core/src/topics.ts`, `apps/web/src/pages/TopicPage.tsx`, `suggestVerses` | Built, AI suggestions planned |
 | [Voting](#voting), data model and upvoting | `firestore.rules`, `firestore.indexes.json`, `apps/web/src/firebase/topics.ts`, `apps/web/src/components/topics/` | Built |
 | [Original Languages](#original-languages) | `scripts/build-word-data.ts`, `packages/core/src/words.ts`, `apps/web/src/bible/wordData.ts`, `apps/web/src/components/reader/WordStudy.tsx`, `apps/web/src/components/reader/useVerseWords.ts`, `apps/web/src/pages/ReaderPage.tsx` | Built |

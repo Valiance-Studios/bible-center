@@ -47,7 +47,7 @@ Other rules:
 
 | Page | Purpose | Signed in? |
 | --- | --- | --- |
-| Home (`/`) | Verse of the Day, the search box, and the common topics with a link to more. Built with a fixed verse | No (admins can set the verse) |
+| Home (`/`) | Verse of the Day, the search box, and the common topics with a link to more. The verse is for the viewer's own date, in their translation, with its reference linking to the verse in the reader and "Read the chapter". Admins also get "Set verse of the day", a dialog to pick a date, then choose automatically or type a verse or passage, with a preview of what visitors will see. Built | No (admins can set the verse) |
 | Reader (`/read/:book/:chapter`) | One chapter of a translation, with book, chapter and translation pickers, and arrows that cross between books. Built. `/read` opens Genesis 1 | No |
 | Reader annotations | Anyone can tap a verse to select it, for its original words. Signed in, tap another to make a range, then highlight, bookmark or add a note. Highlights show on the text, a bookmark shows a marker on its first verse and the ribbon, and a note shows beneath its last verse with a link to edit it. Built | Yes |
 | My verses (`/my-verses`) | All of a user's highlights, bookmarks and notes, filtered by type and ordered by recently added or Bible order, in the selected translation, 20 at a time with "Show more". Removing one asks first. On narrow phones the translation picker shows initialisms, such as KJV. Reached from the account and phone menus, once allowed to annotate. Built | Yes |
