@@ -53,7 +53,9 @@ Each machine should have its own token. Delete a token from the console if it mi
 
 ### Enforcement
 
-No service is enforced yet. Before enforcing one, confirm in the console's App Check metrics that the deployed app's requests are verified. Enforcement is per service for the whole project, and this project hosts only this app.
+Cloud Firestore and Authentication are enforced, so their requests need a valid App Check token: from the deployed app, or from `localhost` with a registered [debug token](#debug-token). The emulators do not check it.
+
+Before enforcing another service, such as Cloud Functions when the first one is added, deploy the app that sends its tokens and confirm in the console's App Check metrics that its requests are verified. Enforcement is per service for the whole project, and this project hosts only this app.
 
 ## Secrets
 
