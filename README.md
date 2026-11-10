@@ -13,6 +13,7 @@ Some of these are still being built; see [Project Status](ARCHITECTURE.md#projec
 - **Search** by reference, such as `John 1:1; Acts 2:3-4`, or by a phrase you remember.
 - **Annotate** verses and ranges with highlights, bookmarks and notes when signed in, and keep them in every translation.
 - **Study** the Hebrew and Greek behind the English.
+- **Memorize** verses with flash cards and fading words, and keep a memory list when signed in.
 - **Explore topics** by asking "What does the Bible say about ___?", with results ranked by community upvotes.
 - **Build boards** to gather related photos, notes and videos (after the first release).
 

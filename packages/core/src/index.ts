@@ -4,6 +4,7 @@ export type {BibleBook, ChapterRef, ChapterText, SearchableVerse, Verse} from '.
 export type {BibleSection} from './bibleSections';
 export type {VerseReference} from './references';
 export type {OpenReport, ReportGroup, ReportOutcome, TopicDecision} from './review';
+export type {FadingWord, MemoryGroup, MemoryStatus, MemoryVerse} from './memorize';
 export type {Role} from './roles';
 export type {CommunityTopicVerse, ReportReason, TopicFile, TopicFileVerse, TopicVerse} from './topics';
 export type {VerseId, VerseLocation} from './verseId';
@@ -14,6 +15,7 @@ export {automaticDailyVerse, DAILY_VERSE_COUNT, dateKeyOf, dayOfLeapYear, isDate
 export {BIBLE_BOOKS, chapterTitle, isOldTestament, nextChapter, parseChapterRef, previousChapter} from './bibleBooks';
 export {BIBLE_SECTIONS} from './bibleSections';
 export {formatReference, parseReferences, referenceOf} from './references';
+export {FADING_STEP_COUNT, fadeWords, groupMemoryVerses, isDueForReview, MEMORY_GROUPS, MEMORY_STATUSES, REVIEW_AFTER_DAYS} from './memorize';
 export {groupReports, parseTopicVerseKey} from './review';
 export {canReview, isAdmin, isEmailAddress, normalizeEmail, parseRole, ROLE_NAMES, ROLES} from './roles';
 export {formatVerseId, parseVerseId} from './verseId';

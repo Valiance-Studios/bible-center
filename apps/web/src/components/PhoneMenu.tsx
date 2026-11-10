@@ -22,6 +22,7 @@ export function PhoneMenu({opened, onClose}: PhoneMenuProps) {
     <Drawer opened={opened} onClose={onClose} position="left" size={334} title="Bible Center" classNames={{title: classes.title, body: classes.body}}>
       <Link className={classes.link} to="/search" onClick={onClose}>Search</Link>
       <Link className={classes.link} to="/topics" onClick={onClose}>Topics</Link>
+      <Link className={classes.link} to="/memorize" onClick={onClose}>Memorize</Link>
       {accountLinks.map((link) => (
         <Link key={link.to} className={classes.link} to={link.to} onClick={onClose}><AccountLinkLabel {...link} /></Link>
       ))}

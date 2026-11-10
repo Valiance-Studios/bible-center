@@ -2,11 +2,12 @@ import {useState} from 'react';
 import {Link} from 'react-router';
 import {dateKeyOf, isAdmin} from '@bible-center/core';
 import {Button, Skeleton} from '@mantine/core';
-import {chapterPath, referencePath} from '@/bible/paths';
+import {chapterPath, memorizePath, referencePath} from '@/bible/paths';
 import {findTranslation} from '@/bible/translations';
+import {useSpanText} from '@/bible/useSpanText';
 import {useAuthStore} from '@/stores/auth';
 import {useTranslationStore} from '@/stores/translation';
-import {useDailyVerseText, useVerseOfTheDay} from './dailyVerseQueries';
+import {useVerseOfTheDay} from './dailyVerseQueries';
 import {SetVerseDialog} from './SetVerseDialog';
 import classes from './VerseOfTheDay.module.scss';
 
@@ -16,7 +17,7 @@ export function VerseOfTheDay() {
   const [date] = useState(() => dateKeyOf(new Date()));
   const translation = findTranslation(useTranslationStore((state) => state.translationId));
   const today = useVerseOfTheDay(date);
-  const {reference, label, passage} = useDailyVerseText(today.verse, translation);
+  const {reference, label, passage} = useSpanText(today.verse, translation);
   const adminUid = useAuthStore((state) => (state.status === 'allowed' && isAdmin(state.role) ? state.user?.uid : undefined));
   const [isSetting, setIsSetting] = useState(false);
   const isError = today.isError || passage.isError;
@@ -52,6 +53,7 @@ export function VerseOfTheDay() {
           <div className={classes.foot}>
             <Link className={classes.reference} to={referencePath(reference)}>{label}</Link>
             <Link className={classes.quiet} to={chapterPath({book: reference.book, chapter: reference.startChapter})}>Read the chapter</Link>
+            <Link className={classes.quiet} to={memorizePath(reference)}>Memorize</Link>
             {adminUid && (
               <button type="button" className={classes.quiet} onClick={() => setIsSetting(true)}>Set verse of the day</button>
             )}

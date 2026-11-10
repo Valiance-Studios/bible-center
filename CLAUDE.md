@@ -21,7 +21,8 @@ These were settled with the owner. Their reasoning is in `ARCHITECTURE.md`.
 - Translations are BSB (default) and KJV as static files, and ESV through Crossway's API once approved. No NIV or NKJV.
 - Code license is PolyForm Noncommercial 1.0.0.
 - Topic ranking is `seedScore + upvotes`, with a 0-20 OpenBible seed. Voting is upvote-only, with reports.
-- AI search uses Claude Opus 5.5 with a $10 monthly cap, and only fills gaps.
+- AI search uses Claude Opus 5.5 with a $10 monthly cap, and only fills gaps. It and the ESV come after V1.
+- Memorization is flash cards and fading words, with a memory list for signed-in users; a memorized verse comes back for review a week after it was last practiced.
 - Annotations are highlights, bookmarks and plain-text notes on a verse or a range within a chapter, in one highlight color.
 - Search covers the selected translation only.
 - A signed-in My verses page will list all of a user's annotations, as its approved mockups show.
