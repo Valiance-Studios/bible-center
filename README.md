@@ -1,12 +1,12 @@
 # Bible Center
 
-A free, one-stop Bible resource: read the Bible, search it, study the original languages, and see what Scripture says about a topic.
+A free, one-stop Bible resource: read the Bible, search it, study the original languages, memorize it, and see what Scripture says about a topic.
 
-> **Status:** early development. See [Project Status](ARCHITECTURE.md#project-status).
+Anyone can read, search, study and practice without an account. Signing in, by invitation for now, adds highlights, bookmarks, notes, a memory list and voting on topics.
+
+> **Status:** the first release is feature-complete. See [Project Status](ARCHITECTURE.md#project-status) for what comes next.
 
 ## Features
-
-Some of these are still being built; see [Project Status](ARCHITECTURE.md#project-status).
 
 - **Verse of the Day** on the home page.
 - **Read** the Bible and switch between translations.
@@ -15,7 +15,8 @@ Some of these are still being built; see [Project Status](ARCHITECTURE.md#projec
 - **Study** the Hebrew and Greek behind the English.
 - **Memorize** verses with flash cards and fading words, and keep a memory list when signed in.
 - **Explore topics** by asking "What does the Bible say about ___?", with results ranked by community upvotes.
-- **Build boards** to gather related photos, notes and videos (after the first release).
+
+Planned after the first release: AI suggestions for topics with few verses, the English Standard Version, and boards to gather related photos, notes and videos.
 
 ## Contributing
 

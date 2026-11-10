@@ -141,3 +141,31 @@ $phone-width: 900px;
     display: none;
   }
 }
+
+.footer {
+  max-width: 820px;
+  margin: 0 180px 0 56px;
+  padding: 16px 0 40px;
+  border-top: 1px solid var(--bc-line);
+
+  @media (max-width: $phone-width) {
+    margin: 0 16px;
+  }
+}
+
+.footerLink {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--bc-muted);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--bc-accent);
+  }
+}

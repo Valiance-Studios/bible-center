@@ -11,10 +11,12 @@ import classes from './PhoneMenu.module.scss';
 interface PhoneMenuProps {
   opened: boolean;
   onClose: () => void;
+  /** Opens the About dialog. */
+  onAbout: () => void;
 }
 
 /** The left-hand menu on phones, where the thumb index becomes tabs that open to list their books. */
-export function PhoneMenu({opened, onClose}: PhoneMenuProps) {
+export function PhoneMenu({opened, onClose, onAbout}: PhoneMenuProps) {
   const [openSection, setOpenSection] = useState<string | null>(null);
   const accountLinks = useAccountLinks();
 
@@ -23,6 +25,16 @@ export function PhoneMenu({opened, onClose}: PhoneMenuProps) {
       <Link className={classes.link} to="/search" onClick={onClose}>Search</Link>
       <Link className={classes.link} to="/topics" onClick={onClose}>Topics</Link>
       <Link className={classes.link} to="/memorize" onClick={onClose}>Memorize</Link>
+      <button
+        type="button"
+        className={classes.link}
+        onClick={() => {
+          onClose();
+          onAbout();
+        }}
+      >
+        About
+      </button>
       {accountLinks.map((link) => (
         <Link key={link.to} className={classes.link} to={link.to} onClick={onClose}><AccountLinkLabel {...link} /></Link>
       ))}

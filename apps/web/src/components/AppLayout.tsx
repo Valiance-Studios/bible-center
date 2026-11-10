@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {Link, Outlet, ScrollRestoration, useMatch} from 'react-router';
 import {BIBLE_BOOKS, BIBLE_SECTIONS} from '@bible-center/core';
 import {chapterPath} from '@/bible/paths';
+import {AboutDialog} from './AboutDialog';
 import {AccountMenu} from './AccountMenu';
 import {PhoneMenu} from './PhoneMenu';
 import {ThemeToggle} from './ThemeToggle';
@@ -14,9 +15,10 @@ function sectionPath(section: string): string {
   return book ? chapterPath({book, chapter: 1}) : '/read';
 }
 
-/** The app bar and thumb index around every page except sign-in. */
+/** The app bar, thumb index and footer around every page except sign-in. */
 export function AppLayout() {
   const [menuOpened, setMenuOpened] = useState(false);
+  const [aboutOpened, setAboutOpened] = useState(false);
   const readerMatch = useMatch('/read/:book/:chapter');
   const currentSection = BIBLE_BOOKS.find((book) => book.slug === readerMatch?.params.book)?.section;
 
@@ -52,9 +54,15 @@ export function AppLayout() {
         ))}
       </nav>
 
-      <PhoneMenu opened={menuOpened} onClose={() => setMenuOpened(false)} />
+      <PhoneMenu opened={menuOpened} onClose={() => setMenuOpened(false)} onAbout={() => setAboutOpened(true)} />
 
       <Outlet />
+
+      <footer className={classes.footer}>
+        <button type="button" className={classes.footerLink} onClick={() => setAboutOpened(true)}>About Bible Center</button>
+      </footer>
+
+      <AboutDialog opened={aboutOpened} onClose={() => setAboutOpened(false)} />
     </div>
   );
 }
