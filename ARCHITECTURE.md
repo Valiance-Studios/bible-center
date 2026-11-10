@@ -4,18 +4,18 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 ## Project Status
 
-**Current step: the About dialog and final polish, in review** in a pull request from `feature/about-and-polish`. Merging it completes V1. Next come the features planned for after V1.
+**V1 is complete.** Next come the features planned for after it; see [Next Steps](#next-steps).
 
 | Area | Status |
 | --- | --- |
-| Monorepo, tooling, tests, env files, Firebase and App Check wiring, deploy check | Done |
+| Monorepo, tooling, tests, env files, Firebase and App Check wiring, deploy check | Done. App Check is enforced for Firestore and Authentication |
 | GitHub Actions CI (`.github/workflows/ci.yml`) | Built. Runs on pull requests and pushes to `main` |
 | Firestore rules and indexes: default deny, allowlist, user settings, annotations, topics, daily verses, memory lists | Built and deployed |
 | Design mockups | Approved |
-| Sign-in and registration | Built. Google sign-in is confirmed on the hosted site; email registration is tested against the emulators only |
+| Sign-in and registration | Built. Google sign-in and registering by email are confirmed on the hosted site |
 | App layout: app bar, thumb index, phone menu, footer, light and dark mode | Built |
 | Home page | Built, with Verse of the Day, search and the common topics |
-| Verse of the Day | Built: the automatic list, the admin dialog, and `dailyVerses` rules. The list awaits the owner's review |
+| Verse of the Day | Built: the automatic list, the admin dialog, and `dailyVerses` rules. The owner approved the list on November 10, 2026 |
 | Site icon (tab and bookmark) | Built |
 | Reader (BSB, KJV), translation switching | Built |
 | Reference and phrase search | Built |
@@ -35,7 +35,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 Last updated November 10, 2026.
 
-- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. Everything through memorization is merged. Check what has merged before starting new work.
+- **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. Everything in V1 is merged. Check what has merged before starting new work.
 - **Hosted project:** `vs-bible-center-dev`, at [vs-bible-center-dev.web.app](https://vs-bible-center-dev.web.app). The owner deploys it; see [DEPLOYMENT.md](docs/DEPLOYMENT.md), which also covers the API key's restrictions and moving the debug token aside before deploying Hosting.
 - **Set up in the project:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. The owner's account is the first admin, set in the console as [DEPLOYMENT.md](docs/DEPLOYMENT.md#allowlist-and-roles) describes.
 
@@ -55,13 +55,12 @@ Waiting on the owner:
 
 - Crossway's decision on the ESV API key. Once approved, the owner adds the key to Secret Manager and shares the secret's name.
 - Choose whether to keep the KJV source, the Pure Cambridge Edition from OpenBible, or swap to one with a clearer license statement. Review the UK Crown patent before a wider launch; see [Translations](#translations).
-- Review the Verse of the Day automatic list, `apps/web/public/daily-verses.json`. To leave a passage out, add it to `EXCLUDED_PASSAGES` in `scripts/build-daily-verses.ts` and run `npm run daily-verses`; to change which topics count, edit `DEVOTIONAL_TOPICS`. An admin can also override any single date from the home page.
-- Test registering with a real email, including the confirmation and password reset emails. These have only run against the emulators.
+- Try the password reset email on the hosted site. Registering by email, with its confirmation email, works there; password reset has only run against the emulators.
 
 To do when reached:
 
 - An Anthropic API key, a Secret Manager entry for it, and a $10 monthly spend limit are needed at the AI step.
-- App Check is not enforced on any service yet. See [DEPLOYMENT.md](docs/DEPLOYMENT.md#enforcement).
+- App Check is enforced for Firestore and Authentication only. Enforce each new service, such as Cloud Functions at the AI step, once its requests show as verified; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#enforcement).
 - The main bundle is about 1.2 MB because every page loads Firebase and Mantine. Signed-out reading should not need Firestore or Auth up front, so split them out.
 - Add a Content Security Policy once the app's external origins are settled.
 - Check the first phrase search on a real phone, and move indexing to a Web Worker if it is slow.
@@ -362,7 +361,7 @@ flowchart LR
   script --> list["apps/web/public/daily-verses.json<br/>366 verse id ranges"]
 ```
 
-`npm run daily-verses` adds up each passage's OpenBible votes across about 50 encouraging topics, such as hope, comfort, strength and God's love. Counting every topic brought in verses on divorce and idolatry, since OpenBible's votes measure how well a verse fits a topic, not how encouraging it is. It keeps passages of up to 3 verses and 160 BSB characters that read as whole sentences, with no quotation left open. It leaves out a psalm's first verse, which often begins with the psalm's title, and anything in `EXCLUDED_PASSAGES`. Of overlapping passages, it keeps the most-voted. The top 366 are shuffled with a fixed seed, so the best-loved verses are spread across the year and a rebuild from the same data gives the same order. The list is committed and needs a person's review before launch; see [Open Items](#open-items).
+`npm run daily-verses` adds up each passage's OpenBible votes across about 50 encouraging topics, such as hope, comfort, strength and God's love. Counting every topic brought in verses on divorce and idolatry, since OpenBible's votes measure how well a verse fits a topic, not how encouraging it is. It keeps passages of up to 3 verses and 160 BSB characters that read as whole sentences, with no quotation left open. It leaves out a psalm's first verse, which often begins with the psalm's title, and anything in `EXCLUDED_PASSAGES`. Of overlapping passages, it keeps the most-voted. The top 366 are shuffled with a fixed seed, so the best-loved verses are spread across the year and a rebuild from the same data gives the same order. The list is committed, and the owner approved it on November 10, 2026. To leave a passage out later, add it to `EXCLUDED_PASSAGES` and run `npm run daily-verses`; to change which topics count, edit `DEVOTIONAL_TOPICS`. An admin can also override any single date from the home page.
 
 ## Topic Search
 
@@ -689,7 +688,7 @@ sequenceDiagram
 This repository and the app are public, so assume hostile use.
 
 - **Firestore** denies everything unless a collection opts in. Rules validate each field and tests cover them.
-- **App Check** starts before Auth and Firestore make requests, and stays off against the emulators. See [DEPLOYMENT.md](docs/DEPLOYMENT.md#app-check-setup).
+- **App Check** starts before Auth and Firestore make requests, and stays off against the emulators. It is enforced for Firestore and Authentication, so requests from anything but the deployed app, or a machine with a registered debug token, are rejected. See [DEPLOYMENT.md](docs/DEPLOYMENT.md#app-check-setup).
 - **Deploys** are refused without a site key, or with a debug token or emulator flag (`scripts/check-firebase-config.ts`).
 - **Secrets** live in Secret Manager. `VITE_` variables end up in the public bundle, so they never hold secrets.
 - **Paid or limited services** are reached only through Cloud Functions with App Check, sign-in where appropriate, per-user limits, and a budget cap.
