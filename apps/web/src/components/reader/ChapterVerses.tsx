@@ -17,8 +17,10 @@ interface ChapterVersesProps {
   /** The verse a link pointed to, if any. */
   targetVerse: number | null;
   selection: VerseSpan | null;
-  /** Called with the new selection, and the verse that was tapped to make it. */
-  onSelectionChange: (selection: VerseSpan | null, tappedVerse: number | null) => void;
+  /** The verse the word panel is on, marked when it steps through a range; null when it is not. */
+  studiedVerse: number | null;
+  /** Called with the new selection. `keepWords` is set when the tools clear it after a change, so the word panel stays. */
+  onSelectionChange: (selection: VerseSpan | null, options?: {keepWords?: boolean}) => void;
   /** A button among the selection's tools that shows the original words, such as "Hebrew words", on phones. */
   wordsTool?: {label: string; onClick: () => void};
 }
@@ -42,7 +44,7 @@ const RibbonIcon = <svg width="13" height="16" viewBox="0 0 13 16" fill="current
  * A chapter's verses. Anyone can select a verse, alone or as a range, to study its original words.
  * Allowlisted users can also annotate the selection.
  */
-export function ChapterVerses({reference, verses, targetVerse, selection, onSelectionChange, wordsTool}: ChapterVersesProps) {
+export function ChapterVerses({reference, verses, targetVerse, selection, studiedVerse, onSelectionChange, wordsTool}: ChapterVersesProps) {
   const status = useAuthStore((state) => state.status);
   const user = useAuthStore((state) => state.user);
   const canAnnotate = status === 'allowed';
@@ -63,16 +65,15 @@ export function ChapterVerses({reference, verses, targetVerse, selection, onSele
   });
   const describe = (span: VerseSpan) => formatReference(referenceTo(span));
 
-  function setSelection(next: VerseSpan | null) {
-    onSelectionChange(next, null);
+  /** Closes the tools once a change is made, leaving the word panel on the verse. */
+  function finishSelection() {
+    onSelectionChange(null, {keepWords: true});
   }
 
   function tapVerse(verse: number): void {
     // Dragging across words to copy them should not also select the verse.
     if (!window.getSelection()?.toString()) {
-      const next = selectVerse(selection, verse);
-
-      onSelectionChange(next, next ? verse : null);
+      onSelectionChange(selectVerse(selection, verse));
     }
   }
 
@@ -90,7 +91,7 @@ export function ChapterVerses({reference, verses, targetVerse, selection, onSele
       await add(toNewAnnotation(type, span));
     }
 
-    setSelection(null);
+    finishSelection();
   }
 
   async function saveNote(text: string): Promise<void> {
@@ -105,7 +106,7 @@ export function ChapterVerses({reference, verses, targetVerse, selection, onSele
     }
 
     setNoteEditor(null);
-    setSelection(null);
+    finishSelection();
   }
 
   async function deleteNote(): Promise<void> {
@@ -114,7 +115,7 @@ export function ChapterVerses({reference, verses, targetVerse, selection, onSele
     }
 
     setNoteEditor(null);
-    setSelection(null);
+    finishSelection();
   }
 
   return (
@@ -147,6 +148,7 @@ export function ChapterVerses({reference, verses, targetVerse, selection, onSele
               marker={isBookmarkStart ? <span className={classes.bookmarkMarker}>{RibbonIcon}</span> : null}
               onSelect={() => tapVerse(verse)}
               isSelected={isSelected}
+              isStudied={studiedVerse === verse}
             />
 
             {verseNotes.map((note) => (
@@ -188,7 +190,7 @@ export function ChapterVerses({reference, verses, targetVerse, selection, onSele
                     </>
                   )}
                   <Link className={classes.tool} to={memorizePath(referenceTo(selection))}>Memorize</Link>
-                  <button type="button" className={classes.tool} onClick={() => setSelection(null)}>Clear selection</button>
+                  <button type="button" className={classes.tool} onClick={() => onSelectionChange(null)}>Clear selection</button>
                 </div>
               </div>
             )}

@@ -3,6 +3,7 @@ import type {StudyWord} from './useVerseWords';
 
 import {useState} from 'react';
 import {Button, Loader} from '@mantine/core';
+import {ArrowIcon} from '@/components/ArrowIcon';
 import {useVerseWords} from './useVerseWords';
 import classes from './WordStudy.module.scss';
 
@@ -57,18 +58,41 @@ function WordEntry({word, language}: {word: StudyWord; language: WordLanguage}) 
   );
 }
 
+/** Moving through the verses of a selected range. */
+export interface VerseSteps {
+  /** Where the shown verse is in the range, from 1. */
+  position: number;
+  count: number;
+  onStep: (by: -1 | 1) => void;
+}
+
 interface WordStudyProps {
   reference: ChapterRef;
   /** The verse to show, or null before one is selected. */
   verse: number | null;
   translationId: string;
+  /** Given when several verses are selected, to show arrows between them. */
+  steps?: VerseSteps;
+}
+
+function StepButtons({position, count, onStep}: VerseSteps) {
+  return (
+    <>
+      <button type="button" className={classes.step} aria-label="Previous verse" disabled={position === 1} onClick={() => onStep(-1)}>
+        <ArrowIcon direction="previous" />
+      </button>
+      <button type="button" className={classes.step} aria-label="Next verse" disabled={position === count} onClick={() => onStep(1)}>
+        <ArrowIcon direction="next" />
+      </button>
+    </>
+  );
 }
 
 /**
  * The selected verse's words in Hebrew, Aramaic or Greek, as the translation follows them, and the meaning
  * of the one selected. Shown beside the reader, or in a sheet on phones.
  */
-export function WordStudy({reference, verse, translationId}: WordStudyProps) {
+export function WordStudy({reference, verse, translationId, steps}: WordStudyProps) {
   const {language, words, isPending, isError, retry} = useVerseWords(reference, verse, translationId);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selected = words[selectedIndex] ?? words[0];
@@ -98,8 +122,14 @@ export function WordStudy({reference, verse, translationId}: WordStudyProps) {
 
   return (
     <>
-      <h2 className={classes.heading}>{`${language} words in verse ${verse}`}</h2>
-      <p className={classes.hint}>{isGreek ? 'The Greek this translation follows. Select a word to see its meaning.' : 'Select a word to see its meaning.'}</p>
+      <div className={classes.head}>
+        <h2 className={classes.heading}>{`${language} words in verse ${verse}`}</h2>
+        {steps && <StepButtons {...steps} />}
+      </div>
+      <p className={classes.hint}>
+        {steps && `Verse ${steps.position} of the ${steps.count} selected. `}
+        {isGreek ? 'The Greek this translation follows. Select a word to see its meaning.' : 'Select a word to see its meaning.'}
+      </p>
 
       {words.length === 0 && <p className={classes.hint}>This translation has no words here in the original text.</p>}
 

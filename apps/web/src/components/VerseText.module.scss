@@ -43,6 +43,12 @@
   cursor: pointer;
 }
 
+.studiedNumberButton {
+  composes: numberButton;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .highlight {
   padding: 1px 2px;
   border-radius: 3px;

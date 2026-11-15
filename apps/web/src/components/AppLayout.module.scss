@@ -3,7 +3,8 @@ $phone-width: 900px;
 .app {
   position: relative;
   min-height: 100vh;
-  overflow-x: hidden;
+  // `clip`, not `hidden`: `hidden` makes this a scroll container, which stops the reader's word panel from sticking.
+  overflow-x: clip;
 }
 
 .bar {
