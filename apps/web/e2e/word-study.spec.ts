@@ -26,9 +26,39 @@ test('selecting a verse shows its Hebrew words, and a word its meaning, without 
   await expect(panel(page).getByRole('link', {name: 'H7462'})).toHaveAttribute('href', /strong=H7462B/);
   await expect(panel(page).getByRole('link', {name: 'STEP Bible'})).toBeVisible();
 
-  // The panel follows the verse tapped last.
-  await selectVerse(page, 4);
-  await expect(panel(page).getByRole('heading', {name: 'Hebrew words in verse 4'})).toBeVisible();
+  // Deselecting the verse empties the panel again.
+  await selectVerse(page, 1);
+  await expect(panel(page).getByText('Select a verse to see its Hebrew words.')).toBeVisible();
+});
+
+test('arrows step through the words of each selected verse', async ({page}) => {
+  await page.goto('/read/psalms/23');
+  await selectVerse(page, 1);
+  await selectVerse(page, 3);
+
+  const previous = panel(page).getByRole('button', {name: 'Previous verse'});
+  const next = panel(page).getByRole('button', {name: 'Next verse'});
+
+  // The panel starts on the first verse of the range, whose number is marked in the text.
+  await expect(panel(page).getByRole('heading', {name: 'Hebrew words in verse 1'})).toBeVisible();
+  await expect(panel(page).getByText('Verse 1 of the 3 selected.')).toBeVisible();
+  await expect(previous).toBeDisabled();
+
+  await next.click();
+  await expect(panel(page).getByRole('heading', {name: 'Hebrew words in verse 2'})).toBeVisible();
+  await expect(page.getByRole('button', {name: 'Select verse 2', exact: true})).toHaveCSS('text-decoration-line', 'underline');
+
+  await next.click();
+  await expect(panel(page).getByRole('heading', {name: 'Hebrew words in verse 3'})).toBeVisible();
+  await expect(next).toBeDisabled();
+
+  await previous.click();
+  await expect(panel(page).getByRole('heading', {name: 'Hebrew words in verse 2'})).toBeVisible();
+
+  // A single verse has no arrows.
+  await selectVerse(page, 5);
+  await expect(panel(page).getByRole('heading', {name: 'Hebrew words in verse 5'})).toBeVisible();
+  await expect(next).toHaveCount(0);
 });
 
 test('Daniel\'s Aramaic is labeled as Aramaic', async ({page}) => {
@@ -46,10 +76,17 @@ test('the Greek follows the translation being read', async ({page}) => {
   await expect(panel(page).getByRole('button', {name: /, theos, “God”/})).toBeVisible();
   await expect(panel(page).getByRole('button', {name: /, huios, /})).toHaveCount(0);
 
+  // The panel follows the translation without selecting the verse again.
   await page.getByLabel('Translation').selectOption('kjv');
-  await selectVerse(page, 18);
   await expect(panel(page).getByRole('button', {name: /, huios, “son”/})).toBeVisible();
   await expect(panel(page).getByRole('button', {name: /, theos, “God”/})).toHaveCount(0);
+});
+
+test('the panel stays in view beside a verse far down the chapter', async ({page}) => {
+  await page.goto('/read/john/1');
+  await selectVerse(page, 51);
+
+  await expect(panel(page).getByRole('heading', {name: 'Greek words in verse 51'})).toBeInViewport();
 });
 
 test.describe('on a phone', () => {

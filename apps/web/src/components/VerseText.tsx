@@ -14,10 +14,12 @@ interface VerseTextProps {
   /** Makes the verse selectable. The number is a real button, so this also works from a keyboard. */
   onSelect?: () => void;
   isSelected?: boolean;
+  /** Marks the number of the verse whose words the word panel shows, when a range is selected. */
+  isStudied?: boolean;
 }
 
 /** One verse of Scripture with its number, as the reader and search results show it. */
-export function VerseText({verse, text, id, isMarked = false, isHighlighted = false, marker, onSelect, isSelected}: VerseTextProps) {
+export function VerseText({verse, text, id, isMarked = false, isHighlighted = false, marker, onSelect, isSelected, isStudied = false}: VerseTextProps) {
   const paragraphClass = [isMarked ? classes.markedVerse : classes.verse, onSelect ? classes.selectable : ''].join(' ');
 
   return (
@@ -27,7 +29,7 @@ export function VerseText({verse, text, id, isMarked = false, isHighlighted = fa
         ? (
             <button
               type="button"
-              className={classes.numberButton}
+              className={isStudied ? classes.studiedNumberButton : classes.numberButton}
               aria-label={`Select verse ${verse}`}
               aria-pressed={isSelected}
               onClick={(event) => {

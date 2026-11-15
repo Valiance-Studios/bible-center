@@ -68,7 +68,6 @@ To do when reached:
 - Topics created by users start pending: they work by link but are not listed or linked from search until a reviewer approves them on the Review page. Anything else users can make public needs the same before the allowlist is removed.
 - A review decision cannot be undone in the app. A removed verse or a rejected topic can be restored by deleting its `removed` document or setting the topic back to `pending` in the console.
 - Roles live on the allowlist. When the allowlist is removed, they need a home of their own, such as `roles/{email}`.
-- The word panel should stay in view while the chapter scrolls. Selecting a verse far down, such as John 1:51, leaves the panel at the top of the page, so studying verses means scrolling up and down. Its `position: sticky` in `ReaderPage.module.scss` does not take effect in the hosted layout; explore a fix, or another arrangement, later.
 - Common topics are a fixed list for now. Later they could follow what people search for, which changes through the year (such as "resurrection" around Easter).
 
 ### Resuming in a New Session
@@ -84,6 +83,7 @@ Start with "Starting a Session" in `CLAUDE.md`, then the [Mockups](#mockups) sec
 | `Main.dc.html` | Home with Verse of the Day, search and topics |
 | `Reader.dc.html` | Reader with annotations and the Hebrew word panel |
 | `ReaderGreek.dc.html` | The reader's Greek word panel, with the dictionary form, which the Hebrew panel shows too |
+| `ReaderRange.dc.html` | The word panel with several verses selected, stepping through them with arrows |
 | `ReaderDark.dc.html` | The reader in dark mode |
 | `Topic.dc.html` | Topic results. Upvoting re-ranks live with the real formula |
 | `TopicAi.dc.html` | A topic with few results, showing AI suggestions |
@@ -560,7 +560,7 @@ erDiagram
 | Hebrew and Greek tagged text (TAHOT, TAGNT) | [STEPBible](https://github.com/STEPBible/STEPBible-Data), from Tyndale House | CC BY 4.0. Credit STEP Bible and Tyndale House with a link to [STEPBible.github.io/STEPBible-Data](https://stepbible.github.io/STEPBible-Data/), and note any changes |
 | Brief lexicons (TBESH, TBESG) and morphology expansions (TEHMC, TEGMC) | STEPBible | CC BY 4.0 |
 
-Anyone can select a verse in the reader, signed in or not, to see its words in the original language: Hebrew for the Old Testament, with Daniel's and Ezra's Aramaic labeled as Aramaic, and Greek for the New. Selecting a word shows its transliteration, English, dictionary form, main senses, grammar and Strong's number, which links to STEP Bible. On desktop the panel sits beside the text and follows the verse tapped last; on phones a "Hebrew words" or "Greek words" button among the verse's tools opens it in a sheet.
+Anyone can select a verse in the reader, signed in or not, to see its words in the original language: Hebrew for the Old Testament, with Daniel's and Ezra's Aramaic labeled as Aramaic, and Greek for the New. Selecting a word shows its transliteration, English, dictionary form, main senses, grammar and Strong's number, which links to STEP Bible. On desktop the panel sits beside the text, stays in view as the chapter scrolls, and follows the selection, emptying when it is deselected. With several verses selected, it starts on the first and arrows step through the rest, the verse it is on marked in the text; on phones a "Hebrew words" or "Greek words" button among the verse's tools opens it in a sheet.
 
 Building the data, once:
 
@@ -572,11 +572,12 @@ flowchart LR
   script --> grammar["word-data/_grammar/language.json"]
 ```
 
-Reading it, for the selected verse:
+Reading it, for the verse the panel is on:
 
 ```mermaid
 flowchart LR
-  reader["ReaderPage<br/>selected verse"] --> panel["WordStudy<br/>useVerseWords"]
+  reader["ReaderPage<br/>study: selected span, current verse"] -- "verse, steps" --> panel["WordStudy<br/>useVerseWords"]
+  panel -- "onStep" --> reader
   panel -- "wordChapterQuery, wordsOfVerse" --> chapters["word-data/book/chapter.json"]
   panel -- "lexiconQuery per group" --> lexicon["word-data/_lexicon/group.json"]
   panel -- "grammarQuery" --> grammar["word-data/_grammar/language.json"]

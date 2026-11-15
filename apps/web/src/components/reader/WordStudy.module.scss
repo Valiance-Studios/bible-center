@@ -1,4 +1,32 @@
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+// Moves between the verses of a selected range.
+.step {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--bc-line);
+  border-radius: 6px;
+  background: none;
+  color: var(--bc-ink);
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}
+
 .heading {
+  flex: 1 1 auto;
   margin: 0;
   font-family: 'Literata', serif;
   font-size: 21px;
