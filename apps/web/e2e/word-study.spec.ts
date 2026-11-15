@@ -89,6 +89,21 @@ test('the panel stays in view beside a verse far down the chapter', async ({page
   await expect(panel(page).getByRole('heading', {name: 'Greek words in verse 51'})).toBeInViewport();
 });
 
+test.describe('in a narrow window', () => {
+  test.use({viewport: {width: 1000, height: 800}});
+
+  test('the panel stays clear of the thumb index', async ({page}) => {
+    await page.goto('/read/john/1');
+    await selectVerse(page, 51);
+    await expect(panel(page).getByRole('heading', {name: 'Greek words in verse 51'})).toBeInViewport();
+
+    const panelBox = await panel(page).boundingBox();
+    const thumbBox = await page.getByRole('navigation', {name: 'Browse by section of the Bible'}).boundingBox();
+
+    expect(panelBox!.x + panelBox!.width).toBeLessThanOrEqual(thumbBox!.x);
+  });
+});
+
 test.describe('on a phone', () => {
   test.use({viewport: {width: 390, height: 844}});
 
