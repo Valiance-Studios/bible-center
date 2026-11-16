@@ -1,13 +1,10 @@
-import {doc, getDoc, runTransaction, serverTimestamp, setDoc, Timestamp} from 'firebase/firestore';
+import {getDoc, runTransaction, serverTimestamp, setDoc, Timestamp} from 'firebase/firestore';
 import {db} from './index';
+import {userRecordRef as userRef} from './userRecord';
 
 /** Mirrors `users/{uid}` in `firestore.rules`. */
 export interface UserSettings {
   translationId?: string;
-}
-
-function userRef(uid: string) {
-  return doc(db, 'users', uid);
 }
 
 export async function loadUserSettings(uid: string): Promise<UserSettings | null> {

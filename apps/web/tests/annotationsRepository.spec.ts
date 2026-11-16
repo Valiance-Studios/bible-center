@@ -4,16 +4,16 @@ import {listAnnotationPage, listChapterAnnotations} from '@/firebase/annotations
 
 vi.mock('@/firebase', () => ({db: {}}));
 vi.mock('firebase/firestore', () => ({
-  addDoc: vi.fn(),
   collection: vi.fn(),
-  deleteDoc: vi.fn(),
   doc: vi.fn(),
   getDocs: vi.fn(),
   // Each constraint becomes a readable description, so tests can check what was asked of Firestore.
   limit: (count: number) => `limit ${count}`,
   orderBy: (field: string, direction = 'asc') => `orderBy ${field} ${direction}`,
   query: vi.fn(),
+  runTransaction: vi.fn(),
   serverTimestamp: vi.fn(),
+  Timestamp: class {},
   startAfter: (cursor: {id: string}) => `startAfter ${cursor.id}`,
   updateDoc: vi.fn(),
   where: (field: string, operator: string, value: string) => `where ${field} ${operator} ${value}`,

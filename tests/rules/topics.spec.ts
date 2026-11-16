@@ -1,4 +1,4 @@
-import type {Firestore} from 'firebase/firestore';
+import type {DocumentReference, Firestore} from 'firebase/firestore';
 
 import {describe, it} from 'vitest';
 import {assertFails, assertSucceeds} from '@firebase/rules-unit-testing';
@@ -20,7 +20,7 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore';
-import {ALICE, BOB, dbFor, MALLORY, NEWT, RITA, useRulesTestEnvironment} from './support';
+import {ALICE, BOB, createStamped, dbFor, MALLORY, NEWT, RITA, useRulesTestEnvironment} from './support';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -186,6 +186,11 @@ describe('topic votes', () => {
   });
 });
 
+/** Starts a topic as the app does, stamping the time on the starter's record for the cooldown. */
+function startTopic(uid: string, ref: DocumentReference, data: object) {
+  return createStamped(uid, ref, data, 'lastTopicAt');
+}
+
 describe('started topics', () => {
   function topic(overrides: Record<string, unknown> = {}) {
     return {name: 'screen time', status: 'pending', createdBy: ALICE, createdAt: serverTimestamp(), ...overrides};
@@ -194,7 +199,7 @@ describe('started topics', () => {
   it('lets an allowlisted user start one, pending review, with its first verse', async () => {
     const db = dbFor(ALICE);
 
-    await assertSucceeds(setDoc(doc(db, 'topics', 'screen-time'), topic()));
+    await assertSucceeds(startTopic(ALICE, doc(db, 'topics', 'screen-time'), topic()));
     await assertSucceeds(upvote(db, ALICE, UNVOTED, UNVOTED, 'screen-time'));
     await assertSucceeds(getDoc(doc(dbFor(null), 'topics', 'screen-time')));
   });
@@ -202,23 +207,38 @@ describe('started topics', () => {
   it('requires a normalized name that matches its slug', async () => {
     const db = dbFor(ALICE);
 
-    await assertFails(setDoc(doc(db, 'topics', 'screen-time'), topic({name: 'Screen time'})));
-    await assertFails(setDoc(doc(db, 'topics', 'screen-time'), topic({name: 'screen  time'})));
-    await assertFails(setDoc(doc(db, 'topics', 'screen-time'), topic({name: 'social media'})));
-    await assertFails(setDoc(doc(db, 'topics', 'Screen-Time'), topic()));
-    await assertSucceeds(setDoc(doc(db, 'topics', 'self-control'), topic({name: 'self-control'})));
+    await assertFails(startTopic(ALICE, doc(db, 'topics', 'screen-time'), topic({name: 'Screen time'})));
+    await assertFails(startTopic(ALICE, doc(db, 'topics', 'screen-time'), topic({name: 'screen  time'})));
+    await assertFails(startTopic(ALICE, doc(db, 'topics', 'screen-time'), topic({name: 'social media'})));
+    await assertFails(startTopic(ALICE, doc(db, 'topics', 'Screen-Time'), topic()));
+    await assertSucceeds(startTopic(ALICE, doc(db, 'topics', 'self-control'), topic({name: 'self-control'})));
   });
 
   it('cannot be approved, changed or started for someone else', async () => {
     const db = dbFor(ALICE);
 
-    await assertFails(setDoc(doc(db, 'topics', 'screen-time'), topic({status: 'approved'})));
-    await assertFails(setDoc(doc(db, 'topics', 'screen-time'), topic({createdBy: BOB})));
-    await assertSucceeds(setDoc(doc(db, 'topics', 'screen-time'), topic()));
+    await assertFails(startTopic(ALICE, doc(db, 'topics', 'screen-time'), topic({status: 'approved'})));
+    await assertFails(startTopic(ALICE, doc(db, 'topics', 'screen-time'), topic({createdBy: BOB})));
+    await assertSucceeds(startTopic(ALICE, doc(db, 'topics', 'screen-time'), topic()));
     await assertFails(updateDoc(doc(db, 'topics', 'screen-time'), {status: 'approved'}));
-    await assertFails(setDoc(doc(dbFor(MALLORY), 'topics', 'other'), topic({name: 'other', createdBy: MALLORY})));
+    await assertFails(startTopic(MALLORY, doc(dbFor(MALLORY), 'topics', 'other'), topic({name: 'other', createdBy: MALLORY})));
+  });
+
+  it('stamps when each one is started, and waits ten minutes between them', async () => {
+    const db = dbFor(ALICE);
+
+    await assertFails(setDoc(doc(db, 'topics', 'screen-time'), topic()));
+    await assertSucceeds(startTopic(ALICE, doc(db, 'topics', 'screen-time'), topic()));
+    await assertFails(startTopic(ALICE, doc(db, 'topics', 'social-media'), topic({name: 'social media'})));
+    // Nobody can clear or backdate the stamp to skip the wait.
+    await assertFails(setDoc(doc(db, 'users', ALICE), {lastTopicAt: new Date(0)}, {merge: true}));
   });
 });
+
+/** Reports as the app does, stamping the time on the reporter's record for the cooldown. */
+function sendReport(uid: string, data: object) {
+  return createStamped(uid, doc(collection(dbFor(uid), 'reports')), data, 'lastReportAt');
+}
 
 describe('reports', () => {
   function report(overrides: Record<string, unknown> = {}) {
@@ -226,21 +246,23 @@ describe('reports', () => {
   }
 
   it('lets an allowlisted user report a verse, with optional details', async () => {
-    const db = dbFor(ALICE);
+    await assertSucceeds(sendReport(ALICE, report()));
+    await assertSucceeds(sendReport(BOB, report({reason: 'other', details: 'x'.repeat(500), reportedBy: BOB})));
+  });
 
-    await assertSucceeds(addDoc(collection(db, 'reports'), report()));
-    await assertSucceeds(addDoc(collection(db, 'reports'), report({reason: 'other', details: 'x'.repeat(500)})));
+  it('stamps when each one is sent, and waits a minute between them', async () => {
+    await assertFails(addDoc(collection(dbFor(ALICE), 'reports'), report()));
+    await assertSucceeds(sendReport(ALICE, report()));
+    await assertFails(sendReport(ALICE, report({verseKey: UNVOTED})));
   });
 
   it('checks the reason, details, reporter and status', async () => {
-    const db = dbFor(ALICE);
-
-    await assertFails(addDoc(collection(db, 'reports'), report({reason: 'boring'})));
-    await assertFails(addDoc(collection(db, 'reports'), report({details: 'x'.repeat(501)})));
-    await assertFails(addDoc(collection(db, 'reports'), report({reportedBy: BOB})));
-    await assertFails(addDoc(collection(db, 'reports'), report({status: 'resolved'})));
-    await assertFails(addDoc(collection(db, 'reports'), report({verseKey: 'nonsense'})));
-    await assertFails(addDoc(collection(dbFor(MALLORY), 'reports'), report({reportedBy: MALLORY})));
+    await assertFails(sendReport(ALICE, report({reason: 'boring'})));
+    await assertFails(sendReport(ALICE, report({details: 'x'.repeat(501)})));
+    await assertFails(sendReport(ALICE, report({reportedBy: BOB})));
+    await assertFails(sendReport(ALICE, report({status: 'resolved'})));
+    await assertFails(sendReport(ALICE, report({verseKey: 'nonsense'})));
+    await assertFails(sendReport(MALLORY, report({reportedBy: MALLORY})));
   });
 
   it('keeps reports out of reach of everyone but reviewers', async () => {
@@ -252,8 +274,9 @@ describe('reports', () => {
 describe('reviewing topics', () => {
   const PENDING = 'screen-time';
 
-  async function seedTopic(slug: string, status: string) {
-    await setDoc(doc(dbFor(ALICE), 'topics', slug), {name: slug.replaceAll('-', ' '), status: 'pending', createdBy: ALICE, createdAt: serverTimestamp()});
+  /** Each person can start one topic every ten minutes, so a second topic in a test needs another starter. */
+  async function seedTopic(slug: string, status: string, uid = ALICE) {
+    await startTopic(uid, doc(dbFor(uid), 'topics', slug), {name: slug.replaceAll('-', ' '), status: 'pending', createdBy: uid, createdAt: serverTimestamp()});
 
     if (status !== 'pending') {
       await updateDoc(doc(dbFor(RITA), 'topics', slug), decision(status));
@@ -278,7 +301,7 @@ describe('reviewing topics', () => {
 
   it('lets a reviewer approve or reject a pending topic, once', async () => {
     await seedTopic(PENDING, 'pending');
-    await seedTopic('social-media', 'pending');
+    await seedTopic('social-media', 'pending', BOB);
 
     await assertSucceeds(updateDoc(doc(dbFor(RITA), 'topics', PENDING), decision('approved')));
     await assertSucceeds(updateDoc(doc(dbFor(RITA), 'topics', 'social-media'), decision('rejected')));
@@ -316,9 +339,11 @@ describe('resolving reports', () => {
   }
 
   async function seedReport(): Promise<string> {
-    const report = await addDoc(collection(dbFor(ALICE), 'reports'), {
+    const report = doc(collection(dbFor(ALICE), 'reports'));
+
+    await createStamped(ALICE, report, {
       topic: TOPIC, verseKey: VOTED, reason: 'fit', reportedBy: ALICE, createdAt: serverTimestamp(), status: 'open',
-    });
+    }, 'lastReportAt');
 
     return report.id;
   }

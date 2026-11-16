@@ -2,13 +2,12 @@ import type {Annotation, AnnotationOrder, AnnotationType} from '@bible-center/co
 import type {QueryConstraint, QueryDocumentSnapshot} from 'firebase/firestore';
 
 import {
-  addDoc,
   collection,
-  deleteDoc,
   doc,
   limit,
   orderBy,
   query,
+  runTransaction,
   serverTimestamp,
   startAfter,
   updateDoc,
@@ -16,6 +15,7 @@ import {
 } from 'firebase/firestore';
 import {db} from './index';
 import {fetchFromServer} from './serverQuery';
+import {addToCount, readUserRecord, takeFromCount} from './userRecord';
 
 export type NewAnnotation = Omit<Annotation, 'id'>;
 
@@ -77,8 +77,14 @@ export async function listAnnotationPage(uid: string, {type, order, after, pageS
   return {annotations: page.map(toAnnotation), next: documents.length > pageSize ? page.at(-1) ?? null : null};
 }
 
+/** Rejects with `WriteLimitError` once the user has as many as `WRITE_LIMITS` allows. */
 export async function addAnnotation(uid: string, annotation: NewAnnotation): Promise<void> {
-  await addDoc(annotationsOf(uid), {...annotation, createdAt: serverTimestamp(), updatedAt: serverTimestamp()});
+  await runTransaction(db, async (transaction) => {
+    const record = await readUserRecord(transaction, uid);
+
+    addToCount(transaction, uid, record, 'annotations');
+    transaction.set(doc(annotationsOf(uid)), {...annotation, createdAt: serverTimestamp(), updatedAt: serverTimestamp()});
+  });
 }
 
 export async function updateNoteText(uid: string, annotationId: string, text: string): Promise<void> {
@@ -86,5 +92,20 @@ export async function updateNoteText(uid: string, annotationId: string, text: st
 }
 
 export async function removeAnnotation(uid: string, annotationId: string): Promise<void> {
-  await deleteDoc(doc(annotationsOf(uid), annotationId));
+  await runTransaction(db, async (transaction) => {
+    const record = await readUserRecord(transaction, uid);
+
+    takeFromCount(transaction, uid, record, 'annotations', annotationId);
+    transaction.delete(doc(annotationsOf(uid), annotationId));
+  });
+}
+
+/**
+ * Removes several, one after another. Each removal lowers the count on the user's record, and the rules accept only
+ * one change to it per write, so removals made at the same moment would be refused rather than retried.
+ */
+export async function removeAnnotations(uid: string, annotationIds: readonly string[]): Promise<void> {
+  for (const annotationId of annotationIds) {
+    await removeAnnotation(uid, annotationId);
+  }
 }

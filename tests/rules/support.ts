@@ -1,10 +1,10 @@
 import type {RulesTestEnvironment} from '@firebase/rules-unit-testing';
-import type {Firestore} from 'firebase/firestore';
+import type {DocumentReference, Firestore} from 'firebase/firestore';
 
 import {readFileSync} from 'node:fs';
 import {afterAll, beforeAll, beforeEach} from 'vitest';
 import {initializeTestEnvironment} from '@firebase/rules-unit-testing';
-import {doc, setDoc} from 'firebase/firestore';
+import {doc, increment, serverTimestamp, setDoc, writeBatch} from 'firebase/firestore';
 
 /** On the allowlist. */
 export const ALICE = 'alice';
@@ -71,4 +71,45 @@ export function dbFor(uid: string | null, emailVerified = true): Firestore {
     : testEnv.unauthenticatedContext();
 
   return context.firestore() as unknown as Firestore;
+}
+
+/** The record of the user a document under `users/{uid}` belongs to. */
+function ownerRecordOf(ref: DocumentReference) {
+  const owner = ref.parent.parent;
+
+  if (!owner) {
+    throw new Error(`${ref.path} does not belong to a user.`);
+  }
+
+  return doc(ref.firestore, 'users', owner.id);
+}
+
+/** Creates a counted document as the app does: with one more in its owner's `countField`, in the same write. */
+export function createCounted(ref: DocumentReference, data: object, countField: string): Promise<void> {
+  const batch = writeBatch(ref.firestore);
+
+  batch.set(ref, data);
+  batch.set(ownerRecordOf(ref), {[countField]: increment(1)}, {merge: true});
+
+  return batch.commit();
+}
+
+/** Deletes a counted document as the app does: with one fewer in its owner's `countField`, naming it in `changeField`. */
+export function deleteCounted(ref: DocumentReference, countField: string, changeField: string): Promise<void> {
+  const batch = writeBatch(ref.firestore);
+
+  batch.delete(ref);
+  batch.set(ownerRecordOf(ref), {[countField]: increment(-1), [changeField]: ref.id}, {merge: true});
+
+  return batch.commit();
+}
+
+/** Creates a document with a cooldown as the app does: stamping now as `stampField` on the user's record, in the same write. */
+export function createStamped(uid: string, ref: DocumentReference, data: object, stampField: string): Promise<void> {
+  const batch = writeBatch(ref.firestore);
+
+  batch.set(ref, data);
+  batch.set(doc(ref.firestore, 'users', uid), {[stampField]: serverTimestamp()}, {merge: true});
+
+  return batch.commit();
 }

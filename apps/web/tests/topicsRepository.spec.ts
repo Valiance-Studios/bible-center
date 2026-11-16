@@ -1,18 +1,18 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {addDoc, getDocs} from 'firebase/firestore';
+import {getDocs, runTransaction} from 'firebase/firestore';
 import {listCommunityVerses, listMyVotes, reportVerse} from '@/firebase/topics';
 
 vi.mock('@/firebase', () => ({db: {}}));
 vi.mock('firebase/firestore', () => ({
-  addDoc: vi.fn(),
   collection: vi.fn(),
   collectionGroup: vi.fn(),
-  doc: vi.fn(),
+  doc: (parent: unknown, ...path: string[]) => path.length > 0 ? path.join('/') : 'reports/new',
   getDocFromServer: vi.fn(),
   getDocs: vi.fn(),
   query: vi.fn(),
   runTransaction: vi.fn(),
   serverTimestamp: () => 'now',
+  Timestamp: class {},
   where: vi.fn(),
 }));
 
@@ -53,10 +53,15 @@ describe('listMyVotes', () => {
 
 describe('reportVerse', () => {
   it('sends an open report, leaving out empty details', async () => {
+    const transaction = {get: vi.fn().mockResolvedValue({data: () => undefined}), set: vi.fn()};
+
+    vi.mocked(runTransaction).mockImplementation((_, update) => update(transaction as never));
     await reportVerse('uid', {topic: 'grief', verseKey: '40005004', reason: 'fit'});
 
-    expect(vi.mocked(addDoc).mock.calls[0]?.[1]).toEqual({
+    expect(transaction.set).toHaveBeenCalledWith('reports/new', {
       topic: 'grief', verseKey: '40005004', reason: 'fit', reportedBy: 'uid', createdAt: 'now', status: 'open',
     });
+    // The cooldown's stamp goes on the user's record in the same write.
+    expect(transaction.set).toHaveBeenCalledWith('users/uid', {lastReportAt: 'now'}, {merge: true});
   });
 });
