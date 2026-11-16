@@ -31,6 +31,10 @@ Referrer restrictions are a light barrier, since non-browser clients can fake th
 
 Admins add people, set their roles and remove them on the People page (`/people`). The first admin has to be made in the Firestore console: create `allowedUsers/<lowercase email>` with no fields, and `roles/<lowercase email>` with a string field `role` set to `admin`. Anyone without a `roles` entry is a member. The email must be verified to count; see [Authentication and Access](../ARCHITECTURE.md#authentication-and-access).
 
+### Account Age for Voting
+
+Votes only count from accounts first seen at least a week ago, recorded as `createdAt` on `users/<uid>` at their first sign-in after the rule is deployed. Existing users get today's date then, so they cannot vote for a week. To let someone vote sooner, set their `createdAt` to an earlier timestamp in the Firestore console; the app never can.
+
 ### Moving Roles Off the Allowlist
 
 Roles used to be a `role` field on `allowedUsers/<email>`. The rules now read them only from `roles/<email>`, so before deploying those rules, copy each reviewer and admin across in the Firestore console:

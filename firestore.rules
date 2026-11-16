@@ -94,9 +94,21 @@ service cloud.firestore {
     }
 
     // Keep the translation ids in sync with TRANSLATIONS in apps/web/src/bible/translations.ts.
-    function isValidUserSettings(data) {
-      return data.keys().hasOnly(['translationId'])
-        && data.translationId in ['bsb', 'kjv'];
+    // `createdAt` is when the account was first seen, set by the server once and never changed.
+    function isValidUserRecord(data) {
+      return data.keys().hasOnly(['translationId', 'createdAt'])
+        && (!('translationId' in data) || data.translationId in ['bsb', 'kjv']);
+    }
+
+    function myUserRecord() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    // Votes count only from accounts at least this old, so new accounts cannot be made in bulk to move a verse.
+    // Keep the days in sync with VOTER_MIN_ACCOUNT_DAYS in packages/core/src/topics.ts.
+    function isEstablished() {
+      return exists(myUserRecord())
+        && get(myUserRecord()).data.get('createdAt', request.time) <= request.time - duration.value(7, 'd');
     }
 
     // Keep in sync with Annotation and NOTE_MAX_LENGTH in packages/core/src/annotations.ts.
@@ -124,8 +136,16 @@ service cloud.firestore {
     match /users/{uid} {
       allow get: if isAllowedOwner(uid);
 
-      allow create, update: if isAllowedOwner(uid)
-        && isValidUserSettings(request.resource.data);
+      allow create: if isAllowedOwner(uid)
+        && isValidUserRecord(request.resource.data)
+        && request.resource.data.get('createdAt', request.time) == request.time;
+
+      // `createdAt` can be added once, as the server's time, and never changed after that.
+      allow update: if isAllowedOwner(uid)
+        && isValidUserRecord(request.resource.data)
+        && ('createdAt' in resource.data
+          ? request.resource.data.createdAt == resource.data.createdAt
+          : request.resource.data.get('createdAt', request.time) == request.time);
 
       match /annotations/{annotationId} {
         allow read, delete: if isAllowedOwner(uid);
@@ -289,9 +309,11 @@ service cloud.firestore {
               && !existsAfter(voteOf(slug, key)))
           );
 
-        // One per user, keyed by their id. Its verse's count must move with it.
+        // One per user, keyed by their id. Its verse's count must move with it. Only established accounts
+        // can vote, which also covers adding a verse, as that creates its adder's vote.
         match /votes/{voterId} {
           allow create: if isAllowed()
+            && isEstablished()
             && voterId == request.auth.uid
             && request.resource.data.keys().hasOnly(['uid', 'topic', 'createdAt'])
             && request.resource.data.keys().hasAll(['uid', 'topic', 'createdAt'])

@@ -10,6 +10,8 @@ import {doc, setDoc} from 'firebase/firestore';
 export const ALICE = 'alice';
 /** On the allowlist, with a `role` of admin left on his entry from before roles moved, which grants nothing. */
 export const BOB = 'bob';
+/** On the allowlist, for tests that need an account too new to vote. */
+export const NEWT = 'newt';
 /** Signed in and verified, but not on the allowlist. */
 export const MALLORY = 'mallory';
 /** On the allowlist, with a reviewer entry in `roles`. */
@@ -50,7 +52,7 @@ export function useRulesTestEnvironment(seed: (db: Firestore) => Promise<void> =
     await testEnv.withSecurityRulesDisabled(async (context) => {
       const db = context.firestore() as unknown as Firestore;
 
-      for (const uid of [ALICE, RITA, ADA]) {
+      for (const uid of [ALICE, NEWT, RITA, ADA]) {
         await setDoc(doc(db, 'allowedUsers', emailOf(uid)), {});
       }
 

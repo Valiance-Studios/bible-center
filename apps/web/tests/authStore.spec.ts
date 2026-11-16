@@ -3,12 +3,14 @@ import type {User} from 'firebase/auth';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {onAuthStateChanged} from 'firebase/auth';
 import {getAccess} from '@/firebase/access';
+import {recordFirstSignIn} from '@/firebase/settings';
 import {useAuthStore} from '@/stores/auth';
 
 const firebaseState = vi.hoisted(() => ({auth: {currentUser: null as unknown}}));
 
 vi.mock('@/firebase', () => ({auth: firebaseState.auth, db: {}}));
 vi.mock('@/firebase/access', () => ({getAccess: vi.fn()}));
+vi.mock('@/firebase/settings', () => ({recordFirstSignIn: vi.fn()}));
 vi.mock('firebase/auth', () => ({
   GoogleAuthProvider: vi.fn(),
   createUserWithEmailAndPassword: vi.fn(),
@@ -48,6 +50,7 @@ describe('auth store', () => {
     vi.clearAllMocks();
     firebaseState.auth.currentUser = null;
     useAuthStore.setState({status: 'loading', user: null});
+    vi.mocked(recordFirstSignIn).mockResolvedValue(new Date('2026-11-01T00:00:00Z'));
   });
 
   it('is signed out when Firebase reports no user', async () => {
@@ -71,6 +74,26 @@ describe('auth store', () => {
     expect(useAuthStore.getState().status).toBe('allowed');
     expect(useAuthStore.getState().user?.email).toBe('person@example.com');
     expect(useAuthStore.getState().role).toBe('member');
+    expect(useAuthStore.getState().accountCreatedAt).toEqual(new Date('2026-11-01T00:00:00Z'));
+  });
+
+  it('still allows a user whose first sign-in could not be recorded, with no account age', async () => {
+    vi.mocked(getAccess).mockResolvedValue('member');
+    vi.mocked(recordFirstSignIn).mockRejectedValue(new Error('offline'));
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await reportUser(makeUser());
+
+    expect(useAuthStore.getState().status).toBe('allowed');
+    expect(useAuthStore.getState().accountCreatedAt).toBeNull();
+  });
+
+  it('records no first sign-in for someone not on the allowlist', async () => {
+    vi.mocked(getAccess).mockResolvedValue(null);
+
+    await reportUser(makeUser());
+
+    expect(recordFirstSignIn).not.toHaveBeenCalled();
   });
 
   it('keeps the role from the allowlist', async () => {

@@ -15,6 +15,7 @@ import {
 import {create} from 'zustand';
 import {auth} from '@/firebase';
 import {getAccess} from '@/firebase/access';
+import {recordFirstSignIn} from '@/firebase/settings';
 
 /**
  * Where the current visitor stands. Reading is open in every state; `allowed` is what will unlock
@@ -33,6 +34,8 @@ interface AuthState {
   user: SessionUser | null;
   /** What the user can do once `allowed`. Only shapes the interface; the security rules check it. */
   role: Role;
+  /** When an `allowed` user's account was first seen, which decides when they can vote; null if unknown. */
+  accountCreatedAt: Date | null;
   /** Follows Firebase's auth state. Returns the function that stops following it. */
   init: () => () => void;
   signInWithGoogle: () => Promise<void>;
@@ -48,22 +51,40 @@ interface AuthState {
 interface Access {
   status: AuthStatus;
   role: Role;
+  accountCreatedAt: Date | null;
+}
+
+const NO_ACCESS = {role: 'member', accountCreatedAt: null} as const;
+
+/** A failure here only leaves the account's age unknown, so it must not cost the person their access. */
+async function accountCreatedAtOf(uid: string): Promise<Date | null> {
+  try {
+    return await recordFirstSignIn(uid);
+  } catch (error) {
+    console.error('Could not record the first sign-in', error);
+
+    return null;
+  }
 }
 
 async function accessFor(user: User): Promise<Access> {
   if (!user.emailVerified) {
-    return {status: 'unverified', role: 'member'};
+    return {status: 'unverified', ...NO_ACCESS};
   }
 
-  try {
-    const role = await getAccess(user);
+  let role: Role | null;
 
-    return role ? {status: 'allowed', role} : {status: 'noAccess', role: 'member'};
+  try {
+    role = await getAccess(user);
   } catch (error) {
     console.error('Could not check access', error);
 
-    return {status: 'accessCheckFailed', role: 'member'};
+    return {status: 'accessCheckFailed', ...NO_ACCESS};
   }
+
+  return role
+    ? {status: 'allowed', role, accountCreatedAt: await accountCreatedAtOf(user.uid)}
+    : {status: 'noAccess', ...NO_ACCESS};
 }
 
 export const useAuthStore = create<AuthState>((set) => {
@@ -74,15 +95,15 @@ export const useAuthStore = create<AuthState>((set) => {
     const update = ++latestUpdate;
 
     if (!user) {
-      set({status: 'signedOut', user: null, role: 'member'});
+      set({status: 'signedOut', user: null, ...NO_ACCESS});
 
       return 'signedOut';
     }
 
-    const {status, role} = await accessFor(user);
+    const {status, role, accountCreatedAt} = await accessFor(user);
 
     if (update === latestUpdate) {
-      set({status, role, user: {uid: user.uid, email: user.email, displayName: user.displayName}});
+      set({status, role, accountCreatedAt, user: {uid: user.uid, email: user.email, displayName: user.displayName}});
     }
 
     return status;
@@ -91,7 +112,7 @@ export const useAuthStore = create<AuthState>((set) => {
   return {
     status: 'loading',
     user: null,
-    role: 'member',
+    ...NO_ACCESS,
 
     init: () => onAuthStateChanged(auth, (user) => {
       void applyUser(user);

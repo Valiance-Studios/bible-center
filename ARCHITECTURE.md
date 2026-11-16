@@ -23,7 +23,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | Translation choice saved to the account | Built |
 | My verses page | Built |
 | About dialog | Built: a shorter version of the README with data credits, from the footer and the phone menu |
-| Topic search, voting, reports | Built: topic pages, the Topics page, voting ranked by `topicVerseScore`, adding verses, starting topics and reports |
+| Topic search, voting, reports | Built: topic pages, the Topics page, voting ranked by `topicVerseScore` from accounts at least a week old, adding verses, starting topics and reports. The message explaining why a newer account cannot vote waits on its mockup |
 | Admins and reviewers | Built: roles in `roles/{email}`, the People page for admins, and the Review page for reported verses and new topics |
 | Hebrew/Greek study | Built: the word panel beside the reader, or in a sheet on phones, from STEPBible data |
 | Scripture memorization | Built: flash cards, fading words, and the memory list; see [Memorization](#memorization) |
@@ -278,10 +278,11 @@ Allowlisted users can highlight, bookmark and add notes to a verse or a range of
 
 ```mermaid
 erDiagram
-  USER ||--o| SETTINGS : "users/{uid}"
+  USER ||--o| USER_RECORD : "users/{uid}"
   USER ||--o{ ANNOTATION : "users/{uid}/annotations/{id}"
-  SETTINGS {
-    string translationId
+  USER_RECORD {
+    string translationId "optional"
+    timestamp createdAt "first sign-in, set once by the server"
   }
   ANNOTATION {
     string type "highlight, bookmark or note"
@@ -409,7 +410,7 @@ The app shows OpenBible and Bible Center counts separately rather than the combi
 ### Voting
 
 - Upvotes only. Users can remove their own upvote, and can report an entry that does not belong.
-- Signed-in users can upvote an existing verse or associate a verse with a topic.
+- Signed-in users can upvote an existing verse or associate a verse with a topic, once their account is at least `VOTER_MIN_ACCOUNT_DAYS` (7) days old, so a crowd of new accounts cannot move a verse. `recordFirstSignIn` in `apps/web/src/firebase/settings.ts` sets `createdAt` on `users/{uid}` the first time the auth store sees an allowed user, as the server's time, and the rules never let it change. `isEstablished` in `firestore.rules` checks it on every new vote, which covers adding a verse, since that creates its adder's vote. Removing an upvote has no such check. Upvotes are not capped against the OpenBible seed, since the ranking formula is settled; the account age, reports and reviewers handle abuse instead.
 - One vote per user for each verse and topic, enforced by the document path and security rules.
 - Counts are checked by the security rules rather than kept by a Cloud Function. `upvoteVerse` and `removeUpvote` in `apps/web/src/firebase/topics.ts` change a vote and its count in one transaction, and the rules use `existsAfter` and `getAfter` to accept a count change only when that user's vote is created (+1) or deleted (-1) in the same write, and a vote only when its count moves with it. Adding a verse to a topic creates its count at 1 alongside the adder's vote. A transaction retries when someone else votes at the same moment, so no vote is lost. `tests/rules/topics.spec.ts` tries each way of changing a count without a vote.
 - Anyone can read the counts. A user's own votes are found with one collection-group query on `uid` and `topic`, and nobody else can read them.
@@ -474,7 +475,7 @@ sequenceDiagram
   Fn->>Firestore: Transaction: read the verse's count
   Fn->>Firestore: Write count + 1 (or create at 1), and votes/{uid}
   Firestore->>Rules: Check each write against the state after both
-  alt Count moved by one and this user's vote appeared
+  alt Count moved by one, this user's vote appeared, and their account is a week old
     Rules-->>Firestore: Allow
     Firestore-->>Page: Done, refetch counts and my votes
   else Anything else

@@ -1,7 +1,7 @@
 import type {TopicFileVerse} from '../src/topics';
 
 import {describe, expect, it} from 'vitest';
-import {normalizeTopicName, rankTopicVerses, topicSlug, topicVerseKey} from '../src/topics';
+import {normalizeTopicName, rankTopicVerses, topicSlug, topicVerseKey, votingOpensAt} from '../src/topics';
 
 describe('topic names', () => {
   it('normalizes case and spacing', () => {
@@ -13,6 +13,12 @@ describe('topic names', () => {
     expect(topicSlug('self-control')).toBe('self-control');
     expect(topicSlug('10 commandments')).toBe('10-commandments');
     expect(topicSlug(' "Christ" & the church! ')).toBe('christ-the-church');
+  });
+});
+
+describe('votingOpensAt', () => {
+  it('is a week after the account was first seen', () => {
+    expect(votingOpensAt(new Date('2026-11-01T12:00:00Z'))).toEqual(new Date('2026-11-08T12:00:00Z'));
   });
 });
 

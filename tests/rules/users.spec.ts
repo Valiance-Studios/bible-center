@@ -117,6 +117,26 @@ describe('user settings', () => {
     await assertFails(setDoc(settings, {translationId: 'kjv', isAdmin: true}));
   });
 
+  it('records when the account was first seen, once, as the server\'s time', async () => {
+    const record = doc(dbFor(ALICE), 'users', ALICE);
+
+    await assertFails(setDoc(record, {createdAt: new Date(0)}));
+    await assertSucceeds(setDoc(record, {createdAt: serverTimestamp()}));
+    await assertSucceeds(setDoc(record, {translationId: 'kjv'}, {merge: true}));
+    await assertFails(updateDoc(record, {createdAt: serverTimestamp()}));
+    await assertFails(updateDoc(record, {createdAt: new Date(0)}));
+    // Saving settings without merging would erase it.
+    await assertFails(setDoc(record, {translationId: 'bsb'}));
+  });
+
+  it('lets an existing record gain a first-seen time, but not a backdated one', async () => {
+    const record = doc(dbFor(ALICE), 'users', ALICE);
+
+    await assertSucceeds(setDoc(record, {translationId: 'kjv'}));
+    await assertFails(updateDoc(record, {createdAt: new Date(0)}));
+    await assertSucceeds(updateDoc(record, {createdAt: serverTimestamp()}));
+  });
+
   it('keeps them private', async () => {
     await assertFails(getDoc(doc(dbFor(BOB), 'users', ALICE)));
     await assertFails(setDoc(doc(dbFor(BOB), 'users', ALICE), {translationId: 'kjv'}));

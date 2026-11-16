@@ -120,6 +120,14 @@ export async function uidOf(email: string): Promise<string> {
   return uid;
 }
 
+/** Records an account as first seen `daysAgo` days ago, so it is old enough to vote. */
+export async function setAccountAge(uid: string, daysAgo: number): Promise<void> {
+  const createdAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
+  const url = `${documentsUrl(`users/${uid}`)}?updateMask.fieldPaths=createdAt`;
+
+  await request(url, {method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields: {createdAt: {timestampValue: createdAt.toISOString()}}})}, `set the age of ${uid}`);
+}
+
 export interface SeedAnnotation {
   type: 'highlight' | 'bookmark' | 'note';
   /** `bbcccvvv`, as in `packages/core/src/verseId.ts`. */
