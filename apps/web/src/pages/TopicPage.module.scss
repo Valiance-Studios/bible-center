@@ -135,6 +135,20 @@ $phone-width: 900px;
   }
 }
 
+.voteWaiting {
+  composes: vote;
+  border-style: dashed;
+  color: var(--bc-muted);
+
+  &:hover {
+    border-color: var(--bc-line);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
 .voteOn {
   composes: vote;
   border-color: var(--bc-accent);

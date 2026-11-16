@@ -4,11 +4,12 @@ import type {TranslationProvider} from '@/bible/translations';
 import {useEffect, useRef, useState} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {Link, Navigate, useParams} from 'react-router';
-import {formatReference, rankTopicVerses, referenceOf, topicSlug, topicVerseKey} from '@bible-center/core';
+import {formatReference, rankTopicVerses, referenceOf, topicSlug, topicVerseKey, votingOpensAt} from '@bible-center/core';
 import {Alert, Button, Loader} from '@mantine/core';
 import {referencePath} from '@/bible/paths';
 import {findTranslation} from '@/bible/translations';
 import {usePassage} from '@/bible/usePassage';
+import {formatDayAndTime} from '@/components/formatDayAndTime';
 import {AddVerseDialog} from '@/components/topics/AddVerseDialog';
 import {ReportDialog} from '@/components/topics/ReportDialog';
 import {startedTopicQuery} from '@/components/topics/startedTopicQuery';
@@ -21,6 +22,8 @@ import classes from './TopicPage.module.scss';
 
 const PAGE_SIZE = 20;
 const OPENBIBLE_TOPICS_URL = 'https://www.openbible.info/topics/';
+/** Explains the vote boxes of an account too new to vote. */
+const NEW_ACCOUNT_NOTICE_ID = 'new-account-notice';
 
 function UpArrow() {
   return (
@@ -35,12 +38,23 @@ interface VoteButtonProps {
   upvotes: number;
   /** Signed in and allowed to vote. Anyone else is sent to sign in. */
   canVote: boolean;
+  /** Signed in, but the account is too new to vote yet. */
+  isWaiting: boolean;
   hasVoted: boolean;
   isSaving: boolean;
   onToggle: () => void;
 }
 
-function VoteButton({title, upvotes, canVote, hasVoted, isSaving, onToggle}: VoteButtonProps) {
+function VoteButton({title, upvotes, canVote, isWaiting, hasVoted, isSaving, onToggle}: VoteButtonProps) {
+  if (isWaiting) {
+    return (
+      <button type="button" className={classes.voteWaiting} disabled aria-label={`Upvote ${title}, not available yet`} aria-describedby={NEW_ACCOUNT_NOTICE_ID}>
+        <UpArrow />
+        <span>{upvotes}</span>
+      </button>
+    );
+  }
+
   if (!canVote) {
     return (
       <Link className={classes.vote} to="/sign-in" aria-label={`Sign in to upvote ${title}`}>
@@ -76,6 +90,7 @@ interface TopicVerseRowProps {
   reference: VerseReference;
   translation: TranslationProvider;
   canVote: boolean;
+  isWaiting: boolean;
   hasVoted: boolean;
   isSaving: boolean;
   isReported: boolean;
@@ -83,7 +98,7 @@ interface TopicVerseRowProps {
   onReport: () => void;
 }
 
-function TopicVerseRow({verseKey, verse, reference, translation, canVote, hasVoted, isSaving, isReported, onToggleVote, onReport}: TopicVerseRowProps) {
+function TopicVerseRow({verseKey, verse, reference, translation, canVote, isWaiting, hasVoted, isSaving, isReported, onToggleVote, onReport}: TopicVerseRowProps) {
   const {text, isPending, isError, retry} = usePassage(reference, translation);
   const title = formatReference(reference);
   const counts = [`${verse.upvotes.toLocaleString('en-US')} on Bible Center`];
@@ -94,7 +109,7 @@ function TopicVerseRow({verseKey, verse, reference, translation, canVote, hasVot
 
   return (
     <article id={rowIdOf(verseKey)} className={classes.row}>
-      <VoteButton title={title} upvotes={verse.upvotes} canVote={canVote} hasVoted={hasVoted} isSaving={isSaving} onToggle={onToggleVote} />
+      <VoteButton title={title} upvotes={verse.upvotes} canVote={canVote} isWaiting={isWaiting} hasVoted={hasVoted} isSaving={isSaving} onToggle={onToggleVote} />
       <div className={classes.body}>
         <Link className={classes.reference} to={referencePath(reference)}>{title}</Link>
 
@@ -132,6 +147,12 @@ function Topic({slug}: {slug: string}) {
   const status = useAuthStore((state) => state.status);
   const user = useAuthStore((state) => state.user);
   const canVote = status === 'allowed' && user !== null;
+  const accountCreatedAt = useAuthStore((state) => state.accountCreatedAt);
+  // The rules only accept votes from accounts a week old. If the age is unknown, let the rules decide.
+  const opensAt = canVote && accountCreatedAt ? votingOpensAt(accountCreatedAt) : null;
+  // When the page opened. A visitor whose wait ends while it is open can reload, and the rules check the real time.
+  const [openedAt] = useState(() => Date.now());
+  const isWaiting = opensAt !== null && opensAt.getTime() > openedAt;
   const uid = canVote ? user.uid : undefined;
   const [shownCount, setShownCount] = useState(PAGE_SIZE);
   const [addedKey, setAddedKey] = useState<string | null>(null);
@@ -196,7 +217,7 @@ function Topic({slug}: {slug: string}) {
     );
   }
 
-  const addButton = canVote && !isPending && !openBible.isError && (
+  const addButton = canVote && !isWaiting && !isPending && !openBible.isError && (
     <Button className={classes.add} variant="outline" radius="xl" size="md" onClick={() => setIsAdding(true)}>Add a verse to this topic</Button>
   );
 
@@ -210,6 +231,13 @@ function Topic({slug}: {slug: string}) {
         <p className={classes.signInHint}>
           <Link to="/sign-in">Sign in</Link>
           {' to upvote, add a verse or report one.'}
+        </p>
+      )}
+
+      {isWaiting && opensAt && (
+        <p id={NEW_ACCOUNT_NOTICE_ID} className={classes.notice}>
+          <strong>{`You can upvote and add verses after ${formatDayAndTime(opensAt)}.`}</strong>
+          {' New accounts wait a week before voting, which keeps the rankings fair. You can report a verse now.'}
         </p>
       )}
 
@@ -229,7 +257,7 @@ function Topic({slug}: {slug: string}) {
       {!isPending && !openBible.isError && verses.length === 0 && (
         <>
           <p className={classes.notice}>
-            {canVote
+            {canVote && !isWaiting
               ? 'No one has added a verse to this topic yet. Add one that speaks to it, and others can upvote it.'
               : 'No one has added a verse to this topic yet.'}
           </p>
@@ -255,6 +283,7 @@ function Topic({slug}: {slug: string}) {
               reference={reference}
               translation={translation}
               canVote={canVote}
+              isWaiting={isWaiting}
               hasVoted={votes.myVotes.has(key)}
               isSaving={votes.savingKey === key}
               isReported={reportedKeys.has(key)}

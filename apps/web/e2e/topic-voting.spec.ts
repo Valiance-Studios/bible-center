@@ -36,6 +36,18 @@ test('someone signed out sees the counts, and is asked to sign in to vote', asyn
   await expect(page).toHaveURL(/\/sign-in$/);
 });
 
+test('an account under a week old is told when it can vote, and can still report', async ({page}) => {
+  const reference = topVerseOf('gentleness');
+
+  await signInAsNewAllowedUser(page, 'member', 1);
+  await page.goto('/topics/gentleness');
+
+  await expect(page.getByText(/^You can upvote and add verses after [A-Z][a-z]+ \d{1,2} at \d{1,2}:\d{2} [AP]M\.$/)).toBeVisible();
+  await expect(rowOf(page, reference).getByRole('button', {name: `Upvote ${reference}, not available yet`})).toBeDisabled();
+  await expect(page.getByRole('button', {name: 'Add a verse to this topic'})).toHaveCount(0);
+  await expect(rowOf(page, reference).getByRole('button', {name: `Report ${reference}`})).toBeVisible();
+});
+
 test('an upvote counts, survives a reload, and can be removed', async ({page}) => {
   const reference = topVerseOf('kindness');
 
