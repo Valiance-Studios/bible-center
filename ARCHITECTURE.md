@@ -23,6 +23,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | Translation choice saved to the account | Built |
 | My verses page | Built |
 | About dialog | Built: a shorter version of the README with data credits, from the footer and the phone menu |
+| Privacy policy and account deletion | Built: `/privacy`, and deleting an account with the `deleteAccount` function; see [Account Deletion](#account-deletion) |
 | Topic search, voting, reports | Built: topic pages, the Topics page, voting ranked by `topicVerseScore` from accounts at least a week old, adding verses, starting topics and reports |
 | Admins and reviewers | Built: roles in `roles/{email}`, the People page for admins, the Review page for reported verses and new topics, and blocking accounts; see [Blocking](#blocking) |
 | Hebrew/Greek study | Built: the word panel beside the reader, or in a sheet on phones, from STEPBible data |
@@ -46,6 +47,8 @@ V1 is complete. Build what comes after it one branch at a time, from `main` or f
 1. **AI topic suggestions:** the first Cloud Function; see [AI Suggestions](#ai-suggestions).
 2. **ESV:** once Crossway approves the key; see [ESV Rules](#esv-rules).
 3. **Boards;** see [Scope](#scope).
+
+Before those, finish opening sign-up: [#17](https://github.com/Valiance-Studios/bible-center/issues/17) (the allowlist goes), with the console steps of #22 and #23. Then set up **production**: a separate Firebase project for the public site, its own instances of the functions and their service accounts (`.env.<production project id>`, `sa-bc-<function>-prod`), `.env.production` for the app, and a release process for moving a tested build from staging to production.
 
 Later, if there is demand: plugins, and embeddings for search by meaning.
 
@@ -161,7 +164,7 @@ flowchart LR
     auth["Authentication<br/>Google, email/password"]
     firestore[("Firestore<br/>allowlist, roles, blocked accounts, annotations,<br/>votes, reports, daily verses, memory lists, AI cache")]
     appcheck["App Check<br/>reCAPTCHA Enterprise"]
-    functions["Cloud Functions<br/>apps/functions: blockAccount"]
+    functions["Cloud Functions<br/>apps/functions: blockAccount,<br/>deleteAccount"]
     secrets["Secret Manager<br/>(planned)"]
   end
 
@@ -736,6 +739,38 @@ sequenceDiagram
 
 `tests/rules/blockedUsers.spec.ts` and `tests/functions/blockAccount.spec.ts` cover this.
 
+### Account Deletion
+
+Anyone signed in can delete their account from the account menu or the phone menu, as the privacy policy at `/privacy` (`PrivacyPage`, linked from the footer, the phone menu, the account menu and the register screen) promises. `DeleteAccountDialog` lists what goes and what stays, and asks the person to type "delete". It calls the `deleteAccount` function, then signs out, and the home page says the account is gone.
+
+- **What goes:** `deleteAccount` in `apps/functions` takes away the account's upvotes with their counts and deletes its reports (shared with [blocking](#blocking) in `userContent.ts`), then deletes `users/{uid}` with its annotations and memory list, its `blockedUsers` entry, and its `roles` and `allowedUsers` entries, then the account itself. The account goes last, so a failure partway leaves the person signed in to try again.
+- **What stays:** the verses it added and the topics it started, which others may have upvoted or added to, with `createdBy` removed (`unlinkAddedContent`), so nothing links them to the person.
+- **Email-keyed entries** are removed only for a verified email (`requireSignedIn`), since anyone can register an unverified account with someone else's address.
+- **Service account:** it runs as `sa-bc-delete-account-dev`, the only one allowed to delete accounts; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#cloud-functions).
+
+```mermaid
+sequenceDiagram
+  actor Person
+  participant Dialog as DeleteAccountDialog
+  participant Fn as deleteAccount
+  participant Firestore
+  participant Auth as Authentication
+
+  Person->>Dialog: Delete account, then type "delete"
+  Dialog->>Fn: Call with App Check and ID tokens
+  Fn->>Firestore: Remove its votes and counts, delete its reports
+  Fn->>Firestore: Unlink the verses and topics it added
+  Fn->>Firestore: Delete users/uid with its annotations and memory list, and its block record
+  opt Verified email
+    Fn->>Firestore: Delete roles/email and allowedUsers/email
+  end
+  Fn->>Auth: deleteUser, last
+  Fn-->>Dialog: Done
+  Dialog->>Person: Sign out, and the home page says the account is gone
+```
+
+`tests/functions/deleteAccount.spec.ts` and `apps/web/e2e/account.spec.ts` cover this.
+
 ## Security
 
 This repository and the app are public, so assume hostile use. Vulnerabilities are reported privately through GitHub, as [SECURITY.md](SECURITY.md) describes.
@@ -843,6 +878,7 @@ Before finishing a change, check whether it touches a source below, and update t
 | [Roles and Review](#roles-and-review), structure, statuses and resolving a report | `packages/core/src/roles.ts`, `packages/core/src/review.ts`, `apps/web/src/firebase/review.ts`, `apps/web/src/firebase/people.ts`, `apps/web/src/components/review/`, `apps/web/src/components/people/`, `apps/web/src/components/RoleGate.tsx`, `apps/web/src/components/useAccountLinks.ts`, `apps/web/src/pages/ReviewPage.tsx`, `apps/web/src/pages/PeoplePage.tsx`, `firestore.rules` | Built |
 | [OpenBible Data](#openbible-data) | `scripts/build-topic-data.ts`, `apps/web/src/topics/topicData.ts`, `apps/web/src/pages/TopicPage.tsx`, `apps/web/src/pages/TopicsPage.tsx`, `apps/web/src/pages/SearchPage.tsx` | Built |
 | [Authentication and Access](#authentication-and-access) | `firestore.rules`, `apps/web/src/stores/auth.ts`, `apps/web/src/firebase/access.ts`, `apps/web/src/pages/SignInPage.tsx` | Built |
+| [Account Deletion](#account-deletion) | `apps/functions/src/deleteAccount.ts`, `apps/functions/src/userContent.ts`, `apps/web/src/components/account/`, `apps/web/src/firebase/account.ts` | Built |
 | [Blocking](#blocking) | `apps/functions/src/`, `firestore.rules`, `apps/web/src/firebase/blocking.ts`, `apps/web/src/components/blocking/`, `apps/web/src/components/review/AccountLine.tsx`, `apps/web/src/components/people/BlockedAccounts.tsx` | Built |
 | [Write Limits](#write-limits) | `packages/core/src/limits.ts`, `apps/web/src/firebase/userRecord.ts`, `apps/web/src/firebase/annotations.ts`, `apps/web/src/firebase/memoryVerses.ts`, `apps/web/src/firebase/topics.ts`, `firestore.rules` | Built |
 | [Environments and Delivery](#environments-and-delivery) | `package.json`, `apps/web/.env.*`, `firebase.json`, `scripts/`, `.github/workflows/ci.yml` | Built |

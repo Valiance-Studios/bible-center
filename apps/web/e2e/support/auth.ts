@@ -28,14 +28,22 @@ async function attemptPopupSignIn(page: Page, user: TestUser): Promise<void> {
 
   // Clicks before the emulator's script has loaded are silently ignored.
   await popup.waitForLoadState('load');
-  await popup.getByRole('button', {name: 'Add new account'}).click();
-  // The emulator's inputs have no accessible names, so select by id.
-  await popup.locator('#email-input').fill(user.email);
-  await popup.locator('#display-name-input').fill(user.displayName);
 
   const closed = popup.waitForEvent('close', {timeout: POPUP_CLOSE_TIMEOUT_MS});
+  // An account made beforehand is listed under "Choose an account". Pick it there, as a person would: adding it
+  // again gives it a second Google id, and the Auth emulator then breaks every later popup once the account is
+  // deleted (firebase-tools 15.35.0 leaves the extra id pointing at the deleted account).
+  const existing = popup.locator('.js-reuse-account').filter({hasText: user.email});
 
-  await popup.getByRole('button', {name: 'Sign in with Google.com'}).click();
+  if (await existing.count() > 0) {
+    await existing.first().click();
+  } else {
+    await popup.getByRole('button', {name: 'Add new account'}).click();
+    // The emulator's inputs have no accessible names, so select by id.
+    await popup.locator('#email-input').fill(user.email);
+    await popup.locator('#display-name-input').fill(user.displayName);
+    await popup.getByRole('button', {name: 'Sign in with Google.com'}).click();
+  }
 
   try {
     await closed;

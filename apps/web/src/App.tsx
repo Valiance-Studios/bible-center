@@ -12,6 +12,7 @@ import {PeoplePage} from '@/pages/PeoplePage';
 import {ReaderPage} from '@/pages/ReaderPage';
 import {ReviewPage} from '@/pages/ReviewPage';
 import {SearchPage} from '@/pages/SearchPage';
+import {PrivacyPage} from '@/pages/PrivacyPage';
 import {SignInPage} from '@/pages/SignInPage';
 import {TopicPage} from '@/pages/TopicPage';
 import {TopicsPage} from '@/pages/TopicsPage';
@@ -34,6 +35,7 @@ const router = createBrowserRouter([
       {path: '/my-verses', element: <MyVersesPage />},
       {path: '/review', element: <ReviewPage />},
       {path: '/people', element: <PeoplePage />},
+      {path: '/privacy', element: <PrivacyPage />},
     ],
   },
   {path: '/sign-in', element: <SignInPage />},

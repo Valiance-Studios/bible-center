@@ -32,6 +32,19 @@ export async function deleteReports(uid: string): Promise<void> {
 }
 
 /**
+ * Keeps the verses this account added and the topics it started, which others may rely on, but removes the account id
+ * from them, so nothing links them to it.
+ */
+export async function unlinkAddedContent(uid: string): Promise<void> {
+  const [verses, topics] = await Promise.all([
+    db.collectionGroup('verses').where('createdBy', '==', uid).get(),
+    db.collection('topics').where('createdBy', '==', uid).get(),
+  ]);
+
+  await Promise.all([...verses.docs, ...topics.docs].map((document) => document.ref.update({createdBy: FieldValue.delete()})));
+}
+
+/**
  * Removes what this account made public: deletes the verses it added, with their votes, and rejects the topics it
  * started, which hides them and closes them to new verses. `adminUid` is recorded as the reviewer.
  */
