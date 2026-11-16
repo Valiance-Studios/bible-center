@@ -23,7 +23,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | Translation choice saved to the account | Built |
 | My verses page | Built |
 | About dialog | Built: a shorter version of the README with data credits, from the footer and the phone menu |
-| Topic search, voting, reports | Built: topic pages, the Topics page, voting ranked by `topicVerseScore` from accounts at least a week old, adding verses, starting topics and reports. The message explaining why a newer account cannot vote waits on its mockup |
+| Topic search, voting, reports | Built: topic pages, the Topics page, voting ranked by `topicVerseScore` from accounts at least a week old, adding verses, starting topics and reports |
 | Admins and reviewers | Built: roles in `roles/{email}`, the People page for admins, and the Review page for reported verses and new topics |
 | Hebrew/Greek study | Built: the word panel beside the reader, or in a sheet on phones, from STEPBible data |
 | Scripture memorization | Built: flash cards, fading words, and the memory list; see [Memorization](#memorization) |
@@ -113,6 +113,13 @@ Start with "Starting a Session" in `CLAUDE.md`, then the [Mockups](#mockups) sec
 | `MemorizeFading.dc.html` | Practicing with fading words, in five steps |
 | `PhoneMemorize.dc.html` | A flash card on a phone |
 | `About.dc.html` | The About dialog, from the home page's footer |
+| `SignInOpen.dc.html` | Sign in and register once sign-up is open to everyone, with the age and privacy line |
+| `TopicNewAccount.dc.html` | A topic for an account too new to vote, saying when it can |
+| `Limits.dc.html` | The messages when a cooldown or a limit on what one account keeps is reached |
+| `PeopleOpen.dc.html` | Admins give roles, and block and unblock accounts, once sign-up is open |
+| `ReviewBlock.dc.html` | Admins block the account behind a reported verse, a report or a new topic |
+| `Privacy.dc.html` | The privacy policy |
+| `DeleteAccount.dc.html` | Deleting your account from the account menu |
 
 The canvas is the source of truth for the design. To work from it in a new session, read `project/canvas.json` and any `project/<artboard>` from that URL with the Artifact tool. The design language is in [UI.md](docs/UI.md#design-language).
 
@@ -410,7 +417,7 @@ The app shows OpenBible and Bible Center counts separately rather than the combi
 ### Voting
 
 - Upvotes only. Users can remove their own upvote, and can report an entry that does not belong.
-- Signed-in users can upvote an existing verse or associate a verse with a topic, once their account is at least `VOTER_MIN_ACCOUNT_DAYS` (7) days old, so a crowd of new accounts cannot move a verse. `recordFirstSignIn` in `apps/web/src/firebase/settings.ts` sets `createdAt` on `users/{uid}` the first time the auth store sees an allowed user, as the server's time, and the rules never let it change. `isEstablished` in `firestore.rules` checks it on every new vote, which covers adding a verse, since that creates its adder's vote. Removing an upvote has no such check. Upvotes are not capped against the OpenBible seed, since the ranking formula is settled; the account age, reports and reviewers handle abuse instead.
+- Signed-in users can upvote an existing verse or associate a verse with a topic, once their account is at least `VOTER_MIN_ACCOUNT_DAYS` (7) days old, so a crowd of new accounts cannot move a verse. `recordFirstSignIn` in `apps/web/src/firebase/settings.ts` sets `createdAt` on `users/{uid}` the first time the auth store sees an allowed user, as the server's time, and the rules never let it change. `isEstablished` in `firestore.rules` checks it on every new vote, which covers adding a verse, since that creates its adder's vote. Removing an upvote has no such check. A newer account's topic pages say when it can vote, from `accountCreatedAt` in the auth store and `votingOpensAt`, with its vote boxes turned off and no way to add a verse; it can still report. Upvotes are not capped against the OpenBible seed, since the ranking formula is settled; the account age, reports and reviewers handle abuse instead.
 - One vote per user for each verse and topic, enforced by the document path and security rules.
 - Counts are checked by the security rules rather than kept by a Cloud Function. `upvoteVerse` and `removeUpvote` in `apps/web/src/firebase/topics.ts` change a vote and its count in one transaction, and the rules use `existsAfter` and `getAfter` to accept a count change only when that user's vote is created (+1) or deleted (-1) in the same write, and a vote only when its count moves with it. Adding a verse to a topic creates its count at 1 alongside the adder's vote. A transaction retries when someone else votes at the same moment, so no vote is lost. `tests/rules/topics.spec.ts` tries each way of changing a count without a vote.
 - Anyone can read the counts. A user's own votes are found with one collection-group query on `uid` and `topic`, and nobody else can read them.

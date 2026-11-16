@@ -63,14 +63,15 @@ const ESTABLISHED_ACCOUNT_DAYS = 30;
 
 /**
  * Signs in a new allowlisted user, who has no annotations, with a role, and waits until the app knows they are
- * signed in. The account is made beforehand and recorded as a month old, so it can vote.
+ * signed in. The account is made beforehand and recorded as a month old, so it can vote, unless `accountAgeDays`
+ * says otherwise.
  */
-export async function signInAsNewAllowedUser(page: Page, role: EmulatorRole = 'member'): Promise<TestUser> {
+export async function signInAsNewAllowedUser(page: Page, role: EmulatorRole = 'member', accountAgeDays = ESTABLISHED_ACCOUNT_DAYS): Promise<TestUser> {
   const user = createTestUser();
 
   await allowEmail(user.email, role);
   await createGoogleAccount(user);
-  await setAccountAge(await uidOf(user.email), ESTABLISHED_ACCOUNT_DAYS);
+  await setAccountAge(await uidOf(user.email), accountAgeDays);
   await signInWithGoogle(page, user);
   await expect(page.getByRole('button', {name: 'Account menu'})).toBeVisible();
 
