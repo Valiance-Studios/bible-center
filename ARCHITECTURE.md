@@ -725,7 +725,7 @@ One account cannot flood reviewers or run up Firestore costs. The limits are in 
 - **Counts** work like upvotes: creating a counted document must raise its count by one in the same write, below the limit (`addsToCount`), and deleting one must lower it (`takesFromCount`). Lowering a count is only accepted when the document named in `annotationChange` or `memoryVerseChange` is deleted in that write, so nobody can lower their count to get past the limit. Raising it alone only hurts the person doing it. Records from before counts start at 0, so older documents are not counted until the person deletes some.
 - **Cooldowns** stamp the server's time on the record in the same write as the report or topic (`stampsAfterCooldown`), and need the last stamp to be old enough. The stamp can only move to now, so it cannot be cleared or backdated.
 - **In the app**, `apps/web/src/firebase/userRecord.ts` makes these changes inside each write's transaction, and throws `WriteLimitError` before writing when a limit is reached. `removeAnnotations` removes several one after another, since the rules accept one count change per write and simultaneous ones would be refused rather than retried. The same applies to two tabs saving at once, which is rare enough to leave.
-- The messages that explain a reached limit wait on their mockups. Until then, the app shows its usual save error.
+- **Messages** follow the approved `Limits` mockup. `limitOf` tells a `WriteLimitError` from a failed connection: `ReportDialog` and `AddVerseDialog` say when the next report or topic can be sent (`formatTime`) and turn off their buttons, and the reader and `MemoryListBox` say the list is full and link to where to make room.
 
 ```mermaid
 sequenceDiagram

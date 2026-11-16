@@ -2,7 +2,7 @@ import type {Annotation, AnnotationType, ChapterRef, Verse, VerseReference, Vers
 
 import {useState} from 'react';
 import {Link} from 'react-router';
-import {chapterIdOf, formatReference, selectVerse, spanContains, spanOf, spansOverlap, verseIdIn} from '@bible-center/core';
+import {chapterIdOf, formatReference, selectVerse, spanContains, spanOf, spansOverlap, verseIdIn, WRITE_LIMITS} from '@bible-center/core';
 import {Alert} from '@mantine/core';
 import {memorizePath} from '@/bible/paths';
 import {VerseText} from '@/components/VerseText';
@@ -48,7 +48,7 @@ export function ChapterVerses({reference, verses, targetVerse, selection, studie
   const status = useAuthStore((state) => state.status);
   const user = useAuthStore((state) => state.user);
   const canAnnotate = status === 'allowed';
-  const {annotations, hasLoadError, isLoading, isSaving, hasError, add, removeAll, updateNote} = useChapterAnnotations(canAnnotate ? user?.uid : undefined, reference);
+  const {annotations, hasLoadError, isLoading, isSaving, hasError, isFull, add, removeAll, updateNote} = useChapterAnnotations(canAnnotate ? user?.uid : undefined, reference);
   // Until annotations load, an action cannot know what is already marked, and could add a duplicate instead of removing.
   const areActionsDisabled = isLoading || isSaving || hasLoadError;
   const [noteEditor, setNoteEditor] = useState<NoteEditor | null>(null);
@@ -85,10 +85,15 @@ export function ChapterVerses({reference, verses, targetVerse, selection, studie
   async function toggle(type: 'highlight' | 'bookmark', existing: Annotation[], span: VerseSpan): Promise<void> {
     const covering = overlapping(existing, span);
 
-    if (covering.length > 0) {
-      await removeAll(covering.map(({id}) => id));
-    } else {
-      await add(toNewAnnotation(type, span));
+    try {
+      if (covering.length > 0) {
+        await removeAll(covering.map(({id}) => id));
+      } else {
+        await add(toNewAnnotation(type, span));
+      }
+    } catch {
+      // The alert below the chapter says what went wrong, and the selection stays so they can try again.
+      return;
     }
 
     finishSelection();
@@ -198,7 +203,15 @@ export function ChapterVerses({reference, verses, targetVerse, selection, studie
         );
       })}
 
-      {hasError && <Alert color="red" mt="md">Your change could not be saved. Check your connection and try again.</Alert>}
+      {hasError && (isFull
+        ? (
+            <Alert color="red" mt="md">
+              {`You have ${WRITE_LIMITS.annotations.toLocaleString('en-US')} highlights, bookmarks and notes, the most one account can keep. Remove some in `}
+              <Link to="/my-verses">My verses</Link>
+              {' to add more.'}
+            </Alert>
+          )
+        : <Alert color="red" mt="md">Your change could not be saved. Check your connection and try again.</Alert>)}
 
       {noteEditor && (
         <NoteDialog

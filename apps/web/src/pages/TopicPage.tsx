@@ -9,7 +9,7 @@ import {Alert, Button, Loader} from '@mantine/core';
 import {referencePath} from '@/bible/paths';
 import {findTranslation} from '@/bible/translations';
 import {usePassage} from '@/bible/usePassage';
-import {formatDayAndTime} from '@/components/formatDayAndTime';
+import {formatDayAndTime} from '@/components/formatTime';
 import {AddVerseDialog} from '@/components/topics/AddVerseDialog';
 import {ReportDialog} from '@/components/topics/ReportDialog';
 import {startedTopicQuery} from '@/components/topics/startedTopicQuery';

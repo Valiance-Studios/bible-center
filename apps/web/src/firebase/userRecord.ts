@@ -33,6 +33,11 @@ export class WriteLimitError extends Error {
   }
 }
 
+/** The limit that stopped a write, or null if it failed for another reason. */
+export function limitOf(error: unknown): WriteLimit | null {
+  return error instanceof WriteLimitError ? error.limit : null;
+}
+
 /** The user's record as a transaction sees it, empty if it does not exist yet. */
 export async function readUserRecord(transaction: Transaction, uid: string): Promise<DocumentData> {
   return (await transaction.get(userRecordRef(uid))).data() ?? {};

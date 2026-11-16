@@ -1,5 +1,11 @@
 import {describe, expect, it} from 'vitest';
-import {formatDayAndTime} from '@/components/formatDayAndTime';
+import {formatDayAndTime, formatTime} from '@/components/formatTime';
+
+describe('formatTime', () => {
+  it('gives the time of day, in the viewer\'s time zone', () => {
+    expect(formatTime(new Date(2026, 10, 16, 15, 42))).toBe('3:42 PM');
+  });
+});
 
 describe('formatDayAndTime', () => {
   it('gives the day and the time, in the viewer\'s time zone', () => {

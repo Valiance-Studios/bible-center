@@ -120,12 +120,29 @@ export async function uidOf(email: string): Promise<string> {
   return uid;
 }
 
+/** Fields of `users/{uid}` a test can preset. See `isValidUserRecord` in `firestore.rules`. */
+export interface SeedUserRecord {
+  createdAt?: Date;
+  annotationCount?: number;
+  memoryVerseCount?: number;
+  lastReportAt?: Date;
+  lastTopicAt?: Date;
+}
+
+/** Sets these fields on a user's record, leaving the others. */
+export async function updateUserRecord(uid: string, record: SeedUserRecord): Promise<void> {
+  const fields = Object.fromEntries(Object.entries(record).map(([name, value]) => [
+    name,
+    value instanceof Date ? {timestampValue: value.toISOString()} : {integerValue: String(value)},
+  ]));
+  const mask = Object.keys(fields).map((name) => `updateMask.fieldPaths=${name}`).join('&');
+
+  await request(`${documentsUrl(`users/${uid}`)}?${mask}`, {method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields})}, `update the record of ${uid}`);
+}
+
 /** Records an account as first seen `daysAgo` days ago, so it is old enough to vote. */
 export async function setAccountAge(uid: string, daysAgo: number): Promise<void> {
-  const createdAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
-  const url = `${documentsUrl(`users/${uid}`)}?updateMask.fieldPaths=createdAt`;
-
-  await request(url, {method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields: {createdAt: {timestampValue: createdAt.toISOString()}}})}, `set the age of ${uid}`);
+  await updateUserRecord(uid, {createdAt: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000)});
 }
 
 export interface SeedAnnotation {

@@ -3,6 +3,7 @@ import type {MemorySpan} from '@/firebase/memoryVerses';
 
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {addMemoryVerse, listMemoryVerses, recordPractice, removeMemoryVerse} from '@/firebase/memoryVerses';
+import {limitOf} from '@/firebase/userRecord';
 import {useAuthStore} from '@/stores/auth';
 
 export type MemoryList = ReturnType<typeof useMemoryList>;
@@ -49,6 +50,8 @@ export function useMemoryList() {
     reload: () => void list.refetch(),
     isSaving: add.isPending || practice.isPending || remove.isPending,
     hasSaveError: add.isError || practice.isError || remove.isError,
+    /** Whether adding failed because the list is as long as one account's may be. */
+    isFull: limitOf(add.error)?.type === 'count',
     add: add.mutateAsync,
     practice: practice.mutateAsync,
     remove: remove.mutateAsync,
