@@ -1,5 +1,6 @@
 import type {ReportOutcome} from '@bible-center/core';
 import type {TranslationProvider} from '@/bible/translations';
+import type {BlockedAccounts} from '@/components/blocking/useBlockedAccounts';
 import type {ReportItem} from './useReviewQueue';
 
 import {useQuery} from '@tanstack/react-query';
@@ -7,7 +8,9 @@ import {Link} from 'react-router';
 import {formatReference, parseTopicVerseKey, referenceOf, REPORT_REASONS} from '@bible-center/core';
 import {referencePath} from '@/bible/paths';
 import {startedTopicQuery} from '@/components/topics/startedTopicQuery';
+import {verseAdderOf} from '@/firebase/review';
 import {nameFromSlug, topicQuery} from '@/topics/topicData';
+import {AccountLine} from './AccountLine';
 import {formatReviewDate} from './formatReviewDate';
 import {ReviewActions} from './ReviewActions';
 import {ReviewVerseText} from './ReviewVerseText';
@@ -18,15 +21,22 @@ interface ReportGroupItemProps {
   translation: TranslationProvider;
   isSaving: boolean;
   hasError: boolean;
+  /** Given for admins, who see the accounts behind the verse and reports, and can block them. */
+  accounts?: BlockedAccounts;
   onResolve: (outcome: ReportOutcome) => void;
 }
 
 /** Every open report on one verse of one topic, to remove the verse from the topic or keep it. */
-export function ReportGroupItem({item: {group, outcome}, translation, isSaving, hasError, onResolve}: ReportGroupItemProps) {
+export function ReportGroupItem({item: {group, outcome}, translation, isSaving, hasError, accounts, onResolve}: ReportGroupItemProps) {
   // OpenBible's topics are named in their files, and the topics people start in Firestore.
   const {data: topicFile} = useQuery(topicQuery(group.topic));
   const {data: started} = useQuery({...startedTopicQuery(group.topic), enabled: topicFile === null});
   const topicName = topicFile?.name ?? started?.name ?? nameFromSlug(group.topic);
+  const adder = useQuery({
+    queryKey: ['verseAdder', group.topic, group.verseKey],
+    queryFn: () => verseAdderOf(group.topic, group.verseKey),
+    enabled: accounts !== undefined,
+  });
   const span = parseTopicVerseKey(group.verseKey);
   const reference = span ? referenceOf(span) : null;
   const title = reference ? formatReference(reference) : group.verseKey;
@@ -49,12 +59,15 @@ export function ReportGroupItem({item: {group, outcome}, translation, isSaving, 
 
       {reference && <ReviewVerseText reference={reference} translation={translation} />}
 
+      {accounts && <AccountLine uid={adder.data} lead="Added by" did={`added ${title} to ${topicName}`} accounts={accounts} />}
+
       <ul className={classes.reports} aria-label={count === 1 ? '1 report' : `${count} reports`}>
         {group.reports.map((report) => (
           <li key={report.id} className={classes.report}>
             <strong>{REPORT_REASONS[report.reason]}</strong>
             <span className={classes.when}>{` · ${formatReviewDate(report.createdAt)}`}</span>
             {report.details && <p className={classes.details}>{report.details}</p>}
+            {accounts && <AccountLine uid={report.reportedBy} lead="Reported by" did="sent this report" accounts={accounts} />}
           </li>
         ))}
       </ul>

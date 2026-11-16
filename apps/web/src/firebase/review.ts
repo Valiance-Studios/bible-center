@@ -1,6 +1,6 @@
 import type {OpenReport, ReportGroup, ReportOutcome, TopicDecision} from '@bible-center/core';
 
-import {collection, doc, orderBy, query, runTransaction, serverTimestamp, Timestamp, updateDoc, where} from 'firebase/firestore';
+import {collection, doc, getDoc, orderBy, query, runTransaction, serverTimestamp, Timestamp, updateDoc, where} from 'firebase/firestore';
 import {db} from './index';
 import {fetchFromServer} from './serverQuery';
 
@@ -8,6 +8,8 @@ import {fetchFromServer} from './serverQuery';
 export interface PendingTopic {
   slug: string;
   name: string;
+  /** The account that started it, which admins can block. */
+  createdBy: string;
   createdAt: Date;
 }
 
@@ -29,6 +31,7 @@ export async function listOpenReports(): Promise<OpenReport[]> {
       verseKey: data.verseKey,
       reason: data.reason,
       ...(data.details ? {details: data.details} : {}),
+      reportedBy: data.reportedBy,
       createdAt: dateOf(data.createdAt),
     };
   });
@@ -38,7 +41,19 @@ export async function listOpenReports(): Promise<OpenReport[]> {
 export async function listPendingTopics(): Promise<PendingTopic[]> {
   const documents = await fetchFromServer(query(collection(db, 'topics'), where('status', '==', 'pending'), orderBy('createdAt')));
 
-  return documents.map((topic) => ({slug: topic.id, name: topic.get('name') as string, createdAt: dateOf(topic.get('createdAt'))}));
+  return documents.map((topic) => ({
+    slug: topic.id,
+    name: topic.get('name') as string,
+    createdBy: topic.get('createdBy') as string,
+    createdAt: dateOf(topic.get('createdAt')),
+  }));
+}
+
+/** The account that added a verse to a topic, or null if it came from OpenBible or is no longer there. */
+export async function verseAdderOf(topic: string, verseKey: string): Promise<string | null> {
+  const createdBy: unknown = (await getDoc(doc(db, 'topics', topic, 'verses', verseKey))).get('createdBy');
+
+  return typeof createdBy === 'string' ? createdBy : null;
 }
 
 /**

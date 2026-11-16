@@ -1,3 +1,4 @@
+export type {BlockAccountRequest, BlockAccountResult, BlockedAccountRecord} from './accounts';
 export type {Annotation, AnnotationOrder, AnnotationType, VerseSpan} from './annotations';
 export type {DailyVerse, DailyVerseList} from './dailyVerses';
 export type {BibleBook, ChapterRef, ChapterText, SearchableVerse, Verse} from './bibleBooks';

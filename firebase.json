@@ -3,6 +3,21 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
+  "functions": [
+    {
+      "source": "apps/functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        "src",
+        "tsconfig*.json",
+        "*.log"
+      ],
+      "predeploy": [
+        "npm run build -w @bible-center/functions"
+      ]
+    }
+  ],
   "hosting": {
     "site": "vs-bible-center-dev",
     "public": "apps/web/dist",
@@ -74,6 +89,9 @@
     },
     "firestore": {
       "port": 8080
+    },
+    "functions": {
+      "port": 5001
     },
     "ui": {
       "enabled": true,

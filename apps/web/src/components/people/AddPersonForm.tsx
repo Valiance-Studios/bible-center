@@ -47,6 +47,7 @@ export function AddPersonForm({isSaving, onAdd, onAdded}: AddPersonFormProps) {
     <>
       <form
         className={classes.add}
+        aria-label="Add a person"
         noValidate
         onSubmit={(event) => {
           event.preventDefault();

@@ -6,9 +6,10 @@ The hosted app is [vs-bible-center-dev.web.app](https://vs-bible-center-dev.web.
 
 | Command | Deploys |
 | --- | --- |
-| `npm run deploy` | Hosting and Firestore rules and indexes |
+| `npm run deploy` | Hosting, Firestore rules and indexes, and Cloud Functions |
 | `npm run deploy:hosting` | Hosting only |
 | `npm run deploy:rules` | Firestore rules and indexes only |
+| `npm run deploy:functions` | Cloud Functions only; each needs its service account first, see [Cloud Functions](#cloud-functions) |
 
 Deploy Firestore rules and indexes along with any feature that changes them, or the live site's writes or queries will be rejected. `npm run deploy` covers both, and `npm run deploy:rules` needs no debug token moved. New indexes take a few minutes to build after deploying.
 
@@ -69,7 +70,30 @@ Each machine should have its own token. Delete a token from the console if it mi
 
 Cloud Firestore and Authentication are enforced, so their requests need a valid App Check token: from the deployed app, or from `localhost` with a registered [debug token](#debug-token). The emulators do not check it.
 
-Before enforcing another service, such as Cloud Functions when the first one is added, deploy the app that sends its tokens and confirm in the console's App Check metrics that its requests are verified. Enforcement is per service for the whole project, and this project hosts only this app.
+Callable Cloud Functions enforce App Check themselves, through their `enforceAppCheck` option, from the moment they are deployed; the app already sends the tokens. Before enforcing another console service, deploy the app that sends its tokens and confirm in the console's App Check metrics that its requests are verified. Enforcement is per service for the whole project, and this project hosts only this app.
+
+## Cloud Functions
+
+The functions live in `apps/functions`. Each runs as its own service account, with only the roles it needs, named by the convention `sa-bc-<function>-<env>`. `apps/functions/.env.<project id>` tells each function its account, so a production project gets its own file and accounts.
+
+| Function | Service account | Roles |
+| --- | --- | --- |
+| `blockAccount` | `sa-bc-block-account-dev` | Cloud Datastore User (`roles/datastore.user`), Firebase Authentication Viewer (`roles/firebaseauth.viewer`) |
+
+Create each account before its first deploy, with a Google Cloud login that can manage IAM in the project:
+
+```sh
+PROJECT=vs-bible-center-dev
+ACCOUNT=sa-bc-block-account-dev@$PROJECT.iam.gserviceaccount.com
+
+gcloud iam service-accounts create sa-bc-block-account-dev --project $PROJECT \
+  --display-name "Bible Center blockAccount (dev)" \
+  --description "Runs the blockAccount Cloud Function: finds and blocks accounts, and removes their content."
+gcloud projects add-iam-policy-binding $PROJECT --member "serviceAccount:$ACCOUNT" --role roles/datastore.user --condition None
+gcloud projects add-iam-policy-binding $PROJECT --member "serviceAccount:$ACCOUNT" --role roles/firebaseauth.viewer --condition None
+```
+
+Whoever deploys needs Service Account User (`roles/iam.serviceAccountUser`) on each account; a project Owner has it already. Then deploy with `npm run deploy:functions`, which builds them first. The service accounts have no keys, and none should be made: the functions run as them without one.
 
 ## Secrets
 

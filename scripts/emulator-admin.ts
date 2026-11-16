@@ -199,16 +199,18 @@ export interface SeedReport {
   reason: 'fit' | 'reference' | 'other';
   details?: string;
   createdAt: Date;
+  /** The reporter's account id. A placeholder that matches no account when left out. */
+  reportedBy?: string;
 }
 
 /** Files an open report, as someone reporting a verse on a topic would. */
-export async function addReport({topic, verseKey, reason, details, createdAt}: SeedReport): Promise<void> {
+export async function addReport({topic, verseKey, reason, details, createdAt, reportedBy = 'e2e-seed'}: SeedReport): Promise<void> {
   const fields = {
     topic: {stringValue: topic},
     verseKey: {stringValue: verseKey},
     reason: {stringValue: reason},
     ...(details === undefined ? {} : {details: {stringValue: details}}),
-    reportedBy: {stringValue: 'e2e-seed'},
+    reportedBy: {stringValue: reportedBy},
     createdAt: {timestampValue: createdAt.toISOString()},
     status: {stringValue: 'open'},
   };

@@ -16,6 +16,20 @@ service cloud.firestore {
       return isAllowed() && request.auth.uid == uid;
     }
 
+    // An admin blocked this account. It can still read, but nothing it writes is accepted.
+    function isBlocked() {
+      return exists(/databases/$(database)/documents/blockedUsers/$(request.auth.uid));
+    }
+
+    // Every write needs this: a verified, allowlisted account that is not blocked.
+    function canWrite() {
+      return isAllowed() && !isBlocked();
+    }
+
+    function isWritingOwner(uid) {
+      return canWrite() && request.auth.uid == uid;
+    }
+
     function myEmail() {
       return request.auth.token.email.lower();
     }
@@ -31,12 +45,12 @@ service cloud.firestore {
 
     // Handles reports and the topics people start.
     function isReviewer() {
-      return isAllowed() && myRole() in ['reviewer', 'admin'];
+      return canWrite() && myRole() in ['reviewer', 'admin'];
     }
 
     // Manages the allowlist and roles.
     function isAdmin() {
-      return isAllowed() && myRole() == 'admin';
+      return canWrite() && myRole() == 'admin';
     }
 
     // Matches normalizeEmail and isEmailAddress in packages/core/src/roles.ts.
@@ -195,29 +209,39 @@ service cloud.firestore {
           : !('text' in data));
     }
 
+    // Accounts an admin blocked, keyed by account id. Only the blockAccount function writes them, since blocking by
+    // email needs the Admin SDK to find the account. Admins list and unblock them; anyone may check their own.
+    // Keep in sync with BlockedAccountRecord in packages/core/src/accounts.ts.
+    match /blockedUsers/{uid} {
+      allow get: if isAdmin() || (request.auth != null && request.auth.uid == uid);
+
+      allow list, delete: if isAdmin();
+    }
+
     // Each user's own settings and annotations. Nobody can read or change another user's.
     match /users/{uid} {
-      allow get: if isAllowedOwner(uid);
+      // Admins see when an account joined, beside what it added on the Review page.
+      allow get: if isAllowedOwner(uid) || isAdmin();
 
-      allow create: if isAllowedOwner(uid)
+      allow create: if isWritingOwner(uid)
         && isValidUserRecord(uid, {}, request.resource.data);
 
-      allow update: if isAllowedOwner(uid)
+      allow update: if isWritingOwner(uid)
         && isValidUserRecord(uid, resource.data, request.resource.data);
 
       match /annotations/{annotationId} {
         allow read: if isAllowedOwner(uid);
 
-        allow delete: if isAllowedOwner(uid)
+        allow delete: if isWritingOwner(uid)
           && takesFromCount('annotationCount');
 
-        allow create: if isAllowedOwner(uid)
+        allow create: if isWritingOwner(uid)
           && isValidAnnotation(request.resource.data)
           && request.resource.data.createdAt == request.time
           && addsToCount('annotationCount', 5000);
 
         // Only a note's words can change. Moving or retyping an annotation means replacing it.
-        allow update: if isAllowedOwner(uid)
+        allow update: if isWritingOwner(uid)
           && resource.data.type == 'note'
           && isValidAnnotation(request.resource.data)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'updatedAt']);
@@ -228,10 +252,10 @@ service cloud.firestore {
       match /memoryVerses/{key} {
         allow read: if isAllowedOwner(uid);
 
-        allow delete: if isAllowedOwner(uid)
+        allow delete: if isWritingOwner(uid)
           && takesFromCount('memoryVerseCount');
 
-        allow create: if isAllowedOwner(uid)
+        allow create: if isWritingOwner(uid)
           && addsToCount('memoryVerseCount', 500)
           && request.resource.data.keys().hasOnly(['startVerse', 'endVerse', 'status', 'createdAt', 'practicedAt'])
           && request.resource.data.keys().hasAll(['startVerse', 'endVerse', 'status', 'createdAt', 'practicedAt'])
@@ -244,7 +268,7 @@ service cloud.firestore {
           && request.resource.data.createdAt == request.time
           && request.resource.data.practicedAt == request.time;
 
-        allow update: if isAllowedOwner(uid)
+        allow update: if isWritingOwner(uid)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'practicedAt'])
           && request.resource.data.status in ['learning', 'memorized']
           && request.resource.data.practicedAt == request.time;
@@ -334,7 +358,7 @@ service cloud.firestore {
         && request.resource.data.reviewedBy == request.auth.uid
         && request.resource.data.reviewedAt == request.time;
 
-      allow create: if isAllowed()
+      allow create: if canWrite()
         && isTopicSlug(slug)
         && request.resource.data.keys().hasOnly(['name', 'status', 'createdBy', 'createdAt'])
         && request.resource.data.keys().hasAll(['name', 'status', 'createdBy', 'createdAt'])
@@ -349,7 +373,7 @@ service cloud.firestore {
       match /verses/{key} {
         allow read: if true;
 
-        allow create: if isAllowed()
+        allow create: if canWrite()
           && isTopicSlug(slug)
           && request.resource.data.keys().hasOnly(['startVerse', 'endVerse', 'upvotes', 'createdBy', 'createdAt'])
           && request.resource.data.keys().hasAll(['startVerse', 'endVerse', 'upvotes', 'createdBy', 'createdAt'])
@@ -365,7 +389,7 @@ service cloud.firestore {
           && !exists(voteOf(slug, key))
           && existsAfter(voteOf(slug, key));
 
-        allow update: if isAllowed()
+        allow update: if canWrite()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes'])
           && (
             (request.resource.data.upvotes == resource.data.upvotes + 1
@@ -379,7 +403,7 @@ service cloud.firestore {
         // One per user, keyed by their id. Its verse's count must move with it. Only established accounts
         // can vote, which also covers adding a verse, as that creates its adder's vote.
         match /votes/{voterId} {
-          allow create: if isAllowed()
+          allow create: if canWrite()
             && isEstablished()
             && voterId == request.auth.uid
             && request.resource.data.keys().hasOnly(['uid', 'topic', 'createdAt'])
@@ -390,7 +414,7 @@ service cloud.firestore {
             && getAfter(verseOf(slug, key)).data.upvotes
               == (exists(verseOf(slug, key)) ? get(verseOf(slug, key)).data.upvotes + 1 : 1);
 
-          allow delete: if isAllowed()
+          allow delete: if canWrite()
             && voterId == request.auth.uid
             && exists(verseOf(slug, key))
             && getAfter(verseOf(slug, key)).data.upvotes == get(verseOf(slug, key)).data.upvotes - 1;
@@ -418,7 +442,7 @@ service cloud.firestore {
     // Reports wait for a reviewer, and only reviewers can read them. They do not change the ranking.
     // Keep the reasons and limit in sync with REPORT_REASONS and REPORT_DETAILS_MAX_LENGTH in packages/core/src/topics.ts.
     match /reports/{reportId} {
-      allow create: if isAllowed()
+      allow create: if canWrite()
         && request.resource.data.keys().hasOnly(['topic', 'verseKey', 'reason', 'details', 'reportedBy', 'createdAt', 'status'])
         && request.resource.data.keys().hasAll(['topic', 'verseKey', 'reason', 'reportedBy', 'createdAt', 'status'])
         && isTopicSlug(request.resource.data.topic)

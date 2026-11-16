@@ -4,6 +4,7 @@ import {useState} from 'react';
 import {isAdmin, normalizeEmail, parseRole, ROLE_NAMES, ROLES} from '@bible-center/core';
 import {Alert, Button, Loader, NativeSelect} from '@mantine/core';
 import {AddPersonForm} from '@/components/people/AddPersonForm';
+import {BlockedAccounts} from '@/components/people/BlockedAccounts';
 import {RemovePersonDialog} from '@/components/people/RemovePersonDialog';
 import {usePeople} from '@/components/people/usePeople';
 import {RoleGate} from '@/components/RoleGate';
@@ -86,6 +87,8 @@ function PeopleList({uid}: {uid: string}) {
 
       {status && <p className={classes.status} role="status">{status}</p>}
 
+      <BlockedAccounts uid={uid} myEmail={myEmail} />
+
       {removing && (
         <RemovePersonDialog
           email={removing}
@@ -122,7 +125,7 @@ export function PeoplePage() {
         <li>
           <strong>Admins</strong>
           {' '}
-          can also set the verse of the day and manage people.
+          can also set the verse of the day, manage people and block accounts.
         </li>
       </ul>
       <RoleGate canSee={isAdmin} audience="admins">{(uid) => <PeopleList uid={uid} />}</RoleGate>
