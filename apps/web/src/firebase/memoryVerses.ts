@@ -2,9 +2,10 @@ import type {MemoryStatus, MemoryVerse} from '@bible-center/core';
 import type {QueryDocumentSnapshot, Timestamp} from 'firebase/firestore';
 
 import {topicVerseKey} from '@bible-center/core';
-import {collection, deleteDoc, doc, serverTimestamp, setDoc, updateDoc} from 'firebase/firestore';
+import {collection, doc, runTransaction, serverTimestamp, updateDoc} from 'firebase/firestore';
 import {db} from './index';
 import {fetchFromServer} from './serverQuery';
+import {addToCount, readUserRecord, takeFromCount} from './userRecord';
 
 /** A verse on the memory list, with the key it is stored under. */
 export interface MemoryListEntry extends MemoryVerse {
@@ -42,16 +43,23 @@ export async function listMemoryVerses(uid: string): Promise<MemoryListEntry[]> 
   return (await fetchFromServer(memoryVersesOf(uid))).map(toEntry);
 }
 
-/** Puts a passage on the list as learning. Adding it counts as practicing it. */
+/**
+ * Puts a passage on the list as learning. Adding it counts as practicing it. Does nothing if it is already there,
+ * and rejects with `WriteLimitError` once the list is as long as `WRITE_LIMITS` allows.
+ */
 export async function addMemoryVerse(uid: string, span: MemorySpan): Promise<void> {
   const {startVerse, endVerse} = span;
+  const verseRef = doc(memoryVersesOf(uid), memoryKeyOf(span));
 
-  await setDoc(doc(memoryVersesOf(uid), memoryKeyOf(span)), {
-    startVerse,
-    endVerse,
-    status: 'learning',
-    createdAt: serverTimestamp(),
-    practicedAt: serverTimestamp(),
+  await runTransaction(db, async (transaction) => {
+    const record = await readUserRecord(transaction, uid);
+
+    if ((await transaction.get(verseRef)).exists()) {
+      return;
+    }
+
+    addToCount(transaction, uid, record, 'memoryVerses');
+    transaction.set(verseRef, {startVerse, endVerse, status: 'learning', createdAt: serverTimestamp(), practicedAt: serverTimestamp()});
   });
 }
 
@@ -61,5 +69,10 @@ export async function recordPractice(uid: string, key: string, status?: MemorySt
 }
 
 export async function removeMemoryVerse(uid: string, key: string): Promise<void> {
-  await deleteDoc(doc(memoryVersesOf(uid), key));
+  await runTransaction(db, async (transaction) => {
+    const record = await readUserRecord(transaction, uid);
+
+    takeFromCount(transaction, uid, record, 'memoryVerses', key);
+    transaction.delete(doc(memoryVersesOf(uid), key));
+  });
 }

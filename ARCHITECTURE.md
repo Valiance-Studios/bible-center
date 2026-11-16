@@ -290,6 +290,12 @@ erDiagram
   USER_RECORD {
     string translationId "optional"
     timestamp createdAt "first sign-in, set once by the server"
+    int annotationCount "see Write Limits"
+    string annotationChange "the last one deleted"
+    int memoryVerseCount
+    string memoryVerseChange
+    timestamp lastReportAt "for the cooldown"
+    timestamp lastTopicAt
   }
   ANNOTATION {
     string type "highlight, bookmark or note"
@@ -334,7 +340,7 @@ flowchart LR
   invalidate -. "refetch" .-> myVerses
 ```
 
-- **Limits:** the rules do not cap how many annotations a user can create, which is worth revisiting before the allowlist is removed.
+- **Limits:** a user can keep up to 5,000 annotations, counted on their `users/{uid}` record; see [Write Limits](#write-limits).
 
 ## Verse of the Day
 
@@ -547,7 +553,7 @@ flowchart LR
 - **Fading words:** `fadeWords` in `packages/core/src/memorize.ts` gives five steps: every word, one in three hidden, two in three, first letters only, then none. Punctuation stays in view, and selecting a blank shows that word.
 - **The passage** is any one reference, checked with `useReferenceSpan`, the same check as adding a verse to a topic, and shown in the selected translation. A psalm's first verse includes its title, as the source text runs them together.
 - **The memory list:** each entry is learning or memorized. A memorized verse is due for review `REVIEW_AFTER_DAYS` (7) after it was last practiced, and `groupMemoryVerses` lists due verses first, then learning, then memorized. Answering the flash card or reaching the last fading step updates `practicedAt` for a verse on the list, so practicing a due verse moves it back among the memorized ones. There is no spaced-repetition schedule beyond this.
-- **Rules:** as with annotations, only the owner on the allowlist with a verified email can read or change their list. An entry is keyed like a topic's verse, starts as learning, and only its `status` and `practicedAt` can change, with `practicedAt` set by the server. `tests/rules/memoryVerses.spec.ts` covers this. Like annotations, the list is not capped in size.
+- **Rules:** as with annotations, only the owner on the allowlist with a verified email can read or change their list. An entry is keyed like a topic's verse, starts as learning, and only its `status` and `practicedAt` can change, with `practicedAt` set by the server. `tests/rules/memoryVerses.spec.ts` covers this. The list holds up to 500 verses; see [Write Limits](#write-limits).
 
 ```mermaid
 erDiagram
@@ -705,6 +711,46 @@ This repository and the app are public, so assume hostile use. Vulnerabilities a
 - **Paid or limited services** are reached only through Cloud Functions with App Check, sign-in where appropriate, per-user limits, and a budget cap.
 - **Hosting** sends `nosniff`, `X-Frame-Options` and `Referrer-Policy` headers. A Content Security Policy is still to be added, once the app's external origins are settled.
 
+### Write Limits
+
+One account cannot flood reviewers or run up Firestore costs. The limits are in `packages/core/src/limits.ts`, and `firestore.rules` enforces the same numbers:
+
+| Limit | Value | Kept on `users/{uid}` |
+| --- | --- | --- |
+| Annotations kept | 5,000 | `annotationCount` |
+| Memory list verses kept | 500 | `memoryVerseCount` |
+| Time between reports | 1 minute | `lastReportAt` |
+| Time between starting topics | 10 minutes | `lastTopicAt` |
+
+- **Counts** work like upvotes: creating a counted document must raise its count by one in the same write, below the limit (`addsToCount`), and deleting one must lower it (`takesFromCount`). Lowering a count is only accepted when the document named in `annotationChange` or `memoryVerseChange` is deleted in that write, so nobody can lower their count to get past the limit. Raising it alone only hurts the person doing it. Records from before counts start at 0, so older documents are not counted until the person deletes some.
+- **Cooldowns** stamp the server's time on the record in the same write as the report or topic (`stampsAfterCooldown`), and need the last stamp to be old enough. The stamp can only move to now, so it cannot be cleared or backdated.
+- **In the app**, `apps/web/src/firebase/userRecord.ts` makes these changes inside each write's transaction, and throws `WriteLimitError` before writing when a limit is reached. `removeAnnotations` removes several one after another, since the rules accept one count change per write and simultaneous ones would be refused rather than retried. The same applies to two tabs saving at once, which is rare enough to leave.
+- **Messages** follow the approved `Limits` mockup. `limitOf` tells a `WriteLimitError` from a failed connection: `ReportDialog` and `AddVerseDialog` say when the next report or topic can be sent (`formatTime`) and turn off their buttons, and the reader and `MemoryListBox` say the list is full and link to where to make room.
+
+```mermaid
+sequenceDiagram
+  actor User
+  participant Fn as addAnnotation
+  participant Firestore
+  participant Rules as firestore.rules
+
+  User->>Fn: Highlight a verse
+  Fn->>Firestore: Transaction: read users/uid
+  alt annotationCount has reached WRITE_LIMITS.annotations
+    Fn-->>User: WriteLimitError, nothing written
+  else Below the limit
+    Fn->>Firestore: Create the annotation, and set annotationCount + 1
+    Firestore->>Rules: Check each write against the state after both
+    alt The count rose by one, below 5,000
+      Rules-->>Firestore: Allow
+    else Anything else
+      Rules-->>Firestore: Deny the whole transaction
+    end
+  end
+```
+
+`tests/rules/users.spec.ts`, `memoryVerses.spec.ts` and `topics.spec.ts` try each way around the limits.
+
 ### What Is Public
 
 Anything one account writes that others can read is checked here, since open sign-up lets anyone write it. Everything else, including annotations, notes, memory lists, settings and who voted for what, is readable only by its owner.
@@ -761,4 +807,5 @@ Before finishing a change, check whether it touches a source below, and update t
 | [Roles and Review](#roles-and-review), structure, statuses and resolving a report | `packages/core/src/roles.ts`, `packages/core/src/review.ts`, `apps/web/src/firebase/review.ts`, `apps/web/src/firebase/people.ts`, `apps/web/src/components/review/`, `apps/web/src/components/people/`, `apps/web/src/components/RoleGate.tsx`, `apps/web/src/components/useAccountLinks.ts`, `apps/web/src/pages/ReviewPage.tsx`, `apps/web/src/pages/PeoplePage.tsx`, `firestore.rules` | Built |
 | [OpenBible Data](#openbible-data) | `scripts/build-topic-data.ts`, `apps/web/src/topics/topicData.ts`, `apps/web/src/pages/TopicPage.tsx`, `apps/web/src/pages/TopicsPage.tsx`, `apps/web/src/pages/SearchPage.tsx` | Built |
 | [Authentication and Access](#authentication-and-access) | `firestore.rules`, `apps/web/src/stores/auth.ts`, `apps/web/src/firebase/access.ts`, `apps/web/src/pages/SignInPage.tsx` | Built |
+| [Write Limits](#write-limits) | `packages/core/src/limits.ts`, `apps/web/src/firebase/userRecord.ts`, `apps/web/src/firebase/annotations.ts`, `apps/web/src/firebase/memoryVerses.ts`, `apps/web/src/firebase/topics.ts`, `firestore.rules` | Built |
 | [Environments and Delivery](#environments-and-delivery) | `package.json`, `apps/web/.env.*`, `firebase.json`, `scripts/`, `.github/workflows/ci.yml` | Built |

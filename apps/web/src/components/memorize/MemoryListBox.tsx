@@ -2,6 +2,7 @@ import type {MemoryListEntry, MemorySpan} from '@/firebase/memoryVerses';
 import type {MemoryList} from './useMemoryList';
 
 import {Link} from 'react-router';
+import {WRITE_LIMITS} from '@bible-center/core';
 import {Button, Loader} from '@mantine/core';
 import {memoryKeyOf} from '@/firebase/memoryVerses';
 import classes from './Memorize.module.scss';
@@ -69,7 +70,15 @@ export function MemoryListBox({span, list}: MemoryListBoxProps) {
   return (
     <div className={classes.listBox}>
       {content}
-      {list.hasSaveError && <p className={classes.saveError} role="alert">Your memory list could not be changed. Check your connection and try again.</p>}
+      {list.hasSaveError && (list.isFull
+        ? (
+            <p className={classes.saveError} role="alert">
+              {`Your memory list has ${WRITE_LIMITS.memoryVerses.toLocaleString('en-US')} verses, the most it can hold. Remove some from `}
+              <Link to="/memorize">your list</Link>
+              {' to add this one. You can still practice it.'}
+            </p>
+          )
+        : <p className={classes.saveError} role="alert">Your memory list could not be changed. Check your connection and try again.</p>)}
     </div>
   );
 }

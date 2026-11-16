@@ -5,6 +5,8 @@ import {useState} from 'react';
 import {topicVerseKey} from '@bible-center/core';
 import {Alert, Button, Group, Modal, Text, TextInput} from '@mantine/core';
 import {useReferenceSpan} from '@/bible/useReferenceSpan';
+import {formatTime} from '@/components/formatTime';
+import {limitOf} from '@/firebase/userRecord';
 import classes from './AddVerseDialog.module.scss';
 
 interface AddVerseDialogProps {
@@ -24,6 +26,8 @@ interface AddVerseDialogProps {
 export function AddVerseDialog({topicName, existingKeys, removedKeys, translation, isSaving, onAdd, onClose}: AddVerseDialogProps) {
   const [text, setText] = useState('');
   const [hasError, setHasError] = useState(false);
+  /** Set when this person started a topic too recently, saying when they can start another. */
+  const [waitMessage, setWaitMessage] = useState<string | null>(null);
   const {span, title, passage, problem: referenceProblem} = useReferenceSpan(text, translation);
   const spanKey = span ? topicVerseKey(span.startVerse, span.endVerse) : null;
   const isListed = spanKey !== null && existingKeys.has(spanKey);
@@ -46,8 +50,14 @@ export function AddVerseDialog({topicName, existingKeys, removedKeys, translatio
     try {
       await onAdd(span);
       onClose();
-    } catch {
-      setHasError(true);
+    } catch (error) {
+      const limit = limitOf(error);
+
+      if (limit?.type === 'cooldown') {
+        setWaitMessage(`You started a topic a few minutes ago. You can start another at ${formatTime(limit.endsAt)}. Until then you can still add verses to topics that already exist.`);
+      } else {
+        setHasError(true);
+      }
     }
   }
 
@@ -81,11 +91,12 @@ export function AddVerseDialog({topicName, existingKeys, removedKeys, translatio
 
         <p className={classes.note}>Adding a verse counts as your upvote. It starts with 1, and others can upvote it from there.</p>
 
+        {waitMessage && <Alert color="gray" mt="md" role="status">{waitMessage}</Alert>}
         {hasError && <Alert color="red" mt="md">It could not be added. Check your connection and try again.</Alert>}
 
         <Group justify="flex-end" mt="md">
           <Button variant="default" onClick={onClose} disabled={isSaving}>Cancel</Button>
-          <Button type="submit" disabled={!span || isListed || isRemoved} loading={isSaving}>Add verse</Button>
+          <Button type="submit" disabled={!span || isListed || isRemoved || waitMessage !== null} loading={isSaving}>Add verse</Button>
         </Group>
       </form>
     </Modal>

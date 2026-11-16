@@ -3,7 +3,8 @@ import type {NewAnnotation} from '@/firebase/annotations';
 
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {chapterIdOf} from '@bible-center/core';
-import {addAnnotation, listChapterAnnotations, removeAnnotation, updateNoteText} from '@/firebase/annotations';
+import {addAnnotation, listChapterAnnotations, removeAnnotations, updateNoteText} from '@/firebase/annotations';
+import {limitOf} from '@/firebase/userRecord';
 import {annotationQueryKeys} from '@/components/annotationQueryKeys';
 
 const NO_ANNOTATIONS: Annotation[] = [];
@@ -36,8 +37,10 @@ export function useChapterAnnotations(uid: string | undefined, reference: Chapte
     isLoading,
     isSaving: change.isPending,
     hasError: change.isError,
+    /** Whether the last change failed because the user keeps as many annotations as one account may. */
+    isFull: limitOf(change.error)?.type === 'count',
     add: (annotation: NewAnnotation) => change.mutateAsync((userId) => addAnnotation(userId, annotation)),
-    removeAll: (ids: string[]) => change.mutateAsync((userId) => Promise.all(ids.map((id) => removeAnnotation(userId, id)))),
+    removeAll: (ids: string[]) => change.mutateAsync((userId) => removeAnnotations(userId, ids)),
     updateNote: (id: string, text: string) => change.mutateAsync((userId) => updateNoteText(userId, id, text)),
   };
 }

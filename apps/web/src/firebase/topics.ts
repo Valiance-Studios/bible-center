@@ -2,7 +2,6 @@ import type {CommunityTopicVerse, ReportReason} from '@bible-center/core';
 
 import {topicVerseKey} from '@bible-center/core';
 import {
-  addDoc,
   collection,
   collectionGroup,
   doc,
@@ -14,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import {db} from './index';
 import {fetchFromServer} from './serverQuery';
+import {readUserRecord, stampAfterCooldown} from './userRecord';
 
 /** A verse or passage on a topic, by its first and last verse ids. */
 export type TopicSpan = Pick<CommunityTopicVerse, 'startVerse' | 'endVerse'>;
@@ -100,9 +100,11 @@ export async function upvoteVerse(uid: string, slug: string, {startVerse, endVer
 
   await runTransaction(db, async (transaction) => {
     const topic = startTopicName ? await transaction.get(doc(db, 'topics', slug)) : null;
+    const record = startTopicName ? await readUserRecord(transaction, uid) : null;
     const verse = await transaction.get(verseRef(slug, key));
 
-    if (startTopicName && topic && !topic.exists()) {
+    if (startTopicName && topic && record && !topic.exists()) {
+      stampAfterCooldown(transaction, uid, record, 'topic');
       transaction.set(doc(db, 'topics', slug), {name: startTopicName, status: 'pending', createdBy: uid, createdAt: serverTimestamp()});
     }
 
@@ -130,15 +132,20 @@ export async function removeUpvote(uid: string, slug: string, key: string): Prom
   });
 }
 
-/** Sends a report for a reviewer. It does not change the ranking. */
+/** Sends a report for a reviewer. It does not change the ranking. Rejects with `WriteLimitError` during the cooldown. */
 export async function reportVerse(uid: string, {topic, verseKey, reason, details}: NewReport): Promise<void> {
-  await addDoc(collection(db, 'reports'), {
-    topic,
-    verseKey,
-    reason,
-    ...(details ? {details} : {}),
-    reportedBy: uid,
-    createdAt: serverTimestamp(),
-    status: 'open',
+  await runTransaction(db, async (transaction) => {
+    const record = await readUserRecord(transaction, uid);
+
+    stampAfterCooldown(transaction, uid, record, 'report');
+    transaction.set(doc(collection(db, 'reports')), {
+      topic,
+      verseKey,
+      reason,
+      ...(details ? {details} : {}),
+      reportedBy: uid,
+      createdAt: serverTimestamp(),
+      status: 'open',
+    });
   });
 }

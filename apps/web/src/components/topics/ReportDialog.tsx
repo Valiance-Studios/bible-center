@@ -3,6 +3,8 @@ import type {ReportReason} from '@bible-center/core';
 import {useState} from 'react';
 import {REPORT_DETAILS_MAX_LENGTH, REPORT_REASONS} from '@bible-center/core';
 import {Alert, Button, Group, Modal, Radio, Stack, Text, Textarea} from '@mantine/core';
+import {formatTime} from '@/components/formatTime';
+import {limitOf} from '@/firebase/userRecord';
 
 interface ReportDialogProps {
   /** Names the verse and topic, such as "Report Psalm 34:18 on grief". */
@@ -23,6 +25,8 @@ export function ReportDialog({title, onSend, onClose}: ReportDialogProps) {
   const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const [hasError, setHasError] = useState(false);
+  /** Set when this person sent a report too recently, saying when they can send another. */
+  const [waitMessage, setWaitMessage] = useState<string | null>(null);
 
   async function send() {
     if (!reason) {
@@ -35,8 +39,14 @@ export function ReportDialog({title, onSend, onClose}: ReportDialogProps) {
     try {
       await onSend(reason, details.trim());
       setIsSent(true);
-    } catch {
-      setHasError(true);
+    } catch (error) {
+      const limit = limitOf(error);
+
+      if (limit?.type === 'cooldown') {
+        setWaitMessage(`You sent a report a moment ago. You can send another at ${formatTime(limit.endsAt)}.`);
+      } else {
+        setHasError(true);
+      }
     } finally {
       setIsSending(false);
     }
@@ -75,10 +85,11 @@ export function ReportDialog({title, onSend, onClose}: ReportDialogProps) {
                 onChange={(event) => setDetails(event.currentTarget.value)}
               />
               <Text size="sm" c="var(--bc-muted)" mt="md">Reports do not change the ranking. A reviewer decides whether to remove the verse from this topic.</Text>
+              {waitMessage && <Alert color="gray" mt="md" role="status">{waitMessage}</Alert>}
               {hasError && <Alert color="red" mt="md">The report could not be sent. Check your connection and try again.</Alert>}
               <Group justify="flex-end" mt="md">
                 <Button variant="default" onClick={onClose} disabled={isSending}>Cancel</Button>
-                <Button onClick={() => void send()} disabled={!reason} loading={isSending}>Send report</Button>
+                <Button onClick={() => void send()} disabled={!reason || waitMessage !== null} loading={isSending}>Send report</Button>
               </Group>
             </>
           )}

@@ -2,8 +2,8 @@ import type {Firestore} from 'firebase/firestore';
 
 import {describe, it} from 'vitest';
 import {assertFails, assertSucceeds} from '@firebase/rules-unit-testing';
-import {addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where} from 'firebase/firestore';
-import {ALICE, BOB, dbFor, MALLORY, useRulesTestEnvironment} from './support';
+import {collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where} from 'firebase/firestore';
+import {ALICE, BOB, createCounted, dbFor, deleteCounted, MALLORY, useRulesTestEnvironment} from './support';
 
 function annotation(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
@@ -21,7 +21,14 @@ function annotationsOf(db: Firestore, uid: string) {
   return collection(db, 'users', uid, 'annotations');
 }
 
+/** Adds an annotation the way the app does, counting it on the owner's record. */
+function addAnnotation(db: Firestore, uid: string, data: Record<string, unknown>) {
+  return createCounted(doc(annotationsOf(db, uid)), data, 'annotationCount');
+}
+
 useRulesTestEnvironment(async (db) => {
+  // Bob has as many annotations as anyone may keep.
+  await setDoc(doc(db, 'users', BOB), {annotationCount: 5000});
   await setDoc(doc(db, 'users', ALICE, 'annotations', 'existing'), annotation());
   await setDoc(doc(db, 'users', ALICE, 'annotations', 'existing-note'), annotation({type: 'note', text: 'Old words.'}));
 });
@@ -30,19 +37,20 @@ describe('annotations', () => {
   it('lets an allowlisted user manage their own', async () => {
     const db = dbFor(ALICE);
 
-    await assertSucceeds(addDoc(annotationsOf(db, ALICE), annotation()));
+    await assertSucceeds(addAnnotation(db, ALICE, annotation()));
     await assertSucceeds(getDocs(query(annotationsOf(db, ALICE), where('chapterId', '==', '43003'))));
     // My verses lists all of them at once.
     await assertSucceeds(getDocs(annotationsOf(db, ALICE)));
-    await assertSucceeds(deleteDoc(doc(annotationsOf(db, ALICE), 'existing')));
+    // Once counted, every delete lowers the count, even of an annotation made before counts.
+    await assertSucceeds(deleteCounted(doc(annotationsOf(db, ALICE), 'existing'), 'annotationCount', 'annotationChange'));
   });
 
   it('accepts a single verse, a range, and each type', async () => {
-    const collectionRef = annotationsOf(dbFor(ALICE), ALICE);
+    const db = dbFor(ALICE);
 
-    await assertSucceeds(addDoc(collectionRef, annotation({startVerse: '43003016', endVerse: '43003016'})));
-    await assertSucceeds(addDoc(collectionRef, annotation({type: 'bookmark'})));
-    await assertSucceeds(addDoc(collectionRef, annotation({type: 'note', text: 'My note.'})));
+    await assertSucceeds(addAnnotation(db, ALICE, annotation({startVerse: '43003016', endVerse: '43003016'})));
+    await assertSucceeds(addAnnotation(db, ALICE, annotation({type: 'bookmark'})));
+    await assertSucceeds(addAnnotation(db, ALICE, annotation({type: 'note', text: 'My note.'})));
   });
 
   it('never lets one user reach another user\'s', async () => {
@@ -50,14 +58,14 @@ describe('annotations', () => {
 
     await assertFails(getDocs(annotationsOf(db, ALICE)));
     await assertFails(getDoc(doc(annotationsOf(db, ALICE), 'existing')));
-    await assertFails(addDoc(annotationsOf(db, ALICE), annotation()));
+    await assertFails(addAnnotation(db, ALICE, annotation()));
     await assertFails(deleteDoc(doc(annotationsOf(db, ALICE), 'existing')));
   });
 
   it('requires the allowlist, a verified email and a sign-in', async () => {
-    await assertFails(addDoc(annotationsOf(dbFor(MALLORY), MALLORY), annotation()));
+    await assertFails(addAnnotation(dbFor(MALLORY), MALLORY, annotation()));
     await assertFails(getDocs(annotationsOf(dbFor(MALLORY), MALLORY)));
-    await assertFails(addDoc(annotationsOf(dbFor(ALICE, false), ALICE), annotation()));
+    await assertFails(addAnnotation(dbFor(ALICE, false), ALICE, annotation()));
     await assertFails(getDocs(annotationsOf(dbFor(null), ALICE)));
   });
 
@@ -74,23 +82,23 @@ describe('annotations', () => {
     ['an oversized note', {type: 'note', text: 'x'.repeat(2001)}],
     ['a client-chosen time', {createdAt: new Date(0)}],
   ])('rejects %s', async (_, overrides) => {
-    await assertFails(addDoc(annotationsOf(dbFor(ALICE), ALICE), annotation(overrides)));
+    await assertFails(addAnnotation(dbFor(ALICE), ALICE, annotation(overrides)));
   });
 
   it('requires both timestamps', async () => {
-    const collectionRef = annotationsOf(dbFor(ALICE), ALICE);
+    const db = dbFor(ALICE);
     const withoutCreated = annotation();
     const withoutUpdated = annotation();
 
     delete withoutCreated['createdAt'];
     delete withoutUpdated['updatedAt'];
 
-    await assertFails(addDoc(collectionRef, withoutCreated));
-    await assertFails(addDoc(collectionRef, withoutUpdated));
+    await assertFails(addAnnotation(db, ALICE, withoutCreated));
+    await assertFails(addAnnotation(db, ALICE, withoutUpdated));
   });
 
   it('accepts a note at the maximum length', async () => {
-    await assertSucceeds(addDoc(annotationsOf(dbFor(ALICE), ALICE), annotation({type: 'note', text: 'x'.repeat(2000)})));
+    await assertSucceeds(addAnnotation(dbFor(ALICE), ALICE, annotation({type: 'note', text: 'x'.repeat(2000)})));
   });
 
   it('only lets a note\'s words change', async () => {
@@ -99,6 +107,36 @@ describe('annotations', () => {
     await assertSucceeds(updateDoc(note, {text: 'New words.', updatedAt: serverTimestamp()}));
     await assertFails(updateDoc(note, {endVerse: '43003020', updatedAt: serverTimestamp()}));
     await assertFails(updateDoc(note, {text: '', updatedAt: serverTimestamp()}));
+  });
+});
+
+describe('annotation limits', () => {
+  it('counts each one on the owner\'s record, in the same write', async () => {
+    const db = dbFor(ALICE);
+
+    await assertFails(setDoc(doc(annotationsOf(db, ALICE)), annotation()));
+    await assertSucceeds(addAnnotation(db, ALICE, annotation()));
+  });
+
+  it('refuses one past the limit', async () => {
+    await assertFails(addAnnotation(dbFor(BOB), BOB, annotation()));
+  });
+
+  it('only lowers the count when the annotation it names is deleted in the same write', async () => {
+    const db = dbFor(ALICE);
+    const added = doc(annotationsOf(db, ALICE), 'added');
+
+    await assertSucceeds(createCounted(added, annotation(), 'annotationCount'));
+    // Lowering the count without deleting, or naming one that stays.
+    await assertFails(setDoc(doc(db, 'users', ALICE), {annotationCount: 0}, {merge: true}));
+    await assertFails(setDoc(doc(db, 'users', ALICE), {annotationCount: 0, annotationChange: 'existing'}, {merge: true}));
+    // Deleting without lowering the count.
+    await assertFails(deleteDoc(added));
+    await assertSucceeds(deleteCounted(added, 'annotationCount', 'annotationChange'));
+  });
+
+  it('lets annotations from before counts be deleted without one', async () => {
+    await assertSucceeds(deleteDoc(doc(annotationsOf(dbFor(ALICE), ALICE), 'existing')));
   });
 });
 

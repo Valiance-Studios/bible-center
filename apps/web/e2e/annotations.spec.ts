@@ -55,6 +55,30 @@ test('a verse range can be highlighted, survives a reload, and can be removed', 
   await expect(page.locator('mark')).toHaveCount(0);
 });
 
+test('removing a highlight across two others removes both', async ({page}) => {
+  await openChapterAsNewUser(page);
+
+  for (const [verse, id] of [[VERSE_1, '#v1'], [VERSE_3, '#v3']] as const) {
+    // Starting from a fresh page each time keeps the last highlight's verse from being selected.
+    await page.reload();
+    await page.getByText(verse).click();
+    await page.getByRole('button', {name: 'Highlight', exact: true}).click();
+    await expect(page.locator(`${id} mark`)).toBeVisible();
+  }
+
+  await page.reload();
+  await page.getByText(VERSE_1).click();
+  await page.getByText(VERSE_3).click();
+  await expect(page.getByText('John 1:1–3 selected.')).toBeVisible();
+  // Each removal lowers the count on the user's record, so they must not be sent at the same moment.
+  await page.getByRole('button', {name: 'Remove highlight'}).click();
+
+  await expect(page.locator('mark')).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText(VERSE_1)).toBeVisible();
+  await expect(page.locator('mark')).toHaveCount(0);
+});
+
 test('a range selected backwards works too', async ({page}) => {
   await openChapterAsNewUser(page);
 

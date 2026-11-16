@@ -93,15 +93,78 @@ service cloud.firestore {
       allow delete: if isAdmin() && email != myEmail();
     }
 
-    // Keep the translation ids in sync with TRANSLATIONS in apps/web/src/bible/translations.ts.
-    // `createdAt` is when the account was first seen, set by the server once and never changed.
-    function isValidUserRecord(data) {
-      return data.keys().hasOnly(['translationId', 'createdAt'])
-        && (!('translationId' in data) || data.translationId in ['bsb', 'kjv']);
-    }
-
     function myUserRecord() {
       return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    // The signed-in user's record before and after this write. Before it exists, it is empty.
+    function recordBefore() {
+      return exists(myUserRecord()) ? get(myUserRecord()).data : {};
+    }
+
+    function recordAfter() {
+      return getAfter(myUserRecord()).data;
+    }
+
+    // A count of a user's documents, such as `annotationCount`, may stay, rise by one, or fall by one when the
+    // document named by `change` (such as `annotationChange`) is deleted in the same write, so nobody can lower it
+    // to get past a limit. Raising it alone only hurts the user. Records from before counts existed start at 0.
+    function isValidCountChange(uid, before, after, field, change, collectionName) {
+      let was = before.get(field, 0);
+      let now = after.get(field, 0);
+      let changed = /databases/$(database)/documents/users/$(uid)/$(collectionName)/$(after.get(change, '-'));
+
+      return now is int && now >= 0
+        && (!(change in after) || after[change] is string)
+        && (now == was
+          || now == was + 1
+          || (now == was - 1 && exists(changed) && !existsAfter(changed)));
+    }
+
+    // When the user last did something limited, such as reporting a verse: unchanged, or now.
+    function isValidStamp(before, after, field) {
+      return after.get(field, null) == before.get(field, null) || after[field] == request.time;
+    }
+
+    // Keep the translation ids in sync with TRANSLATIONS in apps/web/src/bible/translations.ts.
+    // `createdAt` is when the account was first seen, set by the server once and never changed.
+    // The counts and stamps enforce the limits in packages/core/src/limits.ts.
+    function isValidUserRecord(uid, before, after) {
+      return after.keys().hasOnly([
+          'translationId', 'createdAt',
+          'annotationCount', 'annotationChange', 'memoryVerseCount', 'memoryVerseChange',
+          'lastReportAt', 'lastTopicAt'])
+        && (!('translationId' in after) || after.translationId in ['bsb', 'kjv'])
+        && ('createdAt' in before
+          ? after.get('createdAt', null) == before.createdAt
+          : after.get('createdAt', request.time) == request.time)
+        && isValidCountChange(uid, before, after, 'annotationCount', 'annotationChange', 'annotations')
+        && isValidCountChange(uid, before, after, 'memoryVerseCount', 'memoryVerseChange', 'memoryVerses')
+        && isValidStamp(before, after, 'lastReportAt')
+        && isValidStamp(before, after, 'lastTopicAt');
+    }
+
+    // Creating a counted document must raise its count by one in the same write, below the limit.
+    // Keep the limits in sync with WRITE_LIMITS in packages/core/src/limits.ts.
+    function addsToCount(field, max) {
+      let was = recordBefore().get(field, 0);
+
+      return was < max && recordAfter().get(field, 0) == was + 1;
+    }
+
+    // Deleting one lowers its count by one, unless the count is already 0, as for documents made before counts.
+    function takesFromCount(field) {
+      let was = recordBefore().get(field, 0);
+
+      return was <= 0 || recordAfter().get(field, 0) == was - 1;
+    }
+
+    // Doing something with a cooldown stamps the time on the record, and needs the last stamp to be old enough.
+    function stampsAfterCooldown(field, cooldown) {
+      let before = recordBefore();
+
+      return recordAfter().get(field, null) == request.time
+        && (!(field in before) || before[field] + cooldown <= request.time);
     }
 
     // Votes count only from accounts at least this old, so new accounts cannot be made in bulk to move a verse.
@@ -137,22 +200,21 @@ service cloud.firestore {
       allow get: if isAllowedOwner(uid);
 
       allow create: if isAllowedOwner(uid)
-        && isValidUserRecord(request.resource.data)
-        && request.resource.data.get('createdAt', request.time) == request.time;
+        && isValidUserRecord(uid, {}, request.resource.data);
 
-      // `createdAt` can be added once, as the server's time, and never changed after that.
       allow update: if isAllowedOwner(uid)
-        && isValidUserRecord(request.resource.data)
-        && ('createdAt' in resource.data
-          ? request.resource.data.createdAt == resource.data.createdAt
-          : request.resource.data.get('createdAt', request.time) == request.time);
+        && isValidUserRecord(uid, resource.data, request.resource.data);
 
       match /annotations/{annotationId} {
-        allow read, delete: if isAllowedOwner(uid);
+        allow read: if isAllowedOwner(uid);
+
+        allow delete: if isAllowedOwner(uid)
+          && takesFromCount('annotationCount');
 
         allow create: if isAllowedOwner(uid)
           && isValidAnnotation(request.resource.data)
-          && request.resource.data.createdAt == request.time;
+          && request.resource.data.createdAt == request.time
+          && addsToCount('annotationCount', 5000);
 
         // Only a note's words can change. Moving or retyping an annotation means replacing it.
         allow update: if isAllowedOwner(uid)
@@ -164,9 +226,13 @@ service cloud.firestore {
       // The verses someone is memorizing, keyed like a topic's verses. Keep in sync with MemoryVerse and
       // MEMORY_STATUSES in packages/core/src/memorize.ts. Only the status and when it was last practiced change.
       match /memoryVerses/{key} {
-        allow read, delete: if isAllowedOwner(uid);
+        allow read: if isAllowedOwner(uid);
+
+        allow delete: if isAllowedOwner(uid)
+          && takesFromCount('memoryVerseCount');
 
         allow create: if isAllowedOwner(uid)
+          && addsToCount('memoryVerseCount', 500)
           && request.resource.data.keys().hasOnly(['startVerse', 'endVerse', 'status', 'createdAt', 'practicedAt'])
           && request.resource.data.keys().hasAll(['startVerse', 'endVerse', 'status', 'createdAt', 'practicedAt'])
           && isVerseId(request.resource.data.startVerse)
@@ -275,7 +341,8 @@ service cloud.firestore {
         && isTopicNameFor(request.resource.data.name, slug)
         && request.resource.data.status == 'pending'
         && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.createdAt == request.time;
+        && request.resource.data.createdAt == request.time
+        && stampsAfterCooldown('lastTopicAt', duration.value(10, 'm'));
 
       // A verse or passage on a topic, with its Bible Center upvotes. The count only ever moves by one,
       // and only in the same write as the signed-in user's own vote appearing or disappearing.
@@ -362,7 +429,8 @@ service cloud.firestore {
           || (request.resource.data.details is string && request.resource.data.details.size() <= 500))
         && request.resource.data.reportedBy == request.auth.uid
         && request.resource.data.createdAt == request.time
-        && request.resource.data.status == 'open';
+        && request.resource.data.status == 'open'
+        && stampsAfterCooldown('lastReportAt', duration.value(1, 'm'));
 
       allow read: if isReviewer();
 
