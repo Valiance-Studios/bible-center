@@ -7,6 +7,10 @@ export interface UserSettings {
   translationId?: string;
 }
 
+function userRef(uid: string) {
+  return doc(db, 'users', uid);
+}
+
 export async function loadUserSettings(uid: string): Promise<UserSettings | null> {
   const snapshot = await getDoc(userRef(uid));
 
