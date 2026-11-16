@@ -13,7 +13,7 @@ Run every command from the repository root. The root holds the commands, shared 
 
 ## Running Locally
 
-- `npm run emulators` in one terminal and `npm run dev` in another. The app is at http://localhost:5173 and the Emulator UI at http://127.0.0.1:4000. It builds the Cloud Functions first; after changing one, restart it.
+- `npm run emulators` in one terminal and `npm run dev` in another. The app is at http://localhost:5173 and the Emulator UI at http://127.0.0.1:4000. It builds the Cloud Functions first, and the Functions emulator reloads them whenever `apps/functions/lib` changes, so run `npm run watch:functions` in a third terminal while working on one. Their logs are in the Emulator UI's Logs tab.
 - Development runs against the **Firebase Local Emulator Suite** using the `demo-bible-center` project. The `demo-` prefix guarantees no real Firebase resources are touched.
 - `npm run dev:staging` runs the dev server against the hosted project (`apps/web/.env.staging`), with the real allowlist. It needs an App Check debug token in `apps/web/.env.staging.local` (see [Debug Token](DEPLOYMENT.md#debug-token)). It must run on port 5173, the only local port allowed on the API key (see [API Key Restrictions](DEPLOYMENT.md#api-key-restrictions)).
 

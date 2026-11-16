@@ -33,6 +33,7 @@
     "deploy:hosting": "firebase deploy --project dev --only hosting",
     "deploy:rules": "firebase deploy --project dev --only firestore",
     "build:functions": "npm run build -w @bible-center/functions",
+    "watch:functions": "npm run build -w @bible-center/functions -- --watch",
     "deploy:functions": "firebase deploy --project dev --only functions"
   },
   "devDependencies": {
