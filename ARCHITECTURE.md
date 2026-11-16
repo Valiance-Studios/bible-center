@@ -686,7 +686,7 @@ sequenceDiagram
 
 ## Security
 
-This repository and the app are public, so assume hostile use.
+This repository and the app are public, so assume hostile use. Vulnerabilities are reported privately through GitHub, as [SECURITY.md](SECURITY.md) describes.
 
 - **Firestore** denies everything unless a collection opts in. Rules validate each field and tests cover them.
 - **App Check** starts before Auth and Firestore make requests, and stays off against the emulators. It is enforced for Firestore and Authentication, so requests from anything but the deployed app, or a machine with a registered debug token, are rejected. See [DEPLOYMENT.md](docs/DEPLOYMENT.md#app-check-setup).

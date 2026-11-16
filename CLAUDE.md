@@ -73,6 +73,7 @@ Each kind of content has one home. Link to it rather than repeating it.
 | `docs/UI.md`          | What each page does and how it looks.                                                                         |
 | `docs/DEVELOPMENT.md` | Machine setup, running locally, env files, tests, linting, known quirks.                                      |
 | `docs/DEPLOYMENT.md`  | Deploying, and App Check console setup and debug tokens.                                                      |
+| `SECURITY.md`         | How to report a vulnerability privately.                                                                      |
 
 ### Mermaid Diagrams
 
