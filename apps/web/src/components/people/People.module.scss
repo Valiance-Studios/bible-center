@@ -104,3 +104,40 @@ $phone-width: 900px;
   color: var(--bc-muted);
   font-size: 14px;
 }
+
+.sectionTitle {
+  margin: 40px 0 6px;
+  font-family: 'Literata', serif;
+  font-size: 28px;
+  font-weight: 400;
+}
+
+.sectionIntro {
+  max-width: 40em;
+  margin: 0 0 14px;
+  color: var(--bc-muted);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.blockForm {
+  composes: add;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.blocked {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--bc-line);
+}
+
+.none {
+  margin: 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--bc-line);
+  color: var(--bc-muted);
+  font-size: 15px;
+}

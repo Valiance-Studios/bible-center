@@ -1,5 +1,5 @@
 import {useEffect} from 'react';
-import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
+import {MutationCache, QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {createBrowserRouter, Navigate, RouterProvider} from 'react-router';
 import {MantineProvider} from '@mantine/core';
 import {MEMORIZE_PRACTICE_PATH, READER_START_PATH} from '@/bible/paths';
@@ -15,7 +15,7 @@ import {SearchPage} from '@/pages/SearchPage';
 import {SignInPage} from '@/pages/SignInPage';
 import {TopicPage} from '@/pages/TopicPage';
 import {TopicsPage} from '@/pages/TopicsPage';
-import {useAuthStore} from '@/stores/auth';
+import {useAuthStore, wasRefusedForBlock} from '@/stores/auth';
 import {useTranslationSync} from '@/stores/useTranslationSync';
 import {mantineCssVariables, mantineTheme} from '@/theme/mantineTheme';
 
@@ -41,7 +41,11 @@ const router = createBrowserRouter([
 ]);
 
 // Published Bible text does not change while someone is reading it.
-const queryClient = new QueryClient({defaultOptions: {queries: {staleTime: Infinity, retry: 1}}});
+const queryClient = new QueryClient({
+  defaultOptions: {queries: {staleTime: Infinity, retry: 1}},
+  // A save refused because an admin blocked the account during this visit switches the pages to the blocked notice.
+  mutationCache: new MutationCache({onError: (error) => void wasRefusedForBlock(error)}),
+});
 
 export function App() {
   const init = useAuthStore((state) => state.init);

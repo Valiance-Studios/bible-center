@@ -9,6 +9,7 @@ Bible Center is a free, public Bible resource built with React, TypeScript, Mant
 ### Repository Layout
 
 - `apps/web`: the React app, with its env files, Vite and Playwright config, unit tests (`tests`) and E2E specs (`e2e`).
+- `apps/functions`: `@bible-center/functions`, the Cloud Functions. Each has its own service account.
 - `packages/core`: `@bible-center/core`, pure shared types and logic with no browser or Firebase dependencies.
 - `scripts`: emulator helpers, the deploy check, and generators for the Bible data and icons.
 - `tests`: tests for the repo as a whole (security rules, scripts).

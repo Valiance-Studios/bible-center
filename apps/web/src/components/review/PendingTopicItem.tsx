@@ -1,5 +1,6 @@
 import type {TopicDecision} from '@bible-center/core';
 import type {TranslationProvider} from '@/bible/translations';
+import type {BlockedAccounts} from '@/components/blocking/useBlockedAccounts';
 import type {TopicItem} from './useReviewQueue';
 
 import {useQuery} from '@tanstack/react-query';
@@ -9,6 +10,7 @@ import {Loader} from '@mantine/core';
 import {referencePath} from '@/bible/paths';
 import {topicQueryKeys} from '@/components/topics/topicQueryKeys';
 import {listCommunityVerses} from '@/firebase/topics';
+import {AccountLine} from './AccountLine';
 import {formatReviewDate} from './formatReviewDate';
 import {ReviewActions} from './ReviewActions';
 import {ReviewVerseText} from './ReviewVerseText';
@@ -19,11 +21,13 @@ interface PendingTopicItemProps {
   translation: TranslationProvider;
   isSaving: boolean;
   hasError: boolean;
+  /** Given for admins, who see the account that started the topic, and can block it. */
+  accounts?: BlockedAccounts;
   onDecide: (decision: TopicDecision) => void;
 }
 
 /** A topic someone started, with the verses on it so far, to approve or reject. */
-export function PendingTopicItem({item: {topic, decision}, translation, isSaving, hasError, onDecide}: PendingTopicItemProps) {
+export function PendingTopicItem({item: {topic, decision}, translation, isSaving, hasError, accounts, onDecide}: PendingTopicItemProps) {
   const verses = useQuery({queryKey: topicQueryKeys.verses(topic.slug), queryFn: () => listCommunityVerses(topic.slug), staleTime: 0, retry: 4});
   const shown = (verses.data ?? []).flatMap((verse) => {
     const reference = referenceOf(verse);
@@ -39,6 +43,7 @@ export function PendingTopicItem({item: {topic, decision}, translation, isSaving
     <article className={classes.item} aria-label={topic.name}>
       <Link className={classes.topicName} to={`/topics/${topic.slug}`}>{topic.name}</Link>
       <p className={classes.meta}>{[`Started ${formatReviewDate(topic.createdAt)}`, count].filter(Boolean).join(' · ')}</p>
+      {accounts && <AccountLine uid={topic.createdBy} lead="Started by" did={`started "${topic.name}"`} accounts={accounts} />}
 
       {verses.isPending && <Loader size="sm" aria-label={`Loading the verses on ${topic.name}`} />}
       {verses.isError && <p className={classes.missing}>Its verses could not be loaded.</p>}

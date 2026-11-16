@@ -24,6 +24,8 @@ interface Practice {
 export function useMemoryList() {
   const authStatus = useAuthStore((state) => state.status);
   const uid = useAuthStore((state) => (state.status === 'allowed' ? state.user?.uid : undefined));
+  // A blocked account still sees its list, but cannot change it.
+  const isBlocked = useAuthStore((state) => state.status === 'allowed' && state.isBlocked);
   const queryClient = useQueryClient();
   const queryKey = memoryListKey(uid);
   const list = useQuery({queryKey, queryFn: () => listMemoryVerses(uid ?? ''), enabled: uid !== undefined});
@@ -36,12 +38,18 @@ export function useMemoryList() {
     return uid;
   };
   const add = useMutation({mutationFn: (span: MemorySpan) => addMemoryVerse(requireUid(), span), onSettled: refresh});
-  const practice = useMutation({mutationFn: ({key, status}: Practice) => recordPractice(requireUid(), key, status), onSettled: refresh});
+  const practice = useMutation({
+    // Practicing still works for a blocked account; it just is not recorded.
+    mutationFn: async ({key, status}: Practice) => isBlocked ? undefined : recordPractice(requireUid(), key, status),
+    onSettled: refresh,
+  });
   const remove = useMutation({mutationFn: (key: string) => removeMemoryVerse(requireUid(), key), onSettled: refresh});
 
   return {
     /** Whether this user can keep a list at all. */
     canKeepList: uid !== undefined,
+    /** Whether an admin blocked the account, so the list can be seen but not changed. */
+    isBlocked,
     /** Why they cannot, if they cannot: still loading, signed out, or not on the allowlist. */
     authStatus,
     entries: list.data,

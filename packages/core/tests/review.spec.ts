@@ -4,7 +4,7 @@ import {describe, expect, it} from 'vitest';
 import {groupReports, parseTopicVerseKey} from '../src/review';
 
 function report(id: string, topic: string, verseKey: string, day: number): OpenReport {
-  return {id, topic, verseKey, reason: 'fit', createdAt: new Date(2026, 10, day)};
+  return {id, topic, verseKey, reason: 'fit', reportedBy: 'someone', createdAt: new Date(2026, 10, day)};
 }
 
 describe('groupReports', () => {

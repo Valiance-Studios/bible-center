@@ -18,6 +18,7 @@ export default defineConfig([
     ignores: [
       '**/node_modules/**',
       '**/dist/**',
+      'apps/functions/lib/**',
       '**/coverage/**',
       '**/playwright-report/**',
       '**/test-results/**',
@@ -55,7 +56,7 @@ export default defineConfig([
 
   // Tooling config files and scripts (Node)
   {
-    files: ['*.config.{js,ts}', 'apps/web/*.config.ts', 'scripts/**/*.ts'],
+    files: ['*.config.{js,ts}', 'apps/web/*.config.ts', 'scripts/**/*.ts', 'apps/functions/src/**/*.ts'],
     languageOptions: {
       globals: {
         ...globals.node,

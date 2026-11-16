@@ -9,7 +9,9 @@ import {Alert, Button, Loader} from '@mantine/core';
 import {referencePath} from '@/bible/paths';
 import {findTranslation} from '@/bible/translations';
 import {usePassage} from '@/bible/usePassage';
+import {BlockedNotice} from '@/components/BlockedNotice';
 import {formatDayAndTime} from '@/components/formatTime';
+import {SupportContact} from '@/components/SupportContact';
 import {AddVerseDialog} from '@/components/topics/AddVerseDialog';
 import {ReportDialog} from '@/components/topics/ReportDialog';
 import {startedTopicQuery} from '@/components/topics/startedTopicQuery';
@@ -22,8 +24,8 @@ import classes from './TopicPage.module.scss';
 
 const PAGE_SIZE = 20;
 const OPENBIBLE_TOPICS_URL = 'https://www.openbible.info/topics/';
-/** Explains the vote boxes of an account too new to vote. */
-const NEW_ACCOUNT_NOTICE_ID = 'new-account-notice';
+/** Explains the turned-off vote boxes of an account too new to vote, or a blocked one. */
+const VOTING_NOTICE_ID = 'voting-notice';
 
 function UpArrow() {
   return (
@@ -38,7 +40,7 @@ interface VoteButtonProps {
   upvotes: number;
   /** Signed in and allowed to vote. Anyone else is sent to sign in. */
   canVote: boolean;
-  /** Signed in, but the account is too new to vote yet. */
+  /** Signed in, but the account cannot vote: it is too new, or blocked. */
   isWaiting: boolean;
   hasVoted: boolean;
   isSaving: boolean;
@@ -48,7 +50,7 @@ interface VoteButtonProps {
 function VoteButton({title, upvotes, canVote, isWaiting, hasVoted, isSaving, onToggle}: VoteButtonProps) {
   if (isWaiting) {
     return (
-      <button type="button" className={classes.voteWaiting} disabled aria-label={`Upvote ${title}, not available yet`} aria-describedby={NEW_ACCOUNT_NOTICE_ID}>
+      <button type="button" className={classes.voteWaiting} disabled aria-label={`Upvote ${title}, not available`} aria-describedby={VOTING_NOTICE_ID}>
         <UpArrow />
         <span>{upvotes}</span>
       </button>
@@ -94,11 +96,13 @@ interface TopicVerseRowProps {
   hasVoted: boolean;
   isSaving: boolean;
   isReported: boolean;
+  /** Signed in and not blocked. A new account can report before it can vote. */
+  canReport: boolean;
   onToggleVote: () => void;
   onReport: () => void;
 }
 
-function TopicVerseRow({verseKey, verse, reference, translation, canVote, isWaiting, hasVoted, isSaving, isReported, onToggleVote, onReport}: TopicVerseRowProps) {
+function TopicVerseRow({verseKey, verse, reference, translation, canVote, isWaiting, hasVoted, isSaving, isReported, canReport, onToggleVote, onReport}: TopicVerseRowProps) {
   const {text, isPending, isError, retry} = usePassage(reference, translation);
   const title = formatReference(reference);
   const counts = [`${verse.upvotes.toLocaleString('en-US')} on Bible Center`];
@@ -128,7 +132,7 @@ function TopicVerseRow({verseKey, verse, reference, translation, canVote, isWait
 
         <div className={classes.meta}>
           <span>{counts.join(', ')}</span>
-          {canVote && (isReported
+          {canReport && (isReported
             ? <span className={classes.reported}>Reported</span>
             : <button type="button" className={classes.report} aria-label={`Report ${title}`} onClick={onReport}>Report</button>)}
         </div>
@@ -152,7 +156,9 @@ function Topic({slug}: {slug: string}) {
   const opensAt = canVote && accountCreatedAt ? votingOpensAt(accountCreatedAt) : null;
   // When the page opened. A visitor whose wait ends while it is open can reload, and the rules check the real time.
   const [openedAt] = useState(() => Date.now());
-  const isWaiting = opensAt !== null && opensAt.getTime() > openedAt;
+  const isBlocked = useAuthStore((state) => canVote && state.isBlocked);
+  const isNew = !isBlocked && opensAt !== null && opensAt.getTime() > openedAt;
+  const isWaiting = isNew || isBlocked;
   const uid = canVote ? user.uid : undefined;
   const [shownCount, setShownCount] = useState(PAGE_SIZE);
   const [addedKey, setAddedKey] = useState<string | null>(null);
@@ -234,8 +240,16 @@ function Topic({slug}: {slug: string}) {
         </p>
       )}
 
-      {isWaiting && opensAt && (
-        <p id={NEW_ACCOUNT_NOTICE_ID} className={classes.notice}>
+      {isBlocked && (
+        <BlockedNotice id={VOTING_NOTICE_ID}>
+          <strong>Your account is blocked, so you cannot upvote, add verses or report.</strong>
+          {' You can still read everything.'}
+          <SupportContact />
+        </BlockedNotice>
+      )}
+
+      {isNew && opensAt && (
+        <p id={VOTING_NOTICE_ID} className={classes.notice}>
           <strong>{`You can upvote and add verses after ${formatDayAndTime(opensAt)}.`}</strong>
           {' New accounts wait a week before voting, which keeps the rankings fair. You can report a verse now.'}
         </p>
@@ -287,6 +301,7 @@ function Topic({slug}: {slug: string}) {
               hasVoted={votes.myVotes.has(key)}
               isSaving={votes.savingKey === key}
               isReported={reportedKeys.has(key)}
+              canReport={canVote && !isBlocked}
               onToggleVote={() => toggleVote(verse, key)}
               onReport={() => setReportTarget({key, title: formatReference(reference)})}
             />

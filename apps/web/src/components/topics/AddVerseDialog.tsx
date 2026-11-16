@@ -6,7 +6,9 @@ import {topicVerseKey} from '@bible-center/core';
 import {Alert, Button, Group, Modal, Text, TextInput} from '@mantine/core';
 import {useReferenceSpan} from '@/bible/useReferenceSpan';
 import {formatTime} from '@/components/formatTime';
+import {SupportContact} from '@/components/SupportContact';
 import {limitOf} from '@/firebase/userRecord';
+import {wasRefusedForBlock} from '@/stores/auth';
 import classes from './AddVerseDialog.module.scss';
 
 interface AddVerseDialogProps {
@@ -28,6 +30,8 @@ export function AddVerseDialog({topicName, existingKeys, removedKeys, translatio
   const [hasError, setHasError] = useState(false);
   /** Set when this person started a topic too recently, saying when they can start another. */
   const [waitMessage, setWaitMessage] = useState<string | null>(null);
+  /** Set when an admin blocked the account while the dialog was open. */
+  const [isBlocked, setIsBlocked] = useState(false);
   const {span, title, passage, problem: referenceProblem} = useReferenceSpan(text, translation);
   const spanKey = span ? topicVerseKey(span.startVerse, span.endVerse) : null;
   const isListed = spanKey !== null && existingKeys.has(spanKey);
@@ -55,6 +59,8 @@ export function AddVerseDialog({topicName, existingKeys, removedKeys, translatio
 
       if (limit?.type === 'cooldown') {
         setWaitMessage(`You started a topic a few minutes ago. You can start another at ${formatTime(limit.endsAt)}. Until then you can still add verses to topics that already exist.`);
+      } else if (await wasRefusedForBlock(error)) {
+        setIsBlocked(true);
       } else {
         setHasError(true);
       }
@@ -92,11 +98,17 @@ export function AddVerseDialog({topicName, existingKeys, removedKeys, translatio
         <p className={classes.note}>Adding a verse counts as your upvote. It starts with 1, and others can upvote it from there.</p>
 
         {waitMessage && <Alert color="gray" mt="md" role="status">{waitMessage}</Alert>}
+        {isBlocked && (
+          <Alert color="red" mt="md" role="alert">
+            Your account has been blocked, so this could not be added.
+            <SupportContact />
+          </Alert>
+        )}
         {hasError && <Alert color="red" mt="md">It could not be added. Check your connection and try again.</Alert>}
 
         <Group justify="flex-end" mt="md">
           <Button variant="default" onClick={onClose} disabled={isSaving}>Cancel</Button>
-          <Button type="submit" disabled={!span || isListed || isRemoved || waitMessage !== null} loading={isSaving}>Add verse</Button>
+          <Button type="submit" disabled={!span || isListed || isRemoved || waitMessage !== null || isBlocked} loading={isSaving}>Add verse</Button>
         </Group>
       </form>
     </Modal>

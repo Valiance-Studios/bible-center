@@ -4,6 +4,8 @@ import type {Role} from '@bible-center/core';
 import {Link} from 'react-router';
 import {Button, Loader} from '@mantine/core';
 import {useAuthStore} from '@/stores/auth';
+import {BlockedNotice} from './BlockedNotice';
+import {SupportContact} from './SupportContact';
 import classes from './RoleGate.module.scss';
 
 interface RoleGateProps {
@@ -23,6 +25,7 @@ export function RoleGate({canSee, audience, children}: RoleGateProps) {
   const status = useAuthStore((state) => state.status);
   const role = useAuthStore((state) => state.role);
   const uid = useAuthStore((state) => state.user?.uid);
+  const isBlocked = useAuthStore((state) => state.isBlocked);
 
   if (status === 'loading') {
     return <Loader aria-label="Loading" />;
@@ -39,6 +42,16 @@ export function RoleGate({canSee, audience, children}: RoleGateProps) {
 
   if (status !== 'allowed' || !uid || !canSee(role)) {
     return <p className={classes.body}>{`This page is only for ${audience}.`}</p>;
+  }
+
+  // The rules refuse a blocked account's reviews and changes, whatever its role.
+  if (isBlocked) {
+    return (
+      <BlockedNotice>
+        <strong>Your account is blocked, so you cannot use this page.</strong>
+        <SupportContact />
+      </BlockedNotice>
+    );
   }
 
   return children(uid);

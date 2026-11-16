@@ -23,7 +23,8 @@ export function useTranslationSync(): void {
     let hasChosen = false;
 
     const stopSaving = useTranslationStore.subscribe((state, previous) => {
-      if (isApplyingSaved || state.translationId === previous.translationId) {
+      // A blocked account cannot save, so its choice stays in this browser only.
+      if (isApplyingSaved || state.translationId === previous.translationId || useAuthStore.getState().isBlocked) {
         return;
       }
 

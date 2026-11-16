@@ -145,6 +145,19 @@ export async function setAccountAge(uid: string, daysAgo: number): Promise<void>
   await updateUserRecord(uid, {createdAt: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000)});
 }
 
+/** Blocks an account directly, as the blockAccount function would, without removing anything. */
+export async function blockAccount(uid: string, email: string): Promise<void> {
+  const fields = {
+    email: {stringValue: email},
+    blockedBy: {stringValue: 'e2e-seed'},
+    blockedByEmail: {stringValue: 'e2e-seed@example.com'},
+    blockedAt: {timestampValue: new Date().toISOString()},
+    contentRemoved: {booleanValue: false},
+  };
+
+  await request(documentsUrl(`blockedUsers/${uid}`), {method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields})}, `block ${email}`);
+}
+
 export interface SeedAnnotation {
   type: 'highlight' | 'bookmark' | 'note';
   /** `bbcccvvv`, as in `packages/core/src/verseId.ts`. */
@@ -199,16 +212,18 @@ export interface SeedReport {
   reason: 'fit' | 'reference' | 'other';
   details?: string;
   createdAt: Date;
+  /** The reporter's account id. A placeholder that matches no account when left out. */
+  reportedBy?: string;
 }
 
 /** Files an open report, as someone reporting a verse on a topic would. */
-export async function addReport({topic, verseKey, reason, details, createdAt}: SeedReport): Promise<void> {
+export async function addReport({topic, verseKey, reason, details, createdAt, reportedBy = 'e2e-seed'}: SeedReport): Promise<void> {
   const fields = {
     topic: {stringValue: topic},
     verseKey: {stringValue: verseKey},
     reason: {stringValue: reason},
     ...(details === undefined ? {} : {details: {stringValue: details}}),
-    reportedBy: {stringValue: 'e2e-seed'},
+    reportedBy: {stringValue: reportedBy},
     createdAt: {timestampValue: createdAt.toISOString()},
     status: {stringValue: 'open'},
   };

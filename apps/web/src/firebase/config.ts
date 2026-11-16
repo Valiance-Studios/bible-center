@@ -22,4 +22,5 @@ export const appCheckDebugToken: string | undefined = env.VITE_APPCHECK_DEBUG_TO
 export const emulatorHosts = {
   auth: 'http://127.0.0.1:9099',
   firestore: {host: '127.0.0.1', port: 8080},
+  functions: {host: '127.0.0.1', port: 5001},
 } as const;

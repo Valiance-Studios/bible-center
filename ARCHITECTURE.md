@@ -24,7 +24,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | My verses page | Built |
 | About dialog | Built: a shorter version of the README with data credits, from the footer and the phone menu |
 | Topic search, voting, reports | Built: topic pages, the Topics page, voting ranked by `topicVerseScore` from accounts at least a week old, adding verses, starting topics and reports |
-| Admins and reviewers | Built: roles in `roles/{email}`, the People page for admins, and the Review page for reported verses and new topics |
+| Admins and reviewers | Built: roles in `roles/{email}`, the People page for admins, the Review page for reported verses and new topics, and blocking accounts; see [Blocking](#blocking) |
 | Hebrew/Greek study | Built: the word panel beside the reader, or in a sheet on phones, from STEPBible data |
 | Scripture memorization | Built: flash cards, fading words, and the memory list; see [Memorization](#memorization) |
 | AI topic suggestions | After V1 |
@@ -60,7 +60,7 @@ Waiting on the owner:
 To do when reached:
 
 - An Anthropic API key, a Secret Manager entry for it, and a $10 monthly spend limit are needed at the AI step.
-- App Check is enforced for Firestore and Authentication only. Enforce each new service, such as Cloud Functions at the AI step, once its requests show as verified; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#enforcement).
+- App Check is enforced for Firestore and Authentication in the console, and by each callable function's `enforceAppCheck` option. Enforce each new console service once its requests show as verified; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#enforcement).
 - The main bundle is about 1.2 MB because every page loads Firebase and Mantine. Signed-out reading should not need Firestore or Auth up front, so split them out.
 - Add a Content Security Policy once the app's external origins are settled.
 - Check the first phrase search on a real phone, and move indexing to a Web Worker if it is slow.
@@ -120,6 +120,7 @@ Start with "Starting a Session" in `CLAUDE.md`, then the [Mockups](#mockups) sec
 | `ReviewBlock.dc.html` | Admins block the account behind a reported verse, a report or a new topic |
 | `Privacy.dc.html` | The privacy policy |
 | `DeleteAccount.dc.html` | Deleting your account from the account menu |
+| `BlockedAccount.dc.html` | What a blocked account sees wherever it would save |
 
 The canvas is the source of truth for the design. To work from it in a new session, read `project/canvas.json` and any `project/<artboard>` from that URL with the Artifact tool. The design language is in [UI.md](docs/UI.md#design-language).
 
@@ -149,7 +150,7 @@ Bible Center is a free, public, one-stop Bible resource. The [README](README.md)
 
 ## System Overview
 
-Public-domain Bible text and OpenBible data are static files, so reading costs almost nothing and needs no backend. Firestore holds only what users create. Cloud Functions exist only for what a browser cannot be trusted with: private API keys and spending limits.
+Public-domain Bible text and OpenBible data are static files, so reading costs almost nothing and needs no backend. Firestore holds only what users create. Cloud Functions exist only for what a browser cannot be trusted with: private API keys, spending limits, and acting on other people's accounts, such as blocking one.
 
 ```mermaid
 flowchart LR
@@ -158,9 +159,9 @@ flowchart LR
   subgraph firebase["Firebase project: vs-bible-center-dev"]
     hosting["Hosting<br/>app and static data"]
     auth["Authentication<br/>Google, email/password"]
-    firestore[("Firestore<br/>allowlist, roles, annotations, votes, reports,<br/>daily verses, memory lists, AI cache")]
+    firestore[("Firestore<br/>allowlist, roles, blocked accounts, annotations,<br/>votes, reports, daily verses, memory lists, AI cache")]
     appcheck["App Check<br/>reCAPTCHA Enterprise"]
-    functions["Cloud Functions<br/>(planned)"]
+    functions["Cloud Functions<br/>apps/functions: blockAccount"]
     secrets["Secret Manager<br/>(planned)"]
   end
 
@@ -174,6 +175,7 @@ flowchart LR
   browser --> functions
   functions --> secrets
   functions --> firestore
+  functions --> auth
   functions --> esv
   functions --> claude
 ```
@@ -186,7 +188,7 @@ flowchart LR
 | `packages/core` | `@bible-center/core`: types and pure logic shared across the repo, with no browser or Firebase dependencies. |
 | `scripts` | Emulator helpers and the deploy check. |
 | `tests` | Tests that belong to the repo as a whole: security rules and scripts. Workspace unit tests live in each workspace's `tests` folder. |
-| `functions` | Cloud Functions. Added with the first function. |
+| `apps/functions` | `@bible-center/functions`: the Cloud Functions, each with its own service account named in `.env.<project id>`. They share only types with `@bible-center/core`, since a deploy uploads this folder alone. Built to `lib` with `npm run build:functions`, which the emulator and deploy commands run first. |
 
 ## Tech Stack
 
@@ -700,6 +702,40 @@ sequenceDiagram
   end
 ```
 
+### Blocking
+
+Admins block an account that misuses Bible Center. A blocked account can still read, but the rules refuse everything it writes, at once, unlike disabling the account in the console, which waits for its sign-in token to expire.
+
+- **Records:** `blockedUsers/{uid}` holds the account's email, who blocked it and when, and whether its content was removed (`BlockedAccountRecord` in `packages/core/src/accounts.ts`). `isBlocked()` in `firestore.rules` checks it in `canWrite()`, which every write rule uses, and in `isReviewer()` and `isAdmin()`, so a blocked reviewer or admin cannot act either. Admins list and unblock; nobody writes the records directly.
+- **The function:** `blockAccount` in `apps/functions` is a callable function, so it can find an account by email with the Admin SDK, which the People page needs. It checks the caller as `isAdmin` does (`requireAdmin`), refuses to block the caller, and writes the record. With `removeContent`, `userContent.ts` also takes away the account's upvotes (each with its count, as the rules require of people), deletes its reports and the verses it added, and rejects the topics it started. Those queries need the collection-group single-field indexes on `votes.uid` and `verses.createdBy` in `firestore.indexes.json`.
+- **In the app:** the People page blocks by email and lists blocked accounts with Unblock (`BlockedAccounts`). On the Review page, admins see when the account behind each reported verse, report and new topic joined, read from `users/{uid}.createdAt`, which the rules let admins read, and can block it there (`AccountLine`). Both use `BlockDialog` and `useBlockedAccounts`.
+- **For the blocked account:** the auth store reads its own `blockedUsers` entry at sign-in (`isAccountBlocked`), and checks again whenever a save is refused for permission (`wasRefusedForBlock`, from the query client's mutation cache and from the report and add-verse dialogs). While `isBlocked`, each place that would save says why it cannot, with `BlockedNotice` and the support address in `SupportContact`, and turns its controls off: topic votes, adding and reporting; the reader's annotation tools and note editing; the memory list; Remove on My verses and Memorize; and, for staff, the Review and People pages through `RoleGate` and setting the verse of the day. Reading, practicing and the word study work as before.
+- **Service account:** `blockAccount` runs as `sa-bc-block-account-dev`, which can read and write Firestore and look up accounts, and nothing else; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#cloud-functions).
+
+```mermaid
+sequenceDiagram
+  actor Admin
+  participant Page as People or Review page
+  participant Fn as blockAccount
+  participant Auth as Authentication
+  participant Firestore
+
+  Admin->>Page: Block, by email or from an item
+  Page->>Fn: Call with App Check and ID tokens
+  Fn->>Firestore: requireAdmin: roles/email is admin, not blocked
+  alt By email
+    Fn->>Auth: getUserByEmail
+  end
+  Fn->>Firestore: Set blockedUsers/uid
+  opt Also remove its content
+    Fn->>Firestore: Remove its votes and counts, delete its reports and verses, reject its topics
+  end
+  Fn-->>Page: Blocked
+  Note over Firestore: From now on, canWrite() refuses every write from that account
+```
+
+`tests/rules/blockedUsers.spec.ts` and `tests/functions/blockAccount.spec.ts` cover this.
+
 ## Security
 
 This repository and the app are public, so assume hostile use. Vulnerabilities are reported privately through GitHub, as [SECURITY.md](SECURITY.md) describes.
@@ -795,7 +831,7 @@ Before finishing a change, check whether it touches a source below, and update t
 
 | Diagram | Sources | State |
 | --- | --- | --- |
-| [System Overview](#system-overview) | `firebase.json`, `apps/web/src/firebase/`, `functions/` | Partly built |
+| [System Overview](#system-overview) | `firebase.json`, `apps/web/src/firebase/`, `apps/functions/` | Partly built |
 | [Reading Flow](#reading-flow) | `apps/web/src/pages/ReaderPage.tsx`, `apps/web/src/bible/translations.ts`, `scripts/build-bible-data.ts` | Built, ESV planned |
 | [Search](#search) | `apps/web/src/pages/SearchPage.tsx`, `packages/core/src/references.ts`, `apps/web/src/bible/phraseSearch.ts`, `scripts/build-bible-data.ts` | Built |
 | [Annotations](#annotations), data model, selection and pages | `firestore.rules`, `packages/core/src/annotations.ts`, `apps/web/src/firebase/annotations.ts`, `apps/web/src/firebase/settings.ts`, `firestore.indexes.json`, `apps/web/src/components/annotationQueryKeys.ts`, `apps/web/src/components/myVerses/`, `apps/web/src/pages/MyVersesPage.tsx` | Built |
@@ -807,5 +843,6 @@ Before finishing a change, check whether it touches a source below, and update t
 | [Roles and Review](#roles-and-review), structure, statuses and resolving a report | `packages/core/src/roles.ts`, `packages/core/src/review.ts`, `apps/web/src/firebase/review.ts`, `apps/web/src/firebase/people.ts`, `apps/web/src/components/review/`, `apps/web/src/components/people/`, `apps/web/src/components/RoleGate.tsx`, `apps/web/src/components/useAccountLinks.ts`, `apps/web/src/pages/ReviewPage.tsx`, `apps/web/src/pages/PeoplePage.tsx`, `firestore.rules` | Built |
 | [OpenBible Data](#openbible-data) | `scripts/build-topic-data.ts`, `apps/web/src/topics/topicData.ts`, `apps/web/src/pages/TopicPage.tsx`, `apps/web/src/pages/TopicsPage.tsx`, `apps/web/src/pages/SearchPage.tsx` | Built |
 | [Authentication and Access](#authentication-and-access) | `firestore.rules`, `apps/web/src/stores/auth.ts`, `apps/web/src/firebase/access.ts`, `apps/web/src/pages/SignInPage.tsx` | Built |
+| [Blocking](#blocking) | `apps/functions/src/`, `firestore.rules`, `apps/web/src/firebase/blocking.ts`, `apps/web/src/components/blocking/`, `apps/web/src/components/review/AccountLine.tsx`, `apps/web/src/components/people/BlockedAccounts.tsx` | Built |
 | [Write Limits](#write-limits) | `packages/core/src/limits.ts`, `apps/web/src/firebase/userRecord.ts`, `apps/web/src/firebase/annotations.ts`, `apps/web/src/firebase/memoryVerses.ts`, `apps/web/src/firebase/topics.ts`, `firestore.rules` | Built |
 | [Environments and Delivery](#environments-and-delivery) | `package.json`, `apps/web/.env.*`, `firebase.json`, `scripts/`, `.github/workflows/ci.yml` | Built |

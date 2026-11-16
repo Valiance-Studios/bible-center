@@ -1,0 +1,18 @@
+.notice {
+  max-width: 620px;
+  margin: 4px 0 18px;
+  padding: 14px 18px;
+  border-radius: 6px;
+  background: var(--bc-panel);
+  font-size: 15px;
+  line-height: 1.55;
+
+  strong {
+    font-weight: 600;
+  }
+
+  a {
+    color: var(--bc-accent);
+    text-underline-offset: 3px;
+  }
+}

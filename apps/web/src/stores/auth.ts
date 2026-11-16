@@ -14,7 +14,8 @@ import {
 } from 'firebase/auth';
 import {create} from 'zustand';
 import {auth} from '@/firebase';
-import {getAccess} from '@/firebase/access';
+import {FirebaseError} from 'firebase/app';
+import {getAccess, isAccountBlocked} from '@/firebase/access';
 import {recordFirstSignIn} from '@/firebase/settings';
 
 /**
@@ -36,6 +37,8 @@ interface AuthState {
   role: Role;
   /** When an `allowed` user's account was first seen, which decides when they can vote; null if unknown. */
   accountCreatedAt: Date | null;
+  /** Whether an admin blocked this `allowed` account, so it can read but not save anything. */
+  isBlocked: boolean;
   /** Follows Firebase's auth state. Returns the function that stops following it. */
   init: () => () => void;
   signInWithGoogle: () => Promise<void>;
@@ -45,6 +48,8 @@ interface AuthState {
   resendVerificationEmail: () => Promise<void>;
   /** Re-reads the account and its access, as after confirming an email or joining the allowlist. Returns the new status. */
   recheckAccess: () => Promise<AuthStatus>;
+  /** Checks again whether the account is blocked, as after a save is refused. Returns whether it is. */
+  recheckBlocked: () => Promise<boolean>;
   signOut: () => Promise<void>;
 }
 
@@ -52,9 +57,21 @@ interface Access {
   status: AuthStatus;
   role: Role;
   accountCreatedAt: Date | null;
+  isBlocked: boolean;
 }
 
-const NO_ACCESS = {role: 'member', accountCreatedAt: null} as const;
+const NO_ACCESS = {role: 'member', accountCreatedAt: null, isBlocked: false} as const;
+
+/** A failed check counts as not blocked: the rules still refuse a blocked account's writes. */
+async function isBlockedOrUnknown(uid: string): Promise<boolean> {
+  try {
+    return await isAccountBlocked(uid);
+  } catch (error) {
+    console.error('Could not check whether the account is blocked', error);
+
+    return false;
+  }
+}
 
 /** A failure here only leaves the account's age unknown, so it must not cost the person their access. */
 async function accountCreatedAtOf(uid: string): Promise<Date | null> {
@@ -82,9 +99,14 @@ async function accessFor(user: User): Promise<Access> {
     return {status: 'accessCheckFailed', ...NO_ACCESS};
   }
 
-  return role
-    ? {status: 'allowed', role, accountCreatedAt: await accountCreatedAtOf(user.uid)}
-    : {status: 'noAccess', ...NO_ACCESS};
+  if (!role) {
+    return {status: 'noAccess', ...NO_ACCESS};
+  }
+
+  const isBlocked = await isBlockedOrUnknown(user.uid);
+
+  // A blocked account cannot save its first sign-in, and cannot vote either way.
+  return {status: 'allowed', role, isBlocked, accountCreatedAt: isBlocked ? null : await accountCreatedAtOf(user.uid)};
 }
 
 export const useAuthStore = create<AuthState>((set) => {
@@ -100,10 +122,10 @@ export const useAuthStore = create<AuthState>((set) => {
       return 'signedOut';
     }
 
-    const {status, role, accountCreatedAt} = await accessFor(user);
+    const {status, role, accountCreatedAt, isBlocked} = await accessFor(user);
 
     if (update === latestUpdate) {
-      set({status, role, accountCreatedAt, user: {uid: user.uid, email: user.email, displayName: user.displayName}});
+      set({status, role, accountCreatedAt, isBlocked, user: {uid: user.uid, email: user.email, displayName: user.displayName}});
     }
 
     return status;
@@ -157,6 +179,23 @@ export const useAuthStore = create<AuthState>((set) => {
       return applyUser(user);
     },
 
+    recheckBlocked: async () => {
+      const uid = auth.currentUser?.uid;
+      const isBlocked = uid ? await isBlockedOrUnknown(uid) : false;
+
+      set({isBlocked});
+
+      return isBlocked;
+    },
+
     signOut: () => signOutFirebase(auth),
   };
 });
+
+/**
+ * Whether a refused save was refused because an admin blocked the account during this visit. Checks again only
+ * when the rules refused it, and updates the store so the pages show the blocked notice.
+ */
+export async function wasRefusedForBlock(error: unknown): Promise<boolean> {
+  return error instanceof FirebaseError && error.code === 'permission-denied' && useAuthStore.getState().recheckBlocked();
+}

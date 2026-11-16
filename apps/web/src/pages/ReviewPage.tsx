@@ -2,14 +2,16 @@ import type {FilterOption} from '@/components/FilterButtons';
 import type {ReviewQueue} from '@/components/review/useReviewQueue';
 
 import {useSearchParams} from 'react-router';
-import {canReview} from '@bible-center/core';
+import {canReview, isAdmin} from '@bible-center/core';
 import {Alert, Button, Loader} from '@mantine/core';
 import {findTranslation} from '@/bible/translations';
+import {useBlockedAccounts} from '@/components/blocking/useBlockedAccounts';
 import {FilterButtons} from '@/components/FilterButtons';
 import {PendingTopicItem} from '@/components/review/PendingTopicItem';
 import {ReportGroupItem} from '@/components/review/ReportGroupItem';
 import {useReviewQueue} from '@/components/review/useReviewQueue';
 import {RoleGate} from '@/components/RoleGate';
+import {useAuthStore} from '@/stores/auth';
 import {useTranslationStore} from '@/stores/translation';
 import classes from './AdminPage.module.scss';
 
@@ -28,6 +30,10 @@ function Queue() {
   const translation = findTranslation(useTranslationStore((state) => state.translationId));
   const review = useReviewQueue(true);
   const {queue} = review;
+  // Admins also see the accounts behind each item, and can block them.
+  const isAdminUser = useAuthStore((state) => isAdmin(state.role));
+  const blockedAccounts = useBlockedAccounts(isAdminUser);
+  const accounts = isAdminUser ? blockedAccounts : undefined;
 
   if (review.hasLoadError) {
     return (
@@ -71,6 +77,7 @@ function Queue() {
               translation={translation}
               isSaving={review.savingId === item.id}
               hasError={review.failedId === item.id}
+              accounts={accounts}
               onResolve={(outcome) => review.resolve(item, outcome)}
             />
           ))}
@@ -93,6 +100,7 @@ function Queue() {
               translation={translation}
               isSaving={review.savingId === item.topic.slug}
               hasError={review.failedId === item.topic.slug}
+              accounts={accounts}
               onDecide={(decision) => review.decide(item, decision)}
             />
           ))}

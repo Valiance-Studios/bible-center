@@ -2,14 +2,14 @@ import type {User} from 'firebase/auth';
 
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {onAuthStateChanged} from 'firebase/auth';
-import {getAccess} from '@/firebase/access';
+import {getAccess, isAccountBlocked} from '@/firebase/access';
 import {recordFirstSignIn} from '@/firebase/settings';
 import {useAuthStore} from '@/stores/auth';
 
 const firebaseState = vi.hoisted(() => ({auth: {currentUser: null as unknown}}));
 
 vi.mock('@/firebase', () => ({auth: firebaseState.auth, db: {}}));
-vi.mock('@/firebase/access', () => ({getAccess: vi.fn()}));
+vi.mock('@/firebase/access', () => ({getAccess: vi.fn(), isAccountBlocked: vi.fn()}));
 vi.mock('@/firebase/settings', () => ({recordFirstSignIn: vi.fn()}));
 vi.mock('firebase/auth', () => ({
   GoogleAuthProvider: vi.fn(),
@@ -51,6 +51,37 @@ describe('auth store', () => {
     firebaseState.auth.currentUser = null;
     useAuthStore.setState({status: 'loading', user: null});
     vi.mocked(recordFirstSignIn).mockResolvedValue(new Date('2026-11-01T00:00:00Z'));
+    vi.mocked(isAccountBlocked).mockResolvedValue(false);
+  });
+
+  it('knows when an admin blocked the account, and records no first sign-in for it', async () => {
+    vi.mocked(getAccess).mockResolvedValue('member');
+    vi.mocked(isAccountBlocked).mockResolvedValue(true);
+
+    await reportUser(makeUser());
+
+    expect(useAuthStore.getState()).toMatchObject({status: 'allowed', isBlocked: true, accountCreatedAt: null});
+    expect(recordFirstSignIn).not.toHaveBeenCalled();
+  });
+
+  it('treats a failed block check as not blocked, since the rules still refuse a blocked account', async () => {
+    vi.mocked(getAccess).mockResolvedValue('member');
+    vi.mocked(isAccountBlocked).mockRejectedValue(new Error('offline'));
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await reportUser(makeUser());
+
+    expect(useAuthStore.getState()).toMatchObject({status: 'allowed', isBlocked: false});
+  });
+
+  it('checks again when asked, as after a refused save', async () => {
+    vi.mocked(getAccess).mockResolvedValue('member');
+    await reportUser(makeUser());
+    firebaseState.auth.currentUser = makeUser();
+    vi.mocked(isAccountBlocked).mockResolvedValue(true);
+
+    await expect(useAuthStore.getState().recheckBlocked()).resolves.toBe(true);
+    expect(useAuthStore.getState().isBlocked).toBe(true);
   });
 
   it('is signed out when Firebase reports no user', async () => {

@@ -8,6 +8,8 @@ export interface OpenReport {
   verseKey: string;
   reason: ReportReason;
   details?: string;
+  /** The account that sent it, which admins can block. */
+  reportedBy: string;
   createdAt: Date;
 }
 

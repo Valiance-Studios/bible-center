@@ -17,8 +17,8 @@ interface AnnotationItemProps {
   reference: VerseReference;
   translation: TranslationProvider;
   isRemoving: boolean;
-  /** Resolves once removed. Called after the person confirms. */
-  onRemove: () => Promise<unknown>;
+  /** Resolves once removed. Called after the person confirms. Left out when it cannot be removed, as for a blocked account. */
+  onRemove?: () => Promise<unknown>;
 }
 
 /** One highlight, bookmark or note on My verses, with its verses in the selected translation. */
@@ -52,16 +52,18 @@ export function AnnotationItem({annotation, reference, translation, isRemoving, 
 
       {annotation.text && <p className={classes.note}>{annotation.text}</p>}
 
-      <button
-        type="button"
-        className={classes.remove}
-        aria-label={`Remove ${label} on ${title}`}
-        onClick={() => setIsConfirming(true)}
-      >
-        {`Remove ${label}`}
-      </button>
+      {onRemove && (
+        <button
+          type="button"
+          className={classes.remove}
+          aria-label={`Remove ${label} on ${title}`}
+          onClick={() => setIsConfirming(true)}
+        >
+          {`Remove ${label}`}
+        </button>
+      )}
 
-      {isConfirming && (
+      {isConfirming && onRemove && (
         <RemoveDialog label={label} title={title} isRemoving={isRemoving} onConfirm={onRemove} onClose={() => setIsConfirming(false)} />
       )}
     </article>

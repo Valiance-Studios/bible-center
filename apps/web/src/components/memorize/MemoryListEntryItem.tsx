@@ -23,7 +23,8 @@ interface MemoryListEntryItemProps {
   translation: TranslationProvider;
   now: Date;
   isSaving: boolean;
-  onRemove: () => void;
+  /** Left out when the list cannot change, as for a blocked account. */
+  onRemove?: () => void;
 }
 
 /** One verse on the memory list, with its first words, when it was practiced, and ways to practice or remove it. */
@@ -45,9 +46,11 @@ export function MemoryListEntryItem({entry, translation, now, isSaving, onRemove
         <p className={classes.entryWhen}>{entry.status === 'memorized' ? `Memorized, ${practiced}` : `Learning, ${practiced}`}</p>
       </div>
       <Button component={Link} to={memorizePath(reference)} variant="outline" radius="xl" aria-label={`Practice ${name}`}>Practice</Button>
-      <button type="button" className={classes.remove} disabled={isSaving} aria-label={`Remove ${name} from my memory list`} onClick={onRemove}>
-        Remove
-      </button>
+      {onRemove && (
+        <button type="button" className={classes.remove} disabled={isSaving} aria-label={`Remove ${name} from my memory list`} onClick={onRemove}>
+          Remove
+        </button>
+      )}
     </div>
   );
 }
