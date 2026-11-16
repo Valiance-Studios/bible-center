@@ -65,7 +65,7 @@ To do when reached:
 - Add a Content Security Policy once the app's external origins are settled.
 - Check the first phrase search on a real phone, and move indexing to a Web Worker if it is slow.
 - The 10-character password minimum is only enforced in the app. Firebase's password policy could enforce it server-side.
-- Topics created by users start pending: they work by link but are not listed or linked from search until a reviewer approves them on the Review page. Anything else users can make public needs the same before the allowlist is removed.
+- Topics created by users start pending: they work by link but are not listed or linked from search until a reviewer approves them on the Review page. Topic names are the only public free text; see [What Is Public](#what-is-public).
 - A review decision cannot be undone in the app. A removed verse or a rejected topic can be restored by deleting its `removed` document or setting the topic back to `pending` in the console.
 - Roles live on the allowlist. When the allowlist is removed, they need a home of their own, such as `roles/{email}`.
 - Common topics are a fixed list for now. Later they could follow what people search for, which changes through the year (such as "resurrection" around Easter).
@@ -694,6 +694,20 @@ This repository and the app are public, so assume hostile use. Vulnerabilities a
 - **Secrets** live in Secret Manager. `VITE_` variables end up in the public bundle, so they never hold secrets.
 - **Paid or limited services** are reached only through Cloud Functions with App Check, sign-in where appropriate, per-user limits, and a budget cap.
 - **Hosting** sends `nosniff`, `X-Frame-Options` and `Referrer-Policy` headers. A Content Security Policy is still to be added, once the app's external origins are settled.
+
+### What Is Public
+
+Anything one account writes that others can read is checked here, since open sign-up lets anyone write it. Everything else, including annotations, notes, memory lists, settings and who voted for what, is readable only by its owner.
+
+| Collection | Others can read | Free text | Reviewed before others see it |
+| --- | --- | --- | --- |
+| `topics/{slug}` | The name, status, and the starter's account id | The name: up to 80 lowercase characters, which must reduce to the topic's slug, so its letters and digits are the ones in its link | Yes. A pending topic is not listed or linked from search until a reviewer approves it |
+| `topics/{slug}/verses/{key}` | The reference, its upvote count, and the adder's account id | None | No. A reviewer removes a verse that does not belong when it is reported |
+| `topics/{slug}/removed/{key}` | Which verses reviewers removed | None | Written only by reviewers |
+| `dailyVerses/{date}` | The reference | None | Written only by admins |
+| `reports/{id}` | Reviewers only | Details, up to 500 characters | Not public |
+
+A pending topic is still reachable by its link, which is deliberate, since its starter shares it to gather votes. That is no more exposure than the URL itself: `/topics/<any words>` shows "What does the Bible say about <those words>" even when no topic exists, so hiding pending names would not stop someone from sharing an offensive link. What matters is that no free text an account writes is listed, searchable or linked from the app until a reviewer approves it. Verses added to a topic show at once, but they are only references to text Bible Center already has, and each one keeps the account id of whoever added it.
 
 ## Environments and Delivery
 
