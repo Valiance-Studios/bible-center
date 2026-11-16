@@ -159,6 +159,9 @@ $phone-width: 900px;
 }
 
 .footerLink {
+  // Centers the text of the About button and the Privacy link alike; a link does not center its own.
+  display: inline-flex;
+  align-items: center;
   min-height: 44px;
   padding: 0;
   border: 0;

@@ -2,6 +2,22 @@ import {expect, test} from '@playwright/test';
 import {uidOf} from '../../../scripts/emulator-admin.ts';
 import {signInAsNewAllowedUser} from './support/auth';
 
+test('the footer\'s About and Privacy links sit on the same line', async ({page}) => {
+  await page.goto('/');
+
+  const footer = page.getByRole('contentinfo');
+  // Where each one's text is drawn, not its box: a button centers its text in its height, a link does not unless told.
+  const textTop = (name: string, role: 'button' | 'link') => footer.getByRole(role, {name}).evaluate((element) => {
+    const range = document.createRange();
+
+    range.selectNodeContents(element);
+
+    return range.getBoundingClientRect().top;
+  });
+
+  expect(Math.abs(await textTop('About Bible Center', 'button') - await textTop('Privacy', 'link'))).toBeLessThan(1);
+});
+
 test('the privacy policy is linked from the footer and the register screen', async ({page}) => {
   await page.goto('/');
   await page.getByRole('contentinfo').getByRole('link', {name: 'Privacy'}).click();
