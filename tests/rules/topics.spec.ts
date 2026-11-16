@@ -20,7 +20,9 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore';
-import {ALICE, BOB, dbFor, MALLORY, RITA, useRulesTestEnvironment} from './support';
+import {ALICE, BOB, dbFor, MALLORY, NEWT, RITA, useRulesTestEnvironment} from './support';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 const TOPIC = 'grief';
 /** Already has Bob's upvote. */
@@ -75,6 +77,12 @@ async function upvotesOf(key: string): Promise<unknown> {
 }
 
 useRulesTestEnvironment(async (db) => {
+  // Alice and Bob are established; Newt's account is a day old.
+  for (const uid of [ALICE, BOB]) {
+    await setDoc(doc(db, 'users', uid), {createdAt: new Date(Date.now() - 30 * DAY_MS)});
+  }
+
+  await setDoc(doc(db, 'users', NEWT), {createdAt: new Date(Date.now() - DAY_MS)});
   await setDoc(verseRef(db, VOTED), {startVerse: VOTED, endVerse: VOTED, upvotes: 1, createdBy: BOB, createdAt: new Date()});
   await setDoc(voteRef(db, VOTED, BOB), {uid: BOB, topic: TOPIC, createdAt: new Date()});
 });
@@ -97,6 +105,15 @@ describe('topic votes', () => {
 
   it('accepts a passage keyed by both of its verse ids', async () => {
     await assertSucceeds(upvote(dbFor(ALICE), ALICE, '40011028', '40011030'));
+  });
+
+  it('only counts votes from accounts at least a week old, which includes adding a verse', async () => {
+    await assertFails(upvote(dbFor(NEWT), NEWT, VOTED));
+    await assertFails(upvote(dbFor(NEWT), NEWT, UNVOTED));
+  });
+
+  it('turns away an account with no record of when it was first seen', async () => {
+    await assertFails(upvote(dbFor(RITA), RITA, VOTED));
   });
 
   it('allows one vote per user', async () => {

@@ -2,7 +2,7 @@ import type {Page} from '@playwright/test';
 import type {EmulatorRole} from '../../../../scripts/emulator-admin.ts';
 
 import {expect} from '@playwright/test';
-import {allowEmail} from '../../../../scripts/emulator-admin.ts';
+import {allowEmail, createGoogleAccount, setAccountAge, uidOf} from '../../../../scripts/emulator-admin.ts';
 
 export interface TestUser {
   email: string;
@@ -58,14 +58,20 @@ export async function signInWithGoogle(page: Page, user: TestUser): Promise<void
   }).toPass({timeout: 30_000});
 }
 
+/** Old enough to vote; see `VOTER_MIN_ACCOUNT_DAYS`. */
+const ESTABLISHED_ACCOUNT_DAYS = 30;
+
 /**
  * Signs in a new allowlisted user, who has no annotations, with a role, and waits until the app knows they are
- * signed in.
+ * signed in. The account is made beforehand and recorded as a month old, so it can vote, unless `accountAgeDays`
+ * says otherwise.
  */
-export async function signInAsNewAllowedUser(page: Page, role: EmulatorRole = 'member'): Promise<TestUser> {
+export async function signInAsNewAllowedUser(page: Page, role: EmulatorRole = 'member', accountAgeDays = ESTABLISHED_ACCOUNT_DAYS): Promise<TestUser> {
   const user = createTestUser();
 
   await allowEmail(user.email, role);
+  await createGoogleAccount(user);
+  await setAccountAge(await uidOf(user.email), accountAgeDays);
   await signInWithGoogle(page, user);
   await expect(page.getByRole('button', {name: 'Account menu'})).toBeVisible();
 

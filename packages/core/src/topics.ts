@@ -30,6 +30,19 @@ export type ReportReason = keyof typeof REPORT_REASONS;
 /** Keep in sync with `reports` in `firestore.rules`. */
 export const REPORT_DETAILS_MAX_LENGTH = 500;
 
+/**
+ * How old an account must be before its votes count, so new accounts cannot be made in bulk to move a verse.
+ * Adding a verse counts as a vote. Keep in sync with `isEstablished` in `firestore.rules`.
+ */
+export const VOTER_MIN_ACCOUNT_DAYS = 7;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** When an account first seen at `createdAt` can start voting. */
+export function votingOpensAt(createdAt: Date): Date {
+  return new Date(createdAt.getTime() + VOTER_MIN_ACCOUNT_DAYS * DAY_MS);
+}
+
 /** A verse or passage on a topic, with the votes that rank it. */
 export interface TopicVerse {
   startVerse: VerseId;

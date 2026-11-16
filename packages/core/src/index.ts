@@ -20,5 +20,5 @@ export {groupReports, parseTopicVerseKey} from './review';
 export {canReview, isAdmin, isEmailAddress, normalizeEmail, parseRole, ROLE_NAMES, ROLES} from './roles';
 export {formatVerseId, parseVerseId} from './verseId';
 export {MAX_SEED_SCORE, seedScore, topicVerseScore} from './topicScore';
-export {normalizeTopicName, rankTopicVerses, REPORT_DETAILS_MAX_LENGTH, REPORT_REASONS, topicSlug, topicVerseKey} from './topics';
+export {normalizeTopicName, rankTopicVerses, REPORT_DETAILS_MAX_LENGTH, REPORT_REASONS, topicSlug, topicVerseKey, VOTER_MIN_ACCOUNT_DAYS, votingOpensAt} from './topics';
 export {languageOfWords, lexiconGroup, wordsOfVerse} from './words';
