@@ -3,11 +3,11 @@ import type {EmulatorRole} from '../../../scripts/emulator-admin.ts';
 
 import {expect, test} from '@playwright/test';
 import {blockAccount, uidOf} from '../../../scripts/emulator-admin.ts';
-import {signInAsNewAllowedUser} from './support/auth';
+import {signInAsNewUser} from './support/auth';
 
 /** Signs in a new account with a role, then blocks it and reloads, so the app learns at sign-in that it is blocked. */
 async function signInBlocked(page: Page, role: EmulatorRole = 'member'): Promise<void> {
-  const user = await signInAsNewAllowedUser(page, role);
+  const user = await signInAsNewUser(page, role);
 
   await blockAccount(await uidOf(user.email), user.email);
 }
@@ -51,7 +51,7 @@ test('a blocked admin cannot use the People or Review pages', async ({page}) => 
 });
 
 test('an account blocked during a visit is told why its report was refused', async ({page}) => {
-  const user = await signInAsNewAllowedUser(page);
+  const user = await signInAsNewUser(page);
 
   await page.goto('/topics/kindness');
   await page.getByRole('button', {name: /^Report /}).first().click();

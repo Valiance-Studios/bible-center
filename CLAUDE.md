@@ -27,7 +27,7 @@ These were settled with the owner. Their reasoning is in `ARCHITECTURE.md`.
 - Annotations are highlights, bookmarks and plain-text notes on a verse or a range within a chapter, in one highlight color.
 - Search covers the selected translation only.
 - A signed-in My verses page will list all of a user's annotations, as its approved mockups show.
-- Roles (member, reviewer, admin) are a `role` field on `allowedUsers/{email}`, and admins manage them on the People page.
+- Anyone with a verified email can sign up. Roles (reviewer, admin) are entries in `roles/{email}`, members have none, and admins manage them on the People page.
 - The Firebase project is `vs-bible-center-dev`. Boards come after V1.
 
 ### Coding Principles

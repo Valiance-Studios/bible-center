@@ -4,7 +4,7 @@ import type {ChapterText, DailyVerseList} from '@bible-center/core';
 import {readFileSync} from 'node:fs';
 import {expect, test} from '@playwright/test';
 import {automaticDailyVerse, formatReference, referenceOf} from '@bible-center/core';
-import {signInAsNewAllowedUser} from './support/auth';
+import {signInAsNewUser} from './support/auth';
 
 const publicDir = new URL('../public/', import.meta.url);
 const automaticList = JSON.parse(readFileSync(new URL('daily-verses.json', publicDir), 'utf8')) as DailyVerseList;
@@ -59,7 +59,7 @@ test('the verse follows the visitor\'s translation', async ({browser}) => {
 test('an admin chooses a verse for a date, and leaves it to the automatic list again', async ({page, browser}) => {
   const date = '2027-03-02';
 
-  await signInAsNewAllowedUser(page, 'admin');
+  await signInAsNewUser(page, 'admin');
   await page.goto('/');
   await page.getByRole('button', {name: 'Set verse of the day'}).click();
 
@@ -99,7 +99,7 @@ test('an admin chooses a verse for a date, and leaves it to the automatic list a
 });
 
 test('only admins can set the verse', async ({page}) => {
-  await signInAsNewAllowedUser(page, 'reviewer');
+  await signInAsNewUser(page, 'reviewer');
   await page.goto('/');
 
   await expect(page.locator('blockquote')).toBeVisible();

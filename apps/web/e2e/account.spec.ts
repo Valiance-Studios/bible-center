@@ -1,6 +1,6 @@
 import {expect, test} from '@playwright/test';
 import {uidOf} from '../../../scripts/emulator-admin.ts';
-import {signInAsNewAllowedUser} from './support/auth';
+import {signInAsNewUser} from './support/auth';
 
 test('the footer\'s About and Privacy links sit on the same line', async ({page}) => {
   await page.goto('/');
@@ -35,7 +35,7 @@ test('the privacy policy is linked from the footer and the register screen', asy
 });
 
 test('someone deletes their account from the account menu, after typing delete', async ({page}) => {
-  const user = await signInAsNewAllowedUser(page);
+  const user = await signInAsNewUser(page);
 
   // Something of theirs to delete.
   await page.goto('/read/john/3');
@@ -63,7 +63,7 @@ test('someone deletes their account from the account menu, after typing delete',
 
 test('the phone menu offers the privacy policy and deleting the account', async ({page}) => {
   await page.setViewportSize({width: 390, height: 844});
-  await signInAsNewAllowedUser(page);
+  await signInAsNewUser(page);
   await page.getByRole('button', {name: 'Open menu'}).click();
 
   const menu = page.getByRole('dialog', {name: 'Bible Center'});

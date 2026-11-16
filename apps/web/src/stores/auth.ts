@@ -22,7 +22,7 @@ import {recordFirstSignIn} from '@/firebase/settings';
  * Where the current visitor stands. Reading is open in every state; `allowed` is what will unlock
  * annotations and voting. The check is repeated here for the interface only, as the security rules enforce it.
  */
-export type AuthStatus = 'loading' | 'signedOut' | 'unverified' | 'noAccess' | 'accessCheckFailed' | 'allowed';
+export type AuthStatus = 'loading' | 'signedOut' | 'unverified' | 'accessCheckFailed' | 'allowed';
 
 export interface SessionUser {
   uid: string;
@@ -46,7 +46,7 @@ interface AuthState {
   register: (name: string, email: string, password: string) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
-  /** Re-reads the account and its access, as after confirming an email or joining the allowlist. Returns the new status. */
+  /** Re-reads the account and its access, as after confirming an email. Returns the new status. */
   recheckAccess: () => Promise<AuthStatus>;
   /** Checks again whether the account is blocked, as after a save is refused. Returns whether it is. */
   recheckBlocked: () => Promise<boolean>;
@@ -99,8 +99,9 @@ async function accessFor(user: User): Promise<Access> {
     return {status: 'accessCheckFailed', ...NO_ACCESS};
   }
 
+  // getAccess only answers null for an unverified email, which was checked above.
   if (!role) {
-    return {status: 'noAccess', ...NO_ACCESS};
+    return {status: 'unverified', ...NO_ACCESS};
   }
 
   const isBlocked = await isBlockedOrUnknown(user.uid);

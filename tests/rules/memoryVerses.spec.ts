@@ -32,11 +32,11 @@ describe('the memory list', () => {
     await assertSucceeds(deleteCounted(verseRef(ALICE), COUNT, 'memoryVerseChange'));
   });
 
-  it('keeps each list to its owner, on the allowlist, with a verified email', async () => {
+  it('keeps each list to its owner, with a verified email', async () => {
     await assertFails(getDoc(verseRef(ALICE, BOB, '43003016')));
     await assertFails(createCounted(verseRef(ALICE, BOB), entry(), COUNT));
     await assertFails(deleteDoc(verseRef(ALICE, BOB, '43003016')));
-    await assertFails(createCounted(verseRef(MALLORY), entry(), COUNT));
+    await assertSucceeds(createCounted(verseRef(MALLORY), entry(), COUNT));
     await assertFails(createCounted(verseRef(ALICE, ALICE, KEY, false), entry(), COUNT));
   });
 

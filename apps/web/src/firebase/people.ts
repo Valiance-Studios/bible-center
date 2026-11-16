@@ -1,80 +1,55 @@
-import type {Role} from '@bible-center/core';
+import type {StaffRole} from '@bible-center/core';
 
-import {parseRole} from '@bible-center/core';
-import {collection, doc, runTransaction, serverTimestamp, writeBatch} from 'firebase/firestore';
-import {ALLOWED_USERS_COLLECTION, ROLES_COLLECTION} from './access';
+import {parseStaffRole} from '@bible-center/core';
+import {collection, deleteDoc, doc, runTransaction, serverTimestamp, setDoc} from 'firebase/firestore';
+import {ROLES_COLLECTION} from './access';
 import {db} from './index';
 import {fetchFromServer} from './serverQuery';
 
-/** Someone on the allowlist, with their role. */
-export interface Person {
+/** A reviewer or admin. Everyone else is a member, with no entry. */
+export interface StaffMember {
   email: string;
-  role: Role;
+  role: StaffRole;
 }
 
-/** Adding someone who is already on the allowlist. */
-export class AlreadyAllowedError extends Error {
+/** Giving a role to someone who already has one, which is changed in the list instead. */
+export class AlreadyHasRoleError extends Error {
   constructor(email: string) {
-    super(`${email} can already sign in.`);
+    super(`${email} already has a role. Change it in the list.`);
   }
-}
-
-function allowedRef(email: string) {
-  return doc(db, ALLOWED_USERS_COLLECTION, email);
 }
 
 function roleRef(email: string) {
   return doc(db, ROLES_COLLECTION, email);
 }
 
-function changeBy(uid: string) {
-  return {updatedBy: uid, updatedAt: serverTimestamp()};
+function entryFor(uid: string, role: StaffRole) {
+  return {role, updatedBy: uid, updatedAt: serverTimestamp()};
 }
 
-/** Everyone on the allowlist, with their roles, in no particular order. Only admins may read them. */
-export async function listPeople(): Promise<Person[]> {
-  const [allowed, roles] = await Promise.all([
-    fetchFromServer(collection(db, ALLOWED_USERS_COLLECTION)),
-    fetchFromServer(collection(db, ROLES_COLLECTION)),
-  ]);
-  const roleByEmail = new Map(roles.map((entry) => [entry.id, parseRole(entry.get('role'))]));
+/** Every reviewer and admin, in no particular order. Only admins may read them. */
+export async function listStaff(): Promise<StaffMember[]> {
+  const entries = await fetchFromServer(collection(db, ROLES_COLLECTION));
 
-  return allowed.map(({id: email}) => ({email, role: roleByEmail.get(email) ?? 'member'}));
+  return entries.map((entry) => ({email: entry.id, role: parseStaffRole(entry.get('role'))}));
 }
 
-/** Puts a normalized email on the allowlist with a role, unless it is already there. */
-export async function addPerson(uid: string, {email, role}: Person): Promise<void> {
+/** Gives a normalized email a role, unless it has one. It applies once they sign in with that email, verified. */
+export async function giveRole(uid: string, {email, role}: StaffMember): Promise<void> {
   await runTransaction(db, async (transaction) => {
-    if ((await transaction.get(allowedRef(email))).exists()) {
-      throw new AlreadyAllowedError(email);
+    if ((await transaction.get(roleRef(email))).exists()) {
+      throw new AlreadyHasRoleError(email);
     }
 
-    transaction.set(allowedRef(email), changeBy(uid));
-
-    if (role !== 'member') {
-      transaction.set(roleRef(email), {role, ...changeBy(uid)});
-    }
+    transaction.set(roleRef(email), entryFor(uid, role));
   });
 }
 
-/** Members have no entry in `roles`, so making someone a member removes theirs. */
-export async function setRole(uid: string, {email, role}: Person): Promise<void> {
-  const batch = writeBatch(db);
-
-  if (role === 'member') {
-    batch.delete(roleRef(email));
-  } else {
-    batch.set(roleRef(email), {role, ...changeBy(uid)});
-  }
-
-  await batch.commit();
+export async function changeRole(uid: string, {email, role}: StaffMember): Promise<void> {
+  await setDoc(roleRef(email), entryFor(uid, role));
 }
 
-/** Takes someone off the allowlist, with their role. Their own data stays, keyed by their account. */
-export async function removePerson(email: string): Promise<void> {
-  const batch = writeBatch(db);
-
-  batch.delete(allowedRef(email));
-  batch.delete(roleRef(email));
-  await batch.commit();
+/** Makes someone a member again, which is having no entry. */
+export async function removeRole(email: string): Promise<void> {
+  await deleteDoc(roleRef(email));
 }

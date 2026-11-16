@@ -2,7 +2,7 @@ import type {Page} from '@playwright/test';
 import type {EmulatorRole} from '../../../../scripts/emulator-admin.ts';
 
 import {expect} from '@playwright/test';
-import {allowEmail, createGoogleAccount, setAccountAge, uidOf} from '../../../../scripts/emulator-admin.ts';
+import {createGoogleAccount, setAccountAge, setRole, uidOf} from '../../../../scripts/emulator-admin.ts';
 
 export interface TestUser {
   email: string;
@@ -70,14 +70,14 @@ export async function signInWithGoogle(page: Page, user: TestUser): Promise<void
 const ESTABLISHED_ACCOUNT_DAYS = 30;
 
 /**
- * Signs in a new allowlisted user, who has no annotations, with a role, and waits until the app knows they are
+ * Signs in a new user, who has no annotations, with a role, and waits until the app knows they are
  * signed in. The account is made beforehand and recorded as a month old, so it can vote, unless `accountAgeDays`
  * says otherwise.
  */
-export async function signInAsNewAllowedUser(page: Page, role: EmulatorRole = 'member', accountAgeDays = ESTABLISHED_ACCOUNT_DAYS): Promise<TestUser> {
+export async function signInAsNewUser(page: Page, role: EmulatorRole = 'member', accountAgeDays = ESTABLISHED_ACCOUNT_DAYS): Promise<TestUser> {
   const user = createTestUser();
 
-  await allowEmail(user.email, role);
+  await setRole(user.email, role);
   await createGoogleAccount(user);
   await setAccountAge(await uidOf(user.email), accountAgeDays);
   await signInWithGoogle(page, user);

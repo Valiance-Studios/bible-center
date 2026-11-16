@@ -34,7 +34,7 @@ useRulesTestEnvironment(async (db) => {
 });
 
 describe('annotations', () => {
-  it('lets an allowlisted user manage their own', async () => {
+  it('lets a member manage their own', async () => {
     const db = dbFor(ALICE);
 
     await assertSucceeds(addAnnotation(db, ALICE, annotation()));
@@ -62,10 +62,14 @@ describe('annotations', () => {
     await assertFails(deleteDoc(doc(annotationsOf(db, ALICE), 'existing')));
   });
 
-  it('requires the allowlist, a verified email and a sign-in', async () => {
-    await assertFails(addAnnotation(dbFor(MALLORY), MALLORY, annotation()));
-    await assertFails(getDocs(annotationsOf(dbFor(MALLORY), MALLORY)));
+  it('lets anyone with a verified email annotate, on their first visit', async () => {
+    await assertSucceeds(addAnnotation(dbFor(MALLORY), MALLORY, annotation()));
+    await assertSucceeds(getDocs(annotationsOf(dbFor(MALLORY), MALLORY)));
+  });
+
+  it('requires a verified email and a sign-in', async () => {
     await assertFails(addAnnotation(dbFor(ALICE, false), ALICE, annotation()));
+    await assertFails(getDocs(annotationsOf(dbFor(ALICE, false), ALICE)));
     await assertFails(getDocs(annotationsOf(dbFor(null), ALICE)));
   });
 
@@ -178,6 +182,7 @@ describe('user settings', () => {
   it('keeps them private', async () => {
     await assertFails(getDoc(doc(dbFor(BOB), 'users', ALICE)));
     await assertFails(setDoc(doc(dbFor(BOB), 'users', ALICE), {translationId: 'kjv'}));
-    await assertFails(setDoc(doc(dbFor(MALLORY), 'users', MALLORY), {translationId: 'kjv'}));
+    await assertFails(setDoc(doc(dbFor(ALICE, false), 'users', ALICE), {translationId: 'kjv'}));
+    await assertSucceeds(setDoc(doc(dbFor(MALLORY), 'users', MALLORY), {translationId: 'kjv'}));
   });
 });

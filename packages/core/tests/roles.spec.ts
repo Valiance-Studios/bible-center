@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {canReview, isAdmin, isEmailAddress, normalizeEmail, parseRole} from '../src/roles';
+import {canReview, isAdmin, isEmailAddress, normalizeEmail, parseRole, parseStaffRole} from '../src/roles';
 
 describe('parseRole', () => {
   it('reads each role, and treats anything else as a member', () => {
@@ -7,6 +7,14 @@ describe('parseRole', () => {
     expect(parseRole('reviewer')).toBe('reviewer');
     expect(parseRole(undefined)).toBe('member');
     expect(parseRole('owner')).toBe('member');
+  });
+});
+
+describe('parseStaffRole', () => {
+  it('reads a staff role, and treats anything else as the lesser one', () => {
+    expect(parseStaffRole('admin')).toBe('admin');
+    expect(parseStaffRole('reviewer')).toBe('reviewer');
+    expect(parseStaffRole('member')).toBe('reviewer');
   });
 });
 
@@ -18,7 +26,7 @@ describe('what each role can do', () => {
 });
 
 describe('emails', () => {
-  it('normalizes to the allowlist\'s keys', () => {
+  it('normalizes to the keys of roles', () => {
     expect(normalizeEmail('  Grace.Ellis@Example.com ')).toBe('grace.ellis@example.com');
   });
 

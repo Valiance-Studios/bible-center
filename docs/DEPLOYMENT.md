@@ -28,25 +28,50 @@ To check a referrer, request `https://identitytoolkit.googleapis.com/v1/projects
 
 Referrer restrictions are a light barrier, since non-browser clients can fake the header. Security rules and App Check are the real protection. `localhost` must stay off the reCAPTCHA key, which is separate; local runs use a [debug token](#debug-token) for App Check.
 
-## Allowlist and Roles
+## Roles
 
-Admins add people, set their roles and remove them on the People page (`/people`). The first admin has to be made in the Firestore console: create `allowedUsers/<lowercase email>` with no fields, and `roles/<lowercase email>` with a string field `role` set to `admin`. Anyone without a `roles` entry is a member. The email must be verified to count; see [Authentication and Access](../ARCHITECTURE.md#authentication-and-access).
+Anyone with a verified email can sign in, and is a member. Admins give, change and remove the reviewer and admin roles, and block accounts, on the People page (`/people`). The first admin has to be made in the Firestore console: create `roles/<lowercase email>` with a string field `role` set to `admin`. The email must be verified to count; see [Authentication and Access](../ARCHITECTURE.md#authentication-and-access).
+
+Admins cannot change or remove their own role, so there is always at least one admin. To demote the last admin, use the console.
+
+The `allowedUsers` collection from before sign-up opened is no longer read by anything and the rules close it to everyone, so it can be deleted in the console.
 
 ### Account Age for Voting
 
-Votes only count from accounts first seen at least a week ago, recorded as `createdAt` on `users/<uid>` at their first sign-in after the rule is deployed. Existing users get today's date then, so they cannot vote for a week. To let someone vote sooner, set their `createdAt` to an earlier timestamp in the Firestore console; the app never can.
+Votes only count from accounts first seen at least a week ago, recorded as `createdAt` on `users/<uid>` at their first sign-in. To let someone vote sooner, set their `createdAt` to an earlier timestamp in the Firestore console; the app never can.
 
-### Moving Roles Off the Allowlist
+## Before Opening Sign-Up
 
-Roles used to be a `role` field on `allowedUsers/<email>`. The rules now read them only from `roles/<email>`, so before deploying those rules, copy each reviewer and admin across in the Firestore console:
+Do these in the consoles before deploying the rules that let anyone sign up. They are [#23](https://github.com/Valiance-Studios/bible-center/issues/23).
 
-1. In `allowedUsers`, find every entry whose `role` is `reviewer` or `admin`.
-2. For each, create `roles/<the same email>` with a string field `role` holding that value. Members need nothing.
-3. Deploy the rules with `npm run deploy:rules`, then confirm the People page still opens for you.
+1. **Email enumeration protection.** Firebase console > Authentication > Settings > User actions: turn on **Email enumeration protection**. Firebase then answers every failed email sign-in the same way, so nobody can test which addresses have accounts. The app already shows one message for a wrong email or password, and its password reset says "If an account uses …", so nothing in it changes.
+2. **A billing budget.** Google Cloud console > Billing > Budgets & alerts > Create budget, scoped to this project, with email alerts at 50%, 90% and 100%. A budget only warns; it does not stop spending. Start low, such as $25 a month, and raise it once real use is known.
+3. **Alerts for unusual activity.** Google Cloud console > Monitoring > Alerting > Create policy, each emailing you:
+   - **New accounts:** the metric *Consumed API > Request count* (`serviceruntime.googleapis.com/api/request_count`) for the service `identitytoolkit.googleapis.com`, summed over an hour, above a threshold such as 200. Filter it to the sign-up methods if the method list offers them.
+   - **Firestore writes:** the metric *Firestore Instance > Document Write Count* (`firestore.googleapis.com/document/write_count`), summed over an hour, above a threshold such as 50,000.
+   
+   The thresholds are starting points; tighten them once normal traffic is known.
 
-The old `role` fields are ignored afterwards and can be deleted. If the rules go out first, admins lose their role until their `roles` entry exists, but the console can always add it.
+## Identity Platform
 
-Admins cannot change or remove their own entry, so there is always at least one admin. To demote the last admin, use the console.
+[#22](https://github.com/Valiance-Studios/bible-center/issues/22) upgrades Authentication to Firebase Authentication with Identity Platform, which is free up to 50,000 monthly active users for email and Google sign-in. Firebase console > Authentication > Settings > **Upgrade**. Then:
+
+- **Password policy:** Authentication > Settings > Password policy: require at least 10 characters and turn on enforcement, so Firebase refuses short passwords even from a client other than the app.
+- **reCAPTCHA for email and password:** the console may only offer reCAPTCHA for SMS, so set it through the Identity Toolkit API with your Google Cloud login. Start in audit mode, which only logs scores:
+
+  ```sh
+  PROJECT=vs-bible-center-dev
+
+  curl -X PATCH \
+    "https://identitytoolkit.googleapis.com/admin/v2/projects/$PROJECT/config?updateMask=recaptchaConfig.emailPasswordEnforcementState,recaptchaConfig.managedRules" \
+    -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+    -H "X-Goog-User-Project: $PROJECT" \
+    -H "Content-Type: application/json" \
+    -d '{"recaptchaConfig": {"emailPasswordEnforcementState": "AUDIT", "managedRules": [{"endScore": 0.3, "action": "BLOCK"}]}}'
+  ```
+
+  Firebase creates its own reCAPTCHA Enterprise key for this, separate from the App Check key, and the web SDK attaches tokens to email sign-in and sign-up by itself, so the app needs no change; the emulators ignore it. After a week or so, check the key's scores under Security > reCAPTCHA in the Google Cloud console, then run the same command with `"ENFORCE"`, and register a `+test` address on the hosted site to confirm a person still gets through. A `GET` on the same URL, without `?updateMask…`, shows the current setting.
+- **Two-factor sign-in for staff,** and **a blocking function that turns away throwaway email domains,** need code as well as console switches: two-factor enrollment in the app, rules that require a second factor for reviewer and admin actions, and a `beforeUserCreated` function with its own service account. They come in their own change.
 
 ## App Check Setup
 

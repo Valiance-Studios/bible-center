@@ -18,7 +18,7 @@ interface Practice {
 }
 
 /**
- * The signed-in user's memory list and the ways to change it. Only allowlisted users have one; for anyone else
+ * The signed-in user's memory list and the ways to change it. Only verified accounts have one; for anyone else
  * `uid` is undefined and nothing loads.
  */
 export function useMemoryList() {
@@ -50,7 +50,7 @@ export function useMemoryList() {
     canKeepList: uid !== undefined,
     /** Whether an admin blocked the account, so the list can be seen but not changed. */
     isBlocked,
-    /** Why they cannot, if they cannot: still loading, signed out, or not on the allowlist. */
+    /** Why they cannot, if they cannot: still loading, signed out, or not finished signing in. */
     authStatus,
     entries: list.data,
     isLoading: list.isLoading,

@@ -197,7 +197,8 @@ function VerifyEmailPanel() {
   );
 }
 
-function AccessPanel({checkFailed}: {checkFailed: boolean}) {
+/** Shown when checking the account's role failed, as when offline. */
+function AccessCheckFailedPanel() {
   const email = useAuthStore((state) => state.user?.email);
   const recheckAccess = useAuthStore((state) => state.recheckAccess);
   const signOut = useAuthStore((state) => state.signOut);
@@ -205,12 +206,8 @@ function AccessPanel({checkFailed}: {checkFailed: boolean}) {
 
   return (
     <>
-      <h1 className={classes.title}>{checkFailed ? 'Could not check your access' : 'Accounts are invite-only for now'}</h1>
-      <p className={classes.body}>
-        {checkFailed
-          ? `You are signed in as ${email}, but checking this account's access did not work. You can still read and search everything.`
-          : `You are signed in as ${email}, but this address is not on the list yet. You can still read and search everything.`}
-      </p>
+      <h1 className={classes.title}>Could not check your access</h1>
+      <p className={classes.body}>{`You are signed in as ${email}, but checking this account's access did not work. You can still read and search everything.`}</p>
       <div className={classes.fields}>
         {error && <Alert color="red">{error}</Alert>}
         <Button fullWidth size="md" radius="xl" loading={busy} onClick={() => void run(async () => void await recheckAccess())}>Check again</Button>
@@ -229,10 +226,8 @@ function panelFor(status: ReturnType<typeof useAuthStore.getState>['status']): R
       return <SignedOutPanel />;
     case 'unverified':
       return <VerifyEmailPanel />;
-    case 'noAccess':
-      return <AccessPanel checkFailed={false} />;
     case 'accessCheckFailed':
-      return <AccessPanel checkFailed />;
+      return <AccessCheckFailedPanel />;
     case 'allowed':
       return <Navigate to="/" replace />;
   }
@@ -247,7 +242,7 @@ export function SignInPage() {
         <Link className={classes.mark} to="/">Bible Center</Link>
         <div>
           <p className={classes.sideText}>Keep your place, and the verses that matter to you.</p>
-          <p className={classes.sideNote}>Reading and searching never need an account. Sign in to highlight, bookmark and upvote verses.</p>
+          <p className={classes.sideNote}>Reading and searching never need an account. Sign in to highlight, bookmark, memorize and upvote verses. Accounts are free.</p>
         </div>
       </aside>
       <main className={classes.formSide}>

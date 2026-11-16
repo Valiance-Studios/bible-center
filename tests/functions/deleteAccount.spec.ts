@@ -33,7 +33,6 @@ describe('deleteAccount', () => {
     await db.doc(`users/${grace}/annotations/a1`).set({type: 'note', text: 'Private words.'});
     await db.doc(`users/${grace}/memoryVerses/19023001`).set({status: 'learning'});
     await db.doc(`roles/grace@example.com`).set({role: 'reviewer'});
-    await db.doc(`allowedUsers/grace@example.com`).set({});
     await db.doc(`blockedUsers/${grace}`).set({email: 'grace@example.com'});
     // A verse Grace added, which someone else also upvoted, and her vote on someone else's verse.
     await db.doc('topics/grief/verses/40005004').set({upvotes: 2, createdBy: grace});
@@ -56,7 +55,6 @@ describe('deleteAccount', () => {
       `users/${grace}/annotations/a1`,
       `users/${grace}/memoryVerses/19023001`,
       'roles/grace@example.com',
-      'allowedUsers/grace@example.com',
       `blockedUsers/${grace}`,
       `topics/grief/verses/40005004/votes/${grace}`,
       `topics/grief/verses/19147003/votes/${grace}`,
@@ -79,11 +77,10 @@ describe('deleteAccount', () => {
     await expect(auth.getUser(other)).resolves.toBeDefined();
   });
 
-  it('leaves entries keyed by email alone when the email is not verified', async () => {
+  it('leaves the role alone when the email is not verified', async () => {
     await deleteAccount({uid: grace, verifiedEmail: null});
 
     expect(await exists('roles/grace@example.com')).toBe(true);
-    expect(await exists('allowedUsers/grace@example.com')).toBe(true);
     expect(await exists(`users/${grace}`)).toBe(false);
   });
 });

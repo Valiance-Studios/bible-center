@@ -3,11 +3,11 @@ import type {SeedUserRecord} from '../../../scripts/emulator-admin.ts';
 
 import {expect, test} from '@playwright/test';
 import {uidOf, updateUserRecord} from '../../../scripts/emulator-admin.ts';
-import {signInAsNewAllowedUser} from './support/auth';
+import {signInAsNewUser} from './support/auth';
 
 /** Signs in a new user whose record already has these fields, as though they had used up a limit. */
 async function signInWithRecord(page: Page, record: SeedUserRecord): Promise<void> {
-  const user = await signInAsNewAllowedUser(page);
+  const user = await signInAsNewUser(page);
 
   await updateUserRecord(await uidOf(user.email), record);
 }
