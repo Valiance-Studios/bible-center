@@ -57,7 +57,20 @@ Do these in the consoles before deploying the rules that let anyone sign up. The
 [#22](https://github.com/Valiance-Studios/bible-center/issues/22) upgrades Authentication to Firebase Authentication with Identity Platform, which is free up to 50,000 monthly active users for email and Google sign-in. Firebase console > Authentication > Settings > **Upgrade**. Then:
 
 - **Password policy:** Authentication > Settings > Password policy: require at least 10 characters and turn on enforcement, so Firebase refuses short passwords even from a client other than the app.
-- **reCAPTCHA for email and password:** Authentication > Settings > Fraud prevention: turn on reCAPTCHA Enterprise for the email/password provider in audit mode, check its metrics, then enforce it.
+- **reCAPTCHA for email and password:** the console may only offer reCAPTCHA for SMS, so set it through the Identity Toolkit API with your Google Cloud login. Start in audit mode, which only logs scores:
+
+  ```sh
+  PROJECT=vs-bible-center-dev
+
+  curl -X PATCH \
+    "https://identitytoolkit.googleapis.com/admin/v2/projects/$PROJECT/config?updateMask=recaptchaConfig.emailPasswordEnforcementState,recaptchaConfig.managedRules" \
+    -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+    -H "X-Goog-User-Project: $PROJECT" \
+    -H "Content-Type: application/json" \
+    -d '{"recaptchaConfig": {"emailPasswordEnforcementState": "AUDIT", "managedRules": [{"endScore": 0.3, "action": "BLOCK"}]}}'
+  ```
+
+  Firebase creates its own reCAPTCHA Enterprise key for this, separate from the App Check key, and the web SDK attaches tokens to email sign-in and sign-up by itself, so the app needs no change; the emulators ignore it. After a week or so, check the key's scores under Security > reCAPTCHA in the Google Cloud console, then run the same command with `"ENFORCE"`, and register a `+test` address on the hosted site to confirm a person still gets through. A `GET` on the same URL, without `?updateMask…`, shows the current setting.
 - **Two-factor sign-in for staff,** and **a blocking function that turns away throwaway email domains,** need code as well as console switches: two-factor enrollment in the app, rules that require a second factor for reviewer and admin actions, and a `beforeUserCreated` function with its own service account. They come in their own change.
 
 ## App Check Setup
