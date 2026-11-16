@@ -10,7 +10,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | --- | --- |
 | Monorepo, tooling, tests, env files, Firebase and App Check wiring, deploy check | Done. App Check is enforced for Firestore and Authentication |
 | GitHub Actions CI (`.github/workflows/ci.yml`) | Built. Runs on pull requests and pushes to `main` |
-| Firestore rules and indexes: default deny, allowlist, user settings, annotations, topics, daily verses, memory lists | Built and deployed |
+| Firestore rules and indexes: default deny, allowlist, roles, user settings, annotations, topics, daily verses, memory lists | Built and deployed |
 | Design mockups | Approved |
 | Sign-in and registration | Built. Google sign-in and registering by email are confirmed on the hosted site |
 | App layout: app bar, thumb index, phone menu, footer, light and dark mode | Built |
@@ -24,7 +24,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | My verses page | Built |
 | About dialog | Built: a shorter version of the README with data credits, from the footer and the phone menu |
 | Topic search, voting, reports | Built: topic pages, the Topics page, voting ranked by `topicVerseScore`, adding verses, starting topics and reports |
-| Admins and reviewers | Built: roles on the allowlist, the People page for admins, and the Review page for reported verses and new topics |
+| Admins and reviewers | Built: roles in `roles/{email}`, the People page for admins, and the Review page for reported verses and new topics |
 | Hebrew/Greek study | Built: the word panel beside the reader, or in a sheet on phones, from STEPBible data |
 | Scripture memorization | Built: flash cards, fading words, and the memory list; see [Memorization](#memorization) |
 | AI topic suggestions | After V1 |
@@ -67,7 +67,7 @@ To do when reached:
 - The 10-character password minimum is only enforced in the app. Firebase's password policy could enforce it server-side.
 - Topics created by users start pending: they work by link but are not listed or linked from search until a reviewer approves them on the Review page. Topic names are the only public free text; see [What Is Public](#what-is-public).
 - A review decision cannot be undone in the app. A removed verse or a rejected topic can be restored by deleting its `removed` document or setting the topic back to `pending` in the console.
-- Roles live on the allowlist. When the allowlist is removed, they need a home of their own, such as `roles/{email}`.
+- Older allowlist entries may still hold a `role` field from before roles moved to `roles/{email}`. Nothing reads it, and it can be deleted in the console.
 - Common topics are a fixed list for now. Later they could follow what people search for, which changes through the year (such as "resurrection" around Easter).
 
 ### Resuming in a New Session
@@ -151,7 +151,7 @@ flowchart LR
   subgraph firebase["Firebase project: vs-bible-center-dev"]
     hosting["Hosting<br/>app and static data"]
     auth["Authentication<br/>Google, email/password"]
-    firestore[("Firestore<br/>allowlist, annotations, votes, reports,<br/>daily verses, memory lists, AI cache")]
+    firestore[("Firestore<br/>allowlist, roles, annotations, votes, reports,<br/>daily verses, memory lists, AI cache")]
     appcheck["App Check<br/>reCAPTCHA Enterprise"]
     functions["Cloud Functions<br/>(planned)"]
     secrets["Secret Manager<br/>(planned)"]
@@ -346,7 +346,7 @@ flowchart TD
   dialog -- "clearDailyVerse: choose automatically" --> doc
 ```
 
-- **Choosing:** admins get "Set verse of the day" beside the verse, which opens `SetVerseDialog` on today's date. It loads what is set for the chosen date, then offers "Choose automatically" or a verse or passage, checked with `useReferenceSpan` (shared with adding a verse to a topic), and previews what visitors will see. Choosing automatically deletes the date's document. An admin is an allowlist entry with the `admin` role (see [Roles and Review](#roles-and-review)); `firestore.rules` lets only `isAdmin` write to `dailyVerses`, and `tests/rules/dailyVerses.spec.ts` covers it.
+- **Choosing:** admins get "Set verse of the day" beside the verse, which opens `SetVerseDialog` on today's date. It loads what is set for the chosen date, then offers "Choose automatically" or a verse or passage, checked with `useReferenceSpan` (shared with adding a verse to a topic), and previews what visitors will see. Choosing automatically deletes the date's document. An admin has a `roles/{email}` entry with the `admin` role (see [Roles and Review](#roles-and-review)); `firestore.rules` lets only `isAdmin` write to `dailyVerses`, and `tests/rules/dailyVerses.spec.ts` covers it.
 - **Dates:** each viewer sees the verse for their own date (`dateKeyOf`), so it changes at their midnight. `dayOfLeapYear` gives each month and day a fixed place from 0 to 365, so a date gets the same automatic verse every year, and only February 29 is skipped outside leap years. Everyone on the same date sees the same verse, and nothing runs on a schedule.
 - **Storage:** a `VerseId` range, not text, so the verse appears in the viewer's translation. The list and documents hold no scripture. A document holds `startVerse`, `endVerse`, `setBy` and `setAt`, and a passage stays within one book.
 - **Reading:** anyone can read a single date's document, but not list the collection. If it cannot be read, the automatic pick shows instead, so the home page always has a verse.
@@ -592,7 +592,7 @@ flowchart LR
 
 ## Authentication and Access
 
-Anyone can read the Bible without an account. Signing in unlocks annotations and voting, and for now is limited to an allowlist in `allowedUsers/{lowercase email}`, which admins manage on the People page. Each entry also holds the person's role; see [Roles and Review](#roles-and-review).
+Anyone can read the Bible without an account. Signing in unlocks annotations and voting, and for now is limited to an allowlist in `allowedUsers/{lowercase email}`, which admins manage on the People page. Roles are kept separately; see [Roles and Review](#roles-and-review).
 
 ```mermaid
 flowchart TD
@@ -605,7 +605,7 @@ flowchart TD
   verified -- "Yes" --> allowed{"In allowedUsers?"}
   allowed -- "No" --> denied["status: noAccess<br/>Read only, invite-only message"]
   allowed -- "Check failed" --> failed["status: accessCheckFailed<br/>Read only, offer to retry"]
-  allowed -- "Yes" --> access["status: allowed, with the entry's role<br/>Annotations and voting"]
+  allowed -- "Yes" --> access["status: allowed, with the role in roles/email<br/>Annotations and voting"]
   denied -- "recheckAccess" --> allowed
   failed -- "recheckAccess" --> allowed
 ```
@@ -618,7 +618,7 @@ Firebase handles the password storage. The app never sees or stores a password. 
 
 ## Roles and Review
 
-Everyone on the allowlist has a role, stored as `role` on their `allowedUsers/{lowercase email}` entry. An entry with no role, as older ones have, is a member. Each role can do everything the ones before it can:
+Reviewers and admins have an entry in `roles/{lowercase email}` holding their `role`. Everyone else is a member, so members have no entry. Roles are keyed by email rather than account id because admins grant them by email, often before the person has signed in. Each role can do everything the ones before it can:
 
 | Role | Can also |
 | --- | --- |
@@ -626,15 +626,16 @@ Everyone on the allowlist has a role, stored as `role` on their `allowedUsers/{l
 | Reviewer | Remove reported verses or keep them, and approve or reject topics people start, on the Review page (`/review`) |
 | Admin | Add people, change their roles and remove them, on the People page (`/people`), and set the [verse of the day](#verse-of-the-day) from the home page |
 
-- **Roles in code:** `ROLES`, `canReview` and `isAdmin` in `packages/core/src/roles.ts`. `getAccess` in `apps/web/src/firebase/access.ts` reads the role with the allowlist check, and the auth store keeps it. `RoleGate` shows a page only to its roles and `useAccountLinks` lists the pages each role can open. These only shape the interface; `myRole`, `isReviewer` and `isAdmin` in `firestore.rules` enforce it.
-- **Managing people:** only admins can read or change the allowlist, and never their own entry, so there is always an admin and nobody can promote themselves. Each write records `updatedBy` and `updatedAt`. Adding someone already on it is refused rather than changing their role. The first admin is set in the console; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#allowlist-and-roles). Removing someone keeps their annotations and votes, which are keyed by their account.
+- **Roles in code:** `ROLES`, `canReview` and `isAdmin` in `packages/core/src/roles.ts`. `getAccess` in `apps/web/src/firebase/access.ts` reads the person's `roles` entry alongside the allowlist check, and the auth store keeps it. `RoleGate` shows a page only to its roles and `useAccountLinks` lists the pages each role can open. These only shape the interface; `myRole`, `isReviewer` and `isAdmin` in `firestore.rules` enforce it.
+- **Managing people:** only admins can read or change the allowlist and roles, and never their own entries, so there is always an admin and nobody can promote themselves. Each write records `updatedBy` and `updatedAt`. `apps/web/src/firebase/people.ts` joins the two collections for the People page: adding someone creates their allowlist entry and, unless they are a member, their `roles` entry in one transaction; making someone a member deletes their `roles` entry; removing someone deletes both. Adding someone already on the allowlist is refused rather than changing their role. The first admin is set in the console; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#allowlist-and-roles). Removing someone keeps their annotations and votes, which are keyed by their account.
 - **The queue:** `useReviewQueue` loads the open reports and pending topics, oldest first, which needs the two `status, createdAt` indexes. `groupReports` gathers reports by topic and verse, so a reviewer decides once for each. The account menu shows how many are waiting. A decision stays on the page, with its outcome, until the queue next loads.
 - **Resolving reports:** `resolveReports` closes every report in a group in one transaction. Removing also creates `topics/{slug}/removed/{key}` in the same write, and the rules only accept a report closed as removed when that document exists afterwards.
 - **Deciding topics:** `decideTopic` sets a pending topic to approved or rejected, once. Approved topics join the Topics page and search links; rejected ones are hidden and closed to new verses.
 
 ```mermaid
 flowchart LR
-  entry[("allowedUsers/email<br/>role")] --> getAccess["getAccess<br/>auth store role"]
+  allowed[("allowedUsers/email")] --> getAccess["getAccess<br/>auth store role"]
+  entry[("roles/email<br/>reviewers and admins")] --> getAccess
   getAccess --> links["useAccountLinks<br/>account and phone menus"]
   getAccess --> gate["RoleGate"]
   gate -- "canReview" --> review["ReviewPage<br/>useReviewQueue"]
@@ -642,6 +643,7 @@ flowchart LR
   review -- "resolveReports" --> reports[("reports")]
   review -- "resolveReports" --> removed[("topics/slug/removed")]
   review -- "decideTopic" --> topics[("topics/slug")]
+  people -- "addPerson, removePerson" --> allowed
   people -- "addPerson, setRole, removePerson" --> entry
 ```
 

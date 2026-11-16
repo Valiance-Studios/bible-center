@@ -1,12 +1,12 @@
 import type {Role} from '@bible-center/core';
 
 import {parseRole} from '@bible-center/core';
-import {collection, deleteDoc, doc, runTransaction, serverTimestamp, setDoc} from 'firebase/firestore';
-import {ALLOWED_USERS_COLLECTION} from './access';
+import {collection, doc, runTransaction, serverTimestamp, writeBatch} from 'firebase/firestore';
+import {ALLOWED_USERS_COLLECTION, ROLES_COLLECTION} from './access';
 import {db} from './index';
 import {fetchFromServer} from './serverQuery';
 
-/** Someone on the allowlist. */
+/** Someone on the allowlist, with their role. */
 export interface Person {
   email: string;
   role: Role;
@@ -19,37 +19,62 @@ export class AlreadyAllowedError extends Error {
   }
 }
 
-function personRef(email: string) {
+function allowedRef(email: string) {
   return doc(db, ALLOWED_USERS_COLLECTION, email);
 }
 
-function entryFor(uid: string, role: Role) {
-  return {role, updatedBy: uid, updatedAt: serverTimestamp()};
+function roleRef(email: string) {
+  return doc(db, ROLES_COLLECTION, email);
 }
 
-/** Everyone on the allowlist, in no particular order. Only admins may read it. */
+function changeBy(uid: string) {
+  return {updatedBy: uid, updatedAt: serverTimestamp()};
+}
+
+/** Everyone on the allowlist, with their roles, in no particular order. Only admins may read them. */
 export async function listPeople(): Promise<Person[]> {
-  const documents = await fetchFromServer(collection(db, ALLOWED_USERS_COLLECTION));
+  const [allowed, roles] = await Promise.all([
+    fetchFromServer(collection(db, ALLOWED_USERS_COLLECTION)),
+    fetchFromServer(collection(db, ROLES_COLLECTION)),
+  ]);
+  const roleByEmail = new Map(roles.map((entry) => [entry.id, parseRole(entry.get('role'))]));
 
-  return documents.map((person) => ({email: person.id, role: parseRole(person.get('role'))}));
+  return allowed.map(({id: email}) => ({email, role: roleByEmail.get(email) ?? 'member'}));
 }
 
-/** Puts a normalized email on the allowlist, unless it is already there. */
+/** Puts a normalized email on the allowlist with a role, unless it is already there. */
 export async function addPerson(uid: string, {email, role}: Person): Promise<void> {
   await runTransaction(db, async (transaction) => {
-    if ((await transaction.get(personRef(email))).exists()) {
+    if ((await transaction.get(allowedRef(email))).exists()) {
       throw new AlreadyAllowedError(email);
     }
 
-    transaction.set(personRef(email), entryFor(uid, role));
+    transaction.set(allowedRef(email), changeBy(uid));
+
+    if (role !== 'member') {
+      transaction.set(roleRef(email), {role, ...changeBy(uid)});
+    }
   });
 }
 
+/** Members have no entry in `roles`, so making someone a member removes theirs. */
 export async function setRole(uid: string, {email, role}: Person): Promise<void> {
-  await setDoc(personRef(email), entryFor(uid, role));
+  const batch = writeBatch(db);
+
+  if (role === 'member') {
+    batch.delete(roleRef(email));
+  } else {
+    batch.set(roleRef(email), {role, ...changeBy(uid)});
+  }
+
+  await batch.commit();
 }
 
-/** Takes someone off the allowlist. Their own data stays, keyed by their account. */
+/** Takes someone off the allowlist, with their role. Their own data stays, keyed by their account. */
 export async function removePerson(email: string): Promise<void> {
-  await deleteDoc(personRef(email));
+  const batch = writeBatch(db);
+
+  batch.delete(allowedRef(email));
+  batch.delete(roleRef(email));
+  await batch.commit();
 }

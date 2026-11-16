@@ -5,8 +5,11 @@ import {parseRole} from '@bible-center/core';
 import {doc, getDoc} from 'firebase/firestore';
 import {db} from './index';
 
-/** Keyed by lowercase email, with each person's role. Mirrors `allowedUsers` in `firestore.rules`. */
+/** Who can sign in, keyed by lowercase email. Mirrors `allowedUsers` in `firestore.rules`. */
 export const ALLOWED_USERS_COLLECTION = 'allowedUsers';
+
+/** Reviewers and admins, keyed by lowercase email. Mirrors `roles` in `firestore.rules`. */
+export const ROLES_COLLECTION = 'roles';
 
 /**
  * This user's role, or null if they are not on the allowlist. The rules only answer for a verified email,
@@ -17,7 +20,11 @@ export async function getAccess(user: User): Promise<Role | null> {
     return null;
   }
 
-  const snapshot = await getDoc(doc(db, ALLOWED_USERS_COLLECTION, user.email.toLowerCase()));
+  const email = user.email.toLowerCase();
+  const [allowed, role] = await Promise.all([
+    getDoc(doc(db, ALLOWED_USERS_COLLECTION, email)),
+    getDoc(doc(db, ROLES_COLLECTION, email)),
+  ]);
 
-  return snapshot.exists() ? parseRole(snapshot.get('role')) : null;
+  return allowed.exists() ? parseRole(role.get('role')) : null;
 }
