@@ -1,16 +1,16 @@
 import type {Page} from '@playwright/test';
 
 import {expect, test} from '@playwright/test';
-import {createTestUser, signInAsNewAllowedUser, signInWithGoogle} from './support/auth';
+import {createTestUser, register, signInAsNewUser, signInWithGoogle} from './support/auth';
 
 const VERSE_1 = 'In the beginning was the Word';
 const VERSE_2 = 'He was with God in the beginning.';
 const VERSE_3 = 'Through Him all things were made';
 const VERSE_4 = 'In Him was life';
 
-/** Signs in a new allowlisted user, who has no annotations, and opens John 1. */
+/** Signs in a new user, who has no annotations, and opens John 1. */
 async function openChapterAsNewUser(page: Page) {
-  const user = await signInAsNewAllowedUser(page);
+  const user = await signInAsNewUser(page);
 
   await page.goto('/read/john/1');
   await expect(page.getByRole('button', {name: 'Account menu'})).toBeVisible();
@@ -177,9 +177,9 @@ test('one user never sees another user\'s annotations', async ({browser}) => {
   await secondContext.close();
 });
 
-test('an account not on the allowlist cannot annotate', async ({page}) => {
-  await signInWithGoogle(page, createTestUser());
-  await expect(page.getByRole('heading', {name: 'Accounts are invite-only for now'})).toBeVisible();
+test('an account that has not confirmed its email cannot annotate', async ({page}) => {
+  await register(page, createTestUser(), 'a-long-test-password');
+  await expect(page.getByRole('heading', {name: 'Check your email'})).toBeVisible();
 
   await page.goto('/read/john/1');
   await expect(page.getByText(VERSE_1)).toBeVisible();

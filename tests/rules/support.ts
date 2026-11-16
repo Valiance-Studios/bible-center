@@ -6,20 +6,20 @@ import {afterAll, beforeAll, beforeEach} from 'vitest';
 import {initializeTestEnvironment} from '@firebase/rules-unit-testing';
 import {doc, increment, serverTimestamp, setDoc, writeBatch} from 'firebase/firestore';
 
-/** On the allowlist. */
+/** A member. */
 export const ALICE = 'alice';
-/** On the allowlist, with a `role` of admin left on his entry from before roles moved, which grants nothing. */
+/** A member. */
 export const BOB = 'bob';
-/** On the allowlist, for tests that need an account too new to vote. */
+/** A member, for tests that need an account too new to vote. */
 export const NEWT = 'newt';
-/** Signed in and verified, but not on the allowlist. */
+/** Someone signing in with a verified email for the first time, with nothing saved yet. */
 export const MALLORY = 'mallory';
-/** On the allowlist, with a reviewer entry in `roles`. */
+/** A reviewer, with an entry in `roles`. */
 export const RITA = 'rita';
-/** On the allowlist, with an admin entry in `roles`. */
+/** An admin, with an entry in `roles`. */
 export const ADA = 'ada';
 
-/** The allowlist and roles key for one of the users above. */
+/** The `roles` key for one of the users above. */
 export function emailOf(uid: string): string {
   return `${uid}@example.com`;
 }
@@ -28,8 +28,8 @@ let testEnv: RulesTestEnvironment;
 
 /**
  * Starts the rules against the Firestore emulator for this file's tests. Before each test the database is
- * cleared, everyone but Mallory is allowlisted, Rita is a reviewer and Ada an admin, and `seed` writes anything else with the
- * rules turned off.
+ * cleared, Rita is made a reviewer and Ada an admin, and `seed` writes anything else with the rules turned off.
+ * Anyone signed in with a verified email is a member.
  */
 export function useRulesTestEnvironment(seed: (db: Firestore) => Promise<void> = async () => {}) {
   beforeAll(async () => {
@@ -52,11 +52,6 @@ export function useRulesTestEnvironment(seed: (db: Firestore) => Promise<void> =
     await testEnv.withSecurityRulesDisabled(async (context) => {
       const db = context.firestore() as unknown as Firestore;
 
-      for (const uid of [ALICE, NEWT, RITA, ADA]) {
-        await setDoc(doc(db, 'allowedUsers', emailOf(uid)), {});
-      }
-
-      await setDoc(doc(db, 'allowedUsers', emailOf(BOB)), {role: 'admin'});
       await setDoc(doc(db, 'roles', emailOf(RITA)), {role: 'reviewer'});
       await setDoc(doc(db, 'roles', emailOf(ADA)), {role: 'admin'});
       await seed(db);

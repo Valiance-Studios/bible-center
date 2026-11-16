@@ -4,16 +4,15 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Everything not matched below is denied, so each new collection must opt in with its own rules.
 
-    // A verified email on the allowlist. It must be verified: anyone can register a password account
-    // with someone else's address, and it stays unverified until they prove they own it.
-    function isAllowed() {
+    // Signed in with a verified email. It must be verified: anyone can register a password account with someone
+    // else's address, and it stays unverified until they prove they own it. Anyone may register.
+    function isVerified() {
       return request.auth != null
-        && request.auth.token.email_verified == true
-        && exists(/databases/$(database)/documents/allowedUsers/$(request.auth.token.email.lower()));
+        && request.auth.token.email_verified == true;
     }
 
-    function isAllowedOwner(uid) {
-      return isAllowed() && request.auth.uid == uid;
+    function isVerifiedOwner(uid) {
+      return isVerified() && request.auth.uid == uid;
     }
 
     // An admin blocked this account. It can still read, but nothing it writes is accepted.
@@ -21,9 +20,9 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/blockedUsers/$(request.auth.uid));
     }
 
-    // Every write needs this: a verified, allowlisted account that is not blocked.
+    // Every write needs this: a verified account that is not blocked.
     function canWrite() {
-      return isAllowed() && !isBlocked();
+      return isVerified() && !isBlocked();
     }
 
     function isWritingOwner(uid) {
@@ -48,7 +47,7 @@ service cloud.firestore {
       return canWrite() && myRole() in ['reviewer', 'admin'];
     }
 
-    // Manages the allowlist and roles.
+    // Manages roles and blocked accounts.
     function isAdmin() {
       return canWrite() && myRole() == 'admin';
     }
@@ -72,22 +71,6 @@ service cloud.firestore {
       return request.auth != null
         && request.auth.token.email_verified == true
         && myEmail() == email;
-    }
-
-    // The allowlist of who can sign in, keyed by lowercase email. Users may check themselves. Admins manage
-    // everyone else in the app, but never their own entry, so they cannot lock themselves out.
-    // Older entries may still hold a `role`, which nothing reads.
-    match /allowedUsers/{email} {
-      allow get: if isMyEmailKey(email);
-
-      allow read: if isAdmin();
-
-      allow create: if isAdmin()
-        && email != myEmail()
-        && isEmailKey(email)
-        && isChangeRecord(request.resource.data, []);
-
-      allow delete: if isAdmin() && email != myEmail();
     }
 
     // Reviewers and admins, keyed by lowercase email. Everyone else is a member, so a member has no entry.
@@ -221,7 +204,7 @@ service cloud.firestore {
     // Each user's own settings and annotations. Nobody can read or change another user's.
     match /users/{uid} {
       // Admins see when an account joined, beside what it added on the Review page.
-      allow get: if isAllowedOwner(uid) || isAdmin();
+      allow get: if isVerifiedOwner(uid) || isAdmin();
 
       allow create: if isWritingOwner(uid)
         && isValidUserRecord(uid, {}, request.resource.data);
@@ -230,7 +213,7 @@ service cloud.firestore {
         && isValidUserRecord(uid, resource.data, request.resource.data);
 
       match /annotations/{annotationId} {
-        allow read: if isAllowedOwner(uid);
+        allow read: if isVerifiedOwner(uid);
 
         allow delete: if isWritingOwner(uid)
           && takesFromCount('annotationCount');
@@ -250,7 +233,7 @@ service cloud.firestore {
       // The verses someone is memorizing, keyed like a topic's verses. Keep in sync with MemoryVerse and
       // MEMORY_STATUSES in packages/core/src/memorize.ts. Only the status and when it was last practiced change.
       match /memoryVerses/{key} {
-        allow read: if isAllowedOwner(uid);
+        allow read: if isVerifiedOwner(uid);
 
         allow delete: if isWritingOwner(uid)
           && takesFromCount('memoryVerseCount');

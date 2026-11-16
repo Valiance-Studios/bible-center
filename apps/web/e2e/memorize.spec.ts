@@ -1,6 +1,6 @@
 import {expect, test} from '@playwright/test';
 import {addMemoryVerses, uidOf} from '../../../scripts/emulator-admin.ts';
-import {signInAsNewAllowedUser} from './support/auth';
+import {signInAsNewUser} from './support/auth';
 
 const PSALM_23_2 = 'He makes me lie down in green pastures; He leads me beside quiet waters.';
 
@@ -64,7 +64,7 @@ test('the start form and the practice page refuse a verse that is not one', asyn
 });
 
 test('a signed-in user adds a verse to their memory list, marks it memorized, and removes it', async ({page}) => {
-  await signInAsNewAllowedUser(page);
+  await signInAsNewUser(page);
   await page.goto('/memorize/practice?passage=Psalm%2023%3A1-2');
 
   await page.getByRole('button', {name: 'Add to my memory list'}).click();
@@ -85,7 +85,7 @@ test('a signed-in user adds a verse to their memory list, marks it memorized, an
 });
 
 test('a memorized verse comes back for review after a week', async ({page}) => {
-  const user = await signInAsNewAllowedUser(page);
+  const user = await signInAsNewUser(page);
   const tenDaysAgo = new Date(Date.now() - 10 * 86_400_000);
 
   await addMemoryVerses(await uidOf(user.email), [

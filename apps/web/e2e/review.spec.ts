@@ -2,7 +2,7 @@ import type {Page} from '@playwright/test';
 
 import {expect, test} from '@playwright/test';
 import {addReport, startTopic} from '../../../scripts/emulator-admin.ts';
-import {signInAsNewAllowedUser} from './support/auth';
+import {signInAsNewUser} from './support/auth';
 
 /** Psalm 34:8, the verse each test's topic starts with. */
 const VERSE_ID = '19034008';
@@ -27,7 +27,7 @@ test('a reviewer removes a reported verse from its topic', async ({page}) => {
   const {name, slug} = await startUniqueTopic('remove');
 
   await addReport({topic: slug, verseKey: VERSE_ID, reason: 'reference', details: 'I meant Psalm 34:18.', createdAt: new Date()});
-  await signInAsNewAllowedUser(page, 'reviewer');
+  await signInAsNewUser(page, 'reviewer');
 
   await openAccountMenu(page);
   await page.getByRole('menuitem', {name: /^Review/}).click();
@@ -55,7 +55,7 @@ test('a reviewer keeps a reported verse', async ({page}) => {
   const {name, slug} = await startUniqueTopic('keep');
 
   await addReport({topic: slug, verseKey: VERSE_ID, reason: 'fit', createdAt: new Date()});
-  await signInAsNewAllowedUser(page, 'reviewer');
+  await signInAsNewUser(page, 'reviewer');
   await page.goto('/review');
 
   const item = page.getByRole('article', {name: `${REFERENCE} on ${name}`});
@@ -71,7 +71,7 @@ test('a reviewer approves one topic, which is then listed, and rejects another, 
   const approved = await startUniqueTopic('approve');
   const rejected = await startUniqueTopic('reject');
 
-  await signInAsNewAllowedUser(page, 'reviewer');
+  await signInAsNewUser(page, 'reviewer');
   await page.goto('/review');
   await page.getByRole('button', {name: /^New topics/}).click();
   await expect(page).toHaveURL(/\?show=topics$/);
@@ -98,7 +98,7 @@ test('a reviewer approves one topic, which is then listed, and rejects another, 
 });
 
 test('a member has no Review link and cannot see the page', async ({page}) => {
-  await signInAsNewAllowedUser(page);
+  await signInAsNewUser(page);
 
   await openAccountMenu(page);
   await expect(page.getByRole('menuitem', {name: 'My verses'})).toBeVisible();
@@ -116,7 +116,7 @@ test.describe('on a phone', () => {
     const {name, slug} = await startUniqueTopic('phone');
 
     await addReport({topic: slug, verseKey: VERSE_ID, reason: 'fit', details: 'x'.repeat(200), createdAt: new Date()});
-    await signInAsNewAllowedUser(page, 'admin');
+    await signInAsNewUser(page, 'admin');
 
     await page.getByRole('button', {name: 'Open menu'}).click();
     await page.getByRole('link', {name: /^Review/}).click();

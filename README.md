@@ -2,7 +2,7 @@
 
 A free, one-stop Bible resource: read the Bible, search it, study the original languages, memorize it, and see what Scripture says about a topic.
 
-Anyone can read, search, study and practice without an account. Signing in, by invitation for now, adds highlights, bookmarks, notes, a memory list and voting on topics.
+Anyone can read, search, study and practice without an account. Signing in, free for anyone with an email address, adds highlights, bookmarks, notes, a memory list and voting on topics.
 
 > **Status:** the first release is feature-complete. See [Project Status](ARCHITECTURE.md#project-status) for what comes next.
 

@@ -15,13 +15,13 @@ Run every command from the repository root. The root holds the commands, shared 
 
 - `npm run emulators` in one terminal and `npm run dev` in another. The app is at http://localhost:5173 and the Emulator UI at http://127.0.0.1:4000. It builds the Cloud Functions first, and the Functions emulator reloads them whenever `apps/functions/lib` changes, so run `npm run watch:functions` in a third terminal while working on one. Their logs are in the Emulator UI's Logs tab.
 - Development runs against the **Firebase Local Emulator Suite** using the `demo-bible-center` project. The `demo-` prefix guarantees no real Firebase resources are touched.
-- `npm run dev:staging` runs the dev server against the hosted project (`apps/web/.env.staging`), with the real allowlist. It needs an App Check debug token in `apps/web/.env.staging.local` (see [Debug Token](DEPLOYMENT.md#debug-token)). It must run on port 5173, the only local port allowed on the API key (see [API Key Restrictions](DEPLOYMENT.md#api-key-restrictions)).
+- `npm run dev:staging` runs the dev server against the hosted project (`apps/web/.env.staging`), with its real accounts and roles. It needs an App Check debug token in `apps/web/.env.staging.local` (see [Debug Token](DEPLOYMENT.md#debug-token)). It must run on port 5173, the only local port allowed on the API key (see [API Key Restrictions](DEPLOYMENT.md#api-key-restrictions)).
 
 ### Seed Data
 
-`npm run emulators` seeds **Dev User (`dev@example.com`)**, a verified Google account on the allowlist as an admin, on every start, since emulator data is not kept between runs. Pick it under "Choose an account" in the sign-in popup. The rules are not relaxed for local work.
+`npm run emulators` seeds **Dev User (`dev@example.com`)**, a verified Google account with the admin role, on every start, since emulator data is not kept between runs. Pick it under "Choose an account" in the sign-in popup. The rules are not relaxed for local work.
 
-To try another account, add it on the People page, or add `allowedUsers/<lowercase email>` in the Emulator UI, plus `roles/<lowercase email>` with a `role` of `reviewer` or `admin` for those roles.
+To try another account, choose "Add new account" in the sign-in popup with any made-up email; anyone verified can sign in. To give it a role, use the People page, or add `roles/<lowercase email>` in the Emulator UI with a `role` of `reviewer` or `admin`.
 
 ### Emulator Scripts
 

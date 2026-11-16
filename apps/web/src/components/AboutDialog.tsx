@@ -17,7 +17,7 @@ export function AboutDialog({opened, onClose}: AboutDialogProps) {
         says about a topic.
       </p>
       <p>
-        Anyone can read, search, study and practice without an account. Signing in, by invitation for now, adds highlights, bookmarks,
+        Anyone can read, search, study and practice without an account. Signing in, free for anyone with an email address, adds highlights, bookmarks,
         notes, a memory list and voting on topics.
       </p>
 

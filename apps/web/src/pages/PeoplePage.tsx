@@ -1,121 +1,131 @@
-import type {Person} from '@/firebase/people';
+import type {StaffMember} from '@/firebase/people';
 
 import {useState} from 'react';
-import {isAdmin, normalizeEmail, parseRole, ROLE_NAMES, ROLES} from '@bible-center/core';
+import {isAdmin, normalizeEmail, parseStaffRole, ROLE_NAMES, STAFF_ROLES} from '@bible-center/core';
 import {Alert, Button, Loader, NativeSelect} from '@mantine/core';
-import {AddPersonForm} from '@/components/people/AddPersonForm';
 import {BlockedAccounts} from '@/components/people/BlockedAccounts';
-import {RemovePersonDialog} from '@/components/people/RemovePersonDialog';
+import {GiveRoleForm} from '@/components/people/GiveRoleForm';
 import {usePeople} from '@/components/people/usePeople';
 import {RoleGate} from '@/components/RoleGate';
 import {useAuthStore} from '@/stores/auth';
 import pageClasses from './AdminPage.module.scss';
 import classes from '@/components/people/People.module.scss';
 
-const ROLE_OPTIONS = ROLES.map((role) => ({value: role, label: ROLE_NAMES[role]}));
+const ROLE_OPTIONS = STAFF_ROLES.map((role) => ({value: role, label: ROLE_NAMES[role]}));
 
 /** You first, then everyone else alphabetically. */
-function sortPeople(people: readonly Person[], myEmail: string): Person[] {
-  return [...people].sort((a, b) => Number(b.email === myEmail) - Number(a.email === myEmail) || a.email.localeCompare(b.email));
+function sortStaff(staff: readonly StaffMember[], myEmail: string): StaffMember[] {
+  return [...staff].sort((a, b) => Number(b.email === myEmail) - Number(a.email === myEmail) || a.email.localeCompare(b.email));
 }
 
-function PeopleList({uid}: {uid: string}) {
-  const myEmail = normalizeEmail(useAuthStore((state) => state.user?.email) ?? '');
+function StaffList({uid, myEmail}: {uid: string; myEmail: string}) {
   const people = usePeople(uid);
   const [status, setStatus] = useState<string | null>(null);
-  const [removing, setRemoving] = useState<string | null>(null);
 
-  async function changeRole(person: Person) {
+  async function save(change: () => Promise<unknown>, done: string, failed: string) {
     setStatus(null);
 
     try {
-      await people.setRole(person);
-      setStatus(`${person.email} is now ${ROLE_NAMES[person.role].toLowerCase()}.`);
+      await change();
+      setStatus(done);
     } catch {
-      setStatus(`The role for ${person.email} could not be changed. Check your connection and try again.`);
+      setStatus(failed);
     }
   }
 
   return (
-    <>
-      <AddPersonForm isSaving={people.isSaving} onAdd={people.add} onAdded={setStatus} />
+    <section aria-labelledby="staff-title">
+      <h2 id="staff-title" className={classes.sectionTitle}>Reviewers and admins</h2>
+      <GiveRoleForm isSaving={people.isSaving} onGive={people.giveRole} onGiven={setStatus} />
 
       {people.hasLoadError && (
-        <Alert color="red" title="Could not load the people who can sign in">
+        <Alert color="red" title="Could not load the reviewers and admins">
           <p className={pageClasses.alertText}>Check your connection and try again.</p>
           <Button onClick={people.reload}>Try again</Button>
         </Alert>
       )}
 
-      {people.isLoading && <Loader aria-label="Loading people" />}
+      {people.isLoading && <Loader aria-label="Loading reviewers and admins" />}
 
-      {people.people && (
-        <>
-          <p className={classes.count}>{people.people.length === 1 ? '1 person' : `${people.people.length} people`}</p>
-          {sortPeople(people.people, myEmail).map((person) => {
-            const isMe = person.email === myEmail;
+      {people.staff && sortStaff(people.staff, myEmail).map((member) => {
+        const isMe = member.email === myEmail;
 
-            return (
-              <div key={person.email} className={classes.person}>
-                <div>
-                  <div className={classes.email}>{person.email}</div>
-                  {isMe && <div className={classes.you}>You</div>}
-                </div>
-                {isMe
-                  ? <span className={classes.fixedRole}>{ROLE_NAMES[person.role]}</span>
-                  : (
-                      <NativeSelect
-                        className={classes.roleSelect}
-                        size="md"
-                        aria-label={`Role for ${person.email}`}
-                        data={ROLE_OPTIONS}
-                        value={person.role}
-                        disabled={people.isSaving}
-                        onChange={(event) => void changeRole({email: person.email, role: parseRole(event.currentTarget.value)})}
-                      />
-                    )}
-                {!isMe && (
-                  <button type="button" className={classes.remove} aria-label={`Remove ${person.email}`} onClick={() => setRemoving(person.email)}>
-                    Remove
-                  </button>
+        return (
+          <div key={member.email} className={classes.person}>
+            <div>
+              <div className={classes.email}>{member.email}</div>
+              {isMe && <div className={classes.you}>You</div>}
+            </div>
+            {isMe
+              ? <span className={classes.fixedRole}>{ROLE_NAMES[member.role]}</span>
+              : (
+                  <NativeSelect
+                    className={classes.roleSelect}
+                    size="md"
+                    aria-label={`Role for ${member.email}`}
+                    data={ROLE_OPTIONS}
+                    value={member.role}
+                    disabled={people.isSaving}
+                    onChange={(event) => {
+                      const role = parseStaffRole(event.currentTarget.value);
+
+                      void save(
+                        () => people.changeRole({email: member.email, role}),
+                        `${member.email} is now ${ROLE_NAMES[role].toLowerCase()}.`,
+                        `The role for ${member.email} could not be changed. Check your connection and try again.`,
+                      );
+                    }}
+                  />
                 )}
-              </div>
-            );
-          })}
-        </>
-      )}
+            {!isMe && (
+              <button
+                type="button"
+                className={classes.remove}
+                aria-label={`Make ${member.email} a member`}
+                disabled={people.isSaving}
+                onClick={() => void save(
+                  () => people.makeMember(member.email),
+                  `${member.email} is now a member.`,
+                  `${member.email} could not be made a member. Check your connection and try again.`,
+                )}
+              >
+                Make a member
+              </button>
+            )}
+          </div>
+        );
+      })}
 
       {status && <p className={classes.status} role="status">{status}</p>}
+    </section>
+  );
+}
 
+function People({uid}: {uid: string}) {
+  const myEmail = normalizeEmail(useAuthStore((state) => state.user?.email) ?? '');
+
+  return (
+    <>
+      <StaffList uid={uid} myEmail={myEmail} />
       <BlockedAccounts uid={uid} myEmail={myEmail} />
-
-      {removing && (
-        <RemovePersonDialog
-          email={removing}
-          isRemoving={people.isSaving}
-          onConfirm={async () => {
-            await people.remove(removing);
-            setStatus(`Removed ${removing}.`);
-          }}
-          onClose={() => setRemoving(null)}
-        />
-      )}
     </>
   );
 }
 
-/** Where admins manage who can sign in, and what each person can do. */
+/** Where admins give roles and block accounts. */
 export function PeoplePage() {
   return (
     <main className={pageClasses.content}>
       <title>People | Bible Center</title>
       <h1 className={pageClasses.title}>People</h1>
-      <p className={pageClasses.intro}>Everyone who can sign in while Bible Center is invite-only, and what they can do.</p>
+      <p className={pageClasses.intro}>
+        Anyone with a verified email can sign in and is a member. Give someone a role to let them do more, or block an account that misuses Bible Center.
+      </p>
       <ul className={classes.roles}>
         <li>
           <strong>Members</strong>
           {' '}
-          can highlight, take notes and vote.
+          can highlight, take notes, memorize and vote.
         </li>
         <li>
           <strong>Reviewers</strong>
@@ -125,10 +135,10 @@ export function PeoplePage() {
         <li>
           <strong>Admins</strong>
           {' '}
-          can also set the verse of the day, manage people and block accounts.
+          can also set the verse of the day, give roles and block accounts.
         </li>
       </ul>
-      <RoleGate canSee={isAdmin} audience="admins">{(uid) => <PeopleList uid={uid} />}</RoleGate>
+      <RoleGate canSee={isAdmin} audience="admins">{(uid) => <People uid={uid} />}</RoleGate>
     </main>
   );
 }

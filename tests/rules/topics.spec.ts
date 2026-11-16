@@ -172,8 +172,7 @@ describe('topic votes', () => {
     await assertFails(withVerse(UNVOTED, {...newVerse(ALICE, UNVOTED), note: 'extra'}));
   });
 
-  it('requires the allowlist and a sign-in', async () => {
-    await assertFails(upvote(dbFor(MALLORY), MALLORY, UNVOTED));
+  it('requires a verified email', async () => {
     await assertFails(upvote(dbFor(ALICE, false), ALICE, UNVOTED));
   });
 
@@ -196,7 +195,7 @@ describe('started topics', () => {
     return {name: 'screen time', status: 'pending', createdBy: ALICE, createdAt: serverTimestamp(), ...overrides};
   }
 
-  it('lets an allowlisted user start one, pending review, with its first verse', async () => {
+  it('lets a member start one, pending review, with its first verse', async () => {
     const db = dbFor(ALICE);
 
     await assertSucceeds(startTopic(ALICE, doc(db, 'topics', 'screen-time'), topic()));
@@ -221,7 +220,11 @@ describe('started topics', () => {
     await assertFails(startTopic(ALICE, doc(db, 'topics', 'screen-time'), topic({createdBy: BOB})));
     await assertSucceeds(startTopic(ALICE, doc(db, 'topics', 'screen-time'), topic()));
     await assertFails(updateDoc(doc(db, 'topics', 'screen-time'), {status: 'approved'}));
-    await assertFails(startTopic(MALLORY, doc(dbFor(MALLORY), 'topics', 'other'), topic({name: 'other', createdBy: MALLORY})));
+    await assertFails(startTopic(BOB, doc(dbFor(BOB, false), 'topics', 'other'), topic({name: 'other', createdBy: BOB})));
+  });
+
+  it('can be started by anyone with a verified email, on their first visit', async () => {
+    await assertSucceeds(startTopic(MALLORY, doc(dbFor(MALLORY), 'topics', 'other'), topic({name: 'other', createdBy: MALLORY})));
   });
 
   it('stamps when each one is started, and waits ten minutes between them', async () => {
@@ -245,7 +248,7 @@ describe('reports', () => {
     return {topic: TOPIC, verseKey: VOTED, reason: 'fit', reportedBy: ALICE, createdAt: serverTimestamp(), status: 'open', ...overrides};
   }
 
-  it('lets an allowlisted user report a verse, with optional details', async () => {
+  it('lets a member report a verse, with optional details', async () => {
     await assertSucceeds(sendReport(ALICE, report()));
     await assertSucceeds(sendReport(BOB, report({reason: 'other', details: 'x'.repeat(500), reportedBy: BOB})));
   });
@@ -262,7 +265,11 @@ describe('reports', () => {
     await assertFails(sendReport(ALICE, report({reportedBy: BOB})));
     await assertFails(sendReport(ALICE, report({status: 'resolved'})));
     await assertFails(sendReport(ALICE, report({verseKey: 'nonsense'})));
-    await assertFails(sendReport(MALLORY, report({reportedBy: MALLORY})));
+    await assertFails(createStamped(BOB, doc(collection(dbFor(BOB, false), 'reports')), report({reportedBy: BOB}), 'lastReportAt'));
+  });
+
+  it('can be sent by anyone with a verified email, on their first visit', async () => {
+    await assertSucceeds(sendReport(MALLORY, report({reportedBy: MALLORY})));
   });
 
   it('keeps reports out of reach of everyone but reviewers', async () => {

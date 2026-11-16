@@ -4,7 +4,7 @@ import type {TopicFile} from '@bible-center/core';
 import {readFileSync} from 'node:fs';
 import {expect, test} from '@playwright/test';
 import {formatReference, referenceOf} from '@bible-center/core';
-import {signInAsNewAllowedUser} from './support/auth';
+import {signInAsNewUser} from './support/auth';
 
 /** The most-voted verse of a topic in the committed data. Each test uses its own topic, so tests never share counts. */
 function topVerseOf(slug: string): string {
@@ -39,7 +39,7 @@ test('someone signed out sees the counts, and is asked to sign in to vote', asyn
 test('an account under a week old is told when it can vote, and can still report', async ({page}) => {
   const reference = topVerseOf('gentleness');
 
-  await signInAsNewAllowedUser(page, 'member', 1);
+  await signInAsNewUser(page, 'member', 1);
   await page.goto('/topics/gentleness');
 
   await expect(page.getByText(/^You can upvote and add verses after [A-Z][a-z]+ \d{1,2} at \d{1,2}:\d{2} [AP]M\.$/)).toBeVisible();
@@ -51,7 +51,7 @@ test('an account under a week old is told when it can vote, and can still report
 test('an upvote counts, survives a reload, and can be removed', async ({page}) => {
   const reference = topVerseOf('kindness');
 
-  await signInAsNewAllowedUser(page);
+  await signInAsNewUser(page);
   await openTopic(page, 'kindness');
 
   await rowOf(page, reference).getByRole('button', {name: `Upvote ${reference}`}).click();
@@ -69,7 +69,7 @@ test('an upvote counts, survives a reload, and can be removed', async ({page}) =
 test('a verse can be added, counting as an upvote, but not twice or one that does not exist', async ({page}) => {
   const listed = topVerseOf('hope');
 
-  await signInAsNewAllowedUser(page);
+  await signInAsNewUser(page);
   await openTopic(page, 'hope');
   await page.getByRole('button', {name: 'Add a verse to this topic'}).click();
 
@@ -99,7 +99,7 @@ test('a verse can be added, counting as an upvote, but not twice or one that doe
 test('adding the first verse to a topic nobody has starts it', async ({page}) => {
   const slug = `screen-time-${Date.now().toString(36)}`;
 
-  await signInAsNewAllowedUser(page);
+  await signInAsNewUser(page);
   await page.goto(`/topics/${slug}`);
   await expect(page.getByText('No one has added a verse to this topic yet. Add one that speaks to it')).toBeVisible();
 
@@ -117,7 +117,7 @@ test('adding the first verse to a topic nobody has starts it', async ({page}) =>
 test('a verse can be reported for review', async ({page}) => {
   const reference = topVerseOf('joy');
 
-  await signInAsNewAllowedUser(page);
+  await signInAsNewUser(page);
   await openTopic(page, 'joy');
   await rowOf(page, reference).getByRole('button', {name: `Report ${reference}`}).click();
 
@@ -139,7 +139,7 @@ test.describe('on a phone', () => {
   test('voting works, and the page does not scroll sideways', async ({page}) => {
     const reference = topVerseOf('peace');
 
-    await signInAsNewAllowedUser(page);
+    await signInAsNewUser(page);
     await openTopic(page, 'peace');
     await rowOf(page, reference).getByRole('button', {name: `Upvote ${reference}`}).click();
     await expect(rowOf(page, reference)).toContainText('1 on Bible Center');

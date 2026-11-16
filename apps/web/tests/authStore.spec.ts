@@ -90,14 +90,14 @@ describe('auth store', () => {
     expect(useAuthStore.getState().status).toBe('signedOut');
   });
 
-  it('asks an unverified user to verify, without checking the allowlist', async () => {
+  it('asks an unverified user to verify, without checking their role', async () => {
     await reportUser(makeUser({emailVerified: false}));
 
     expect(useAuthStore.getState().status).toBe('unverified');
     expect(getAccess).not.toHaveBeenCalled();
   });
 
-  it('allows a verified user on the allowlist', async () => {
+  it('allows any verified user, as a member', async () => {
     vi.mocked(getAccess).mockResolvedValue('member');
 
     await reportUser(makeUser());
@@ -119,15 +119,13 @@ describe('auth store', () => {
     expect(useAuthStore.getState().accountCreatedAt).toBeNull();
   });
 
-  it('records no first sign-in for someone not on the allowlist', async () => {
-    vi.mocked(getAccess).mockResolvedValue(null);
-
-    await reportUser(makeUser());
+  it('records no first sign-in until the email is verified', async () => {
+    await reportUser(makeUser({emailVerified: false}));
 
     expect(recordFirstSignIn).not.toHaveBeenCalled();
   });
 
-  it('keeps the role from the allowlist', async () => {
+  it('keeps the role from roles', async () => {
     vi.mocked(getAccess).mockResolvedValue('reviewer');
 
     await reportUser(makeUser());
@@ -135,15 +133,7 @@ describe('auth store', () => {
     expect(useAuthStore.getState().role).toBe('reviewer');
   });
 
-  it('reports a verified user who is not on the allowlist', async () => {
-    vi.mocked(getAccess).mockResolvedValue(null);
-
-    await reportUser(makeUser());
-
-    expect(useAuthStore.getState().status).toBe('noAccess');
-  });
-
-  it('reports a failed check separately from having no access', async () => {
+  it('reports a failed check, so the person can try again', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(getAccess).mockRejectedValue(new Error('offline'));
 

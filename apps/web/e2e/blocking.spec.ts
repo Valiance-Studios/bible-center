@@ -1,6 +1,6 @@
 import {expect, test} from '@playwright/test';
 import {addReport, createGoogleAccount, setAccountAge, startTopic, uidOf} from '../../../scripts/emulator-admin.ts';
-import {createTestUser, signInAsNewAllowedUser} from './support/auth';
+import {createTestUser, signInAsNewUser} from './support/auth';
 
 /** Psalm 34:8, the verse each test's topic starts with. */
 const VERSE_ID = '19034008';
@@ -30,7 +30,7 @@ async function startUniqueTopic(): Promise<string> {
 test('an admin blocks an account by email, and unblocks it', async ({page}) => {
   const target = await createTarget();
 
-  await signInAsNewAllowedUser(page, 'admin');
+  await signInAsNewUser(page, 'admin');
   await page.goto('/people');
 
   const section = page.getByRole('region', {name: 'Blocked accounts'});
@@ -62,7 +62,7 @@ test('an admin blocks the account behind a report from the Review page, which re
   const slug = await startUniqueTopic();
 
   await addReport({topic: slug, verseKey: VERSE_ID, reason: 'other', details: 'Spam from a blocked account.', createdAt: new Date(), reportedBy: target.uid});
-  await signInAsNewAllowedUser(page, 'admin');
+  await signInAsNewUser(page, 'admin');
   await page.goto('/review');
 
   const item = page.getByRole('article', {name: `Psalm 34:8 on ${slug.replaceAll('-', ' ')}`});
@@ -82,7 +82,7 @@ test('a reviewer sees no accounts and cannot block', async ({page}) => {
   const slug = await startUniqueTopic();
 
   await addReport({topic: slug, verseKey: VERSE_ID, reason: 'fit', details: 'Seen by a reviewer.', createdAt: new Date()});
-  await signInAsNewAllowedUser(page, 'reviewer');
+  await signInAsNewUser(page, 'reviewer');
   await page.goto('/review');
 
   const item = page.getByRole('article', {name: `Psalm 34:8 on ${slug.replaceAll('-', ' ')}`});

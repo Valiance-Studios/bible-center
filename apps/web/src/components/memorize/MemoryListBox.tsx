@@ -26,7 +26,12 @@ export function MemoryListBox({span, list}: MemoryListBoxProps) {
       </>
     );
   } else if (!list.canKeepList && list.authStatus !== 'loading') {
-    content = <p>Keeping a memory list is invite-only for now. Anyone can practice.</p>;
+    content = (
+      <p>
+        <Link to="/sign-in">Finish signing in</Link>
+        {' to keep a memory list. Anyone can practice.'}
+      </p>
+    );
   } else if (list.isBlocked) {
     content = <p>Your account is blocked, so your memory list cannot change. You can still practice any verse.</p>;
   } else if (list.authStatus === 'loading' || list.isLoading) {

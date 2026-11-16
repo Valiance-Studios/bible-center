@@ -79,7 +79,12 @@ function MemoryList() {
   }
 
   if (!list.canKeepList) {
-    return <p className={classes.empty}>Keeping a memory list is invite-only for now. Anyone can practice.</p>;
+    return (
+      <p className={classes.empty}>
+        <Link to="/sign-in">Finish signing in</Link>
+        {' to keep a memory list. Anyone can practice.'}
+      </p>
+    );
   }
 
   if (list.hasLoadError || !list.entries) {

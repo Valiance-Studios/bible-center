@@ -58,17 +58,13 @@ function documentsUrl(path: string): string {
 /** A role from `packages/core/src/roles.ts`. */
 export type EmulatorRole = 'member' | 'reviewer' | 'admin';
 
-/** Adds the email to the allowlist the security rules check, with a role. Safe to repeat. */
-export async function allowEmail(email: string, role: EmulatorRole = 'member'): Promise<void> {
-  const key = encodeURIComponent(email.toLowerCase());
-  const options = (fields: object) => ({method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields})});
+/** Gives an email a role, as an admin would on the People page. Members have no entry in `roles`. Safe to repeat. */
+export async function setRole(email: string, role: EmulatorRole = 'member'): Promise<void> {
+  const url = documentsUrl(`roles/${encodeURIComponent(email.toLowerCase())}`);
 
-  await request(documentsUrl(`allowedUsers/${key}`), options({}), `allow ${email}`);
-
-  // Members have no entry in `roles`.
   await (role === 'member'
-    ? request(documentsUrl(`roles/${key}`), {method: 'DELETE', headers: ADMIN_HEADERS}, `clear the role of ${email}`)
-    : request(documentsUrl(`roles/${key}`), options({role: {stringValue: role}}), `make ${email} ${role}`));
+    ? request(url, {method: 'DELETE', headers: ADMIN_HEADERS}, `clear the role of ${email}`)
+    : request(url, {method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields: {role: {stringValue: role}}})}, `make ${email} ${role}`));
 }
 
 /** Opens the confirmation link the Auth emulator would have emailed, as the person would from their inbox. */

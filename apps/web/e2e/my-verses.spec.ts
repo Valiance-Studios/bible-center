@@ -2,7 +2,7 @@ import type {Page} from '@playwright/test';
 
 import {expect, test} from '@playwright/test';
 import {addAnnotations, uidOf} from '../../../scripts/emulator-admin.ts';
-import {signInAsNewAllowedUser} from './support/auth';
+import {signInAsNewUser} from './support/auth';
 
 /** Opens a chapter in the reader and waits until it can be annotated. */
 async function openChapter(page: Page, path: string) {
@@ -48,7 +48,7 @@ test('someone signed out is asked to sign in', async ({page}) => {
 });
 
 test('with nothing saved, it explains how to start', async ({page}) => {
-  await signInAsNewAllowedUser(page);
+  await signInAsNewUser(page);
   await openMyVerses(page);
 
   await expect(page.getByText('Verses you highlight, bookmark or add notes to will appear here.')).toBeVisible();
@@ -57,7 +57,7 @@ test('with nothing saved, it explains how to start', async ({page}) => {
 });
 
 test('it lists highlights, bookmarks and notes, filtered and ordered, in the selected translation', async ({page}) => {
-  await signInAsNewAllowedUser(page);
+  await signInAsNewUser(page);
   await openChapter(page, '/read/genesis/1');
   await addNote(page, 1, 'A thought on creation.');
   await openChapter(page, '/read/psalms/23');
@@ -94,7 +94,7 @@ test('it lists highlights, bookmarks and notes, filtered and ordered, in the sel
 });
 
 test('removing asks first, then takes it off the list and out of the reader', async ({page}) => {
-  await signInAsNewAllowedUser(page);
+  await signInAsNewUser(page);
   await openChapter(page, '/read/psalms/23');
   await mark(page, [1], 'Bookmark');
   await mark(page, [2], 'Highlight');
@@ -123,7 +123,7 @@ test('removing asks first, then takes it off the list and out of the reader', as
 });
 
 test('it shows 20 at a time, in the chosen order and filter', async ({page}) => {
-  const user = await signInAsNewAllowedUser(page);
+  const user = await signInAsNewUser(page);
   const start = Date.UTC(2026, 0, 1);
   // Psalm 119:1-25 as highlights, each added a minute after the last, and one note on Psalm 119:105.
   const highlights = Array.from({length: 25}, (_, index) => {
@@ -160,7 +160,7 @@ test.describe('on a phone', () => {
   test.use({viewport: {width: 390, height: 844}});
 
   test('it opens from the menu, and the page does not scroll sideways', async ({page}) => {
-    await signInAsNewAllowedUser(page);
+    await signInAsNewUser(page);
     await openChapter(page, '/read/john/1');
     await mark(page, [1, 2], 'Highlight');
 
