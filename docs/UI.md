@@ -39,6 +39,8 @@ Other rules:
 
 ## Global
 
+- A blocked account can still read, search, practice and study words. Wherever it would save something, a notice says it is blocked, with the support address, in place of the controls. A save refused because the account was blocked during the visit says so in the same words.
+
 - Toggle between light and dark mode. The system setting applies until the user chooses.
 - Works at phone widths.
 - Pages showing data credit their source: OpenBible, STEP Bible, or the translation.

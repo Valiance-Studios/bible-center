@@ -58,6 +58,8 @@ function SavedVerses({uid}: {uid: string}) {
   const filter = parseFilter(searchParams.get('show'));
   const order = parseOrder(searchParams.get('order'));
   const pages = useAnnotationPages(uid, filter === 'all' ? null : filter, order);
+  // A blocked account still sees its saved verses, but cannot remove them.
+  const isBlocked = useAuthStore((state) => state.isBlocked);
 
   function setParam(name: string, value: string, defaultValue: string) {
     const next = new URLSearchParams(searchParams);
@@ -127,7 +129,7 @@ function SavedVerses({uid}: {uid: string}) {
           reference={reference}
           translation={translation}
           isRemoving={pages.isRemoving}
-          onRemove={() => pages.remove(annotation.id)}
+          onRemove={isBlocked ? undefined : () => pages.remove(annotation.id)}
         />
       ))}
 

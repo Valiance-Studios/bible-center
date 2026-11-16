@@ -4,7 +4,9 @@ import {useState} from 'react';
 import {REPORT_DETAILS_MAX_LENGTH, REPORT_REASONS} from '@bible-center/core';
 import {Alert, Button, Group, Modal, Radio, Stack, Text, Textarea} from '@mantine/core';
 import {formatTime} from '@/components/formatTime';
+import {SupportContact} from '@/components/SupportContact';
 import {limitOf} from '@/firebase/userRecord';
+import {wasRefusedForBlock} from '@/stores/auth';
 
 interface ReportDialogProps {
   /** Names the verse and topic, such as "Report Psalm 34:18 on grief". */
@@ -27,6 +29,8 @@ export function ReportDialog({title, onSend, onClose}: ReportDialogProps) {
   const [hasError, setHasError] = useState(false);
   /** Set when this person sent a report too recently, saying when they can send another. */
   const [waitMessage, setWaitMessage] = useState<string | null>(null);
+  /** Set when an admin blocked the account while the dialog was open. */
+  const [isBlocked, setIsBlocked] = useState(false);
 
   async function send() {
     if (!reason) {
@@ -44,6 +48,8 @@ export function ReportDialog({title, onSend, onClose}: ReportDialogProps) {
 
       if (limit?.type === 'cooldown') {
         setWaitMessage(`You sent a report a moment ago. You can send another at ${formatTime(limit.endsAt)}.`);
+      } else if (await wasRefusedForBlock(error)) {
+        setIsBlocked(true);
       } else {
         setHasError(true);
       }
@@ -86,10 +92,16 @@ export function ReportDialog({title, onSend, onClose}: ReportDialogProps) {
               />
               <Text size="sm" c="var(--bc-muted)" mt="md">Reports do not change the ranking. A reviewer decides whether to remove the verse from this topic.</Text>
               {waitMessage && <Alert color="gray" mt="md" role="status">{waitMessage}</Alert>}
+              {isBlocked && (
+                <Alert color="red" mt="md" role="alert">
+                  Your account has been blocked, so this could not be sent.
+                  <SupportContact />
+                </Alert>
+              )}
               {hasError && <Alert color="red" mt="md">The report could not be sent. Check your connection and try again.</Alert>}
               <Group justify="flex-end" mt="md">
                 <Button variant="default" onClick={onClose} disabled={isSending}>Cancel</Button>
-                <Button onClick={() => void send()} disabled={!reason || waitMessage !== null} loading={isSending}>Send report</Button>
+                <Button onClick={() => void send()} disabled={!reason || waitMessage !== null || isBlocked} loading={isSending}>Send report</Button>
               </Group>
             </>
           )}

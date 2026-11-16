@@ -43,7 +43,7 @@ test('an account under a week old is told when it can vote, and can still report
   await page.goto('/topics/gentleness');
 
   await expect(page.getByText(/^You can upvote and add verses after [A-Z][a-z]+ \d{1,2} at \d{1,2}:\d{2} [AP]M\.$/)).toBeVisible();
-  await expect(rowOf(page, reference).getByRole('button', {name: `Upvote ${reference}, not available yet`})).toBeDisabled();
+  await expect(rowOf(page, reference).getByRole('button', {name: `Upvote ${reference}, not available`})).toBeDisabled();
   await expect(page.getByRole('button', {name: 'Add a verse to this topic'})).toHaveCount(0);
   await expect(rowOf(page, reference).getByRole('button', {name: `Report ${reference}`})).toBeVisible();
 });

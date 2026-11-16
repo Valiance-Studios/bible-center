@@ -120,6 +120,7 @@ Start with "Starting a Session" in `CLAUDE.md`, then the [Mockups](#mockups) sec
 | `ReviewBlock.dc.html` | Admins block the account behind a reported verse, a report or a new topic |
 | `Privacy.dc.html` | The privacy policy |
 | `DeleteAccount.dc.html` | Deleting your account from the account menu |
+| `BlockedAccount.dc.html` | What a blocked account sees wherever it would save |
 
 The canvas is the source of truth for the design. To work from it in a new session, read `project/canvas.json` and any `project/<artboard>` from that URL with the Artifact tool. The design language is in [UI.md](docs/UI.md#design-language).
 
@@ -708,6 +709,7 @@ Admins block an account that misuses Bible Center. A blocked account can still r
 - **Records:** `blockedUsers/{uid}` holds the account's email, who blocked it and when, and whether its content was removed (`BlockedAccountRecord` in `packages/core/src/accounts.ts`). `isBlocked()` in `firestore.rules` checks it in `canWrite()`, which every write rule uses, and in `isReviewer()` and `isAdmin()`, so a blocked reviewer or admin cannot act either. Admins list and unblock; nobody writes the records directly.
 - **The function:** `blockAccount` in `apps/functions` is a callable function, so it can find an account by email with the Admin SDK, which the People page needs. It checks the caller as `isAdmin` does (`requireAdmin`), refuses to block the caller, and writes the record. With `removeContent`, `userContent.ts` also takes away the account's upvotes (each with its count, as the rules require of people), deletes its reports and the verses it added, and rejects the topics it started. Those queries need the collection-group single-field indexes on `votes.uid` and `verses.createdBy` in `firestore.indexes.json`.
 - **In the app:** the People page blocks by email and lists blocked accounts with Unblock (`BlockedAccounts`). On the Review page, admins see when the account behind each reported verse, report and new topic joined, read from `users/{uid}.createdAt`, which the rules let admins read, and can block it there (`AccountLine`). Both use `BlockDialog` and `useBlockedAccounts`.
+- **For the blocked account:** the auth store reads its own `blockedUsers` entry at sign-in (`isAccountBlocked`), and checks again whenever a save is refused for permission (`wasRefusedForBlock`, from the query client's mutation cache and from the report and add-verse dialogs). While `isBlocked`, each place that would save says why it cannot, with `BlockedNotice` and the support address in `SupportContact`, and turns its controls off: topic votes, adding and reporting; the reader's annotation tools and note editing; the memory list; Remove on My verses and Memorize; and, for staff, the Review and People pages through `RoleGate` and setting the verse of the day. Reading, practicing and the word study work as before.
 - **Service account:** `blockAccount` runs as `sa-bc-block-account-dev`, which can read and write Firestore and look up accounts, and nothing else; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#cloud-functions).
 
 ```mermaid

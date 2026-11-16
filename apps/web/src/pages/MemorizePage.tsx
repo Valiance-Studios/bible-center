@@ -112,7 +112,7 @@ function MemoryList() {
               translation={translation}
               now={now}
               isSaving={list.isSaving}
-              onRemove={() => void list.remove(entry.key).catch(() => {})}
+              onRemove={list.isBlocked ? undefined : () => void list.remove(entry.key).catch(() => {})}
             />
           ))}
         </section>

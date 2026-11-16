@@ -93,7 +93,19 @@ gcloud projects add-iam-policy-binding $PROJECT --member "serviceAccount:$ACCOUN
 gcloud projects add-iam-policy-binding $PROJECT --member "serviceAccount:$ACCOUNT" --role roles/firebaseauth.viewer --condition None
 ```
 
-Whoever deploys needs Service Account User (`roles/iam.serviceAccountUser`) on each account; a project Owner has it already. Then deploy with `npm run deploy:functions`, which builds them first. The service accounts have no keys, and none should be made: the functions run as them without one.
+Whoever deploys needs Service Account User (`roles/iam.serviceAccountUser`) on each account; a project Owner has it already.
+
+**Builds, once per project.** Cloud Build builds each function as the Compute Engine default service account, `<project number>-compute@developer.gserviceaccount.com`, which new projects create with almost no roles. The first deploy fails until it can read the uploaded source, push to Artifact Registry and write logs, which the Cloud Build Service Account role covers. Granting `roles/logging.logWriter` alone is not enough. Allow a few minutes for the grant to apply before retrying:
+
+```sh
+NUMBER=$(gcloud projects describe $PROJECT --format='value(projectNumber)')
+
+gcloud projects add-iam-policy-binding $PROJECT \
+  --member "serviceAccount:$NUMBER-compute@developer.gserviceaccount.com" \
+  --role roles/cloudbuild.builds.builder --condition None
+```
+
+The Firebase CLI cannot choose a different build account. The functions still run as their own accounts; the default one only builds them. Then deploy with `npm run deploy:functions`, which builds them first. The service accounts have no keys, and none should be made: the functions run as them without one.
 
 ## Secrets
 

@@ -5,10 +5,8 @@ import {collection, deleteDoc, doc, getDoc, Timestamp} from 'firebase/firestore'
 import {httpsCallable} from 'firebase/functions';
 import {functions} from './functions';
 import {db} from './index';
+import {BLOCKED_USERS_COLLECTION} from './access';
 import {fetchFromServer} from './serverQuery';
-
-/** Mirrors `blockedUsers` in `firestore.rules`. */
-const BLOCKED_USERS_COLLECTION = 'blockedUsers';
 
 /** An account an admin blocked. */
 export interface BlockedAccount extends BlockedAccountRecord {

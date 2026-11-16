@@ -11,6 +11,14 @@ export const ALLOWED_USERS_COLLECTION = 'allowedUsers';
 /** Reviewers and admins, keyed by lowercase email. Mirrors `roles` in `firestore.rules`. */
 export const ROLES_COLLECTION = 'roles';
 
+/** Accounts an admin blocked, keyed by account id. Mirrors `blockedUsers` in `firestore.rules`. */
+export const BLOCKED_USERS_COLLECTION = 'blockedUsers';
+
+/** Whether an admin blocked this account. The rules let each account read its own entry. */
+export async function isAccountBlocked(uid: string): Promise<boolean> {
+  return (await getDoc(doc(db, BLOCKED_USERS_COLLECTION, uid))).exists();
+}
+
 /**
  * This user's role, or null if they are not on the allowlist. The rules only answer for a verified email,
  * so check that first.

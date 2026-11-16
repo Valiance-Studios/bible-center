@@ -5,6 +5,7 @@ import {Link} from 'react-router';
 import {chapterIdOf, formatReference, selectVerse, spanContains, spanOf, spansOverlap, verseIdIn, WRITE_LIMITS} from '@bible-center/core';
 import {Alert} from '@mantine/core';
 import {memorizePath} from '@/bible/paths';
+import {BlockedNotice} from '@/components/BlockedNotice';
 import {VerseText} from '@/components/VerseText';
 import {useAuthStore} from '@/stores/auth';
 import {NoteDialog} from './NoteDialog';
@@ -47,8 +48,11 @@ const RibbonIcon = <svg width="13" height="16" viewBox="0 0 13 16" fill="current
 export function ChapterVerses({reference, verses, targetVerse, selection, studiedVerse, onSelectionChange, wordsTool}: ChapterVersesProps) {
   const status = useAuthStore((state) => state.status);
   const user = useAuthStore((state) => state.user);
-  const canAnnotate = status === 'allowed';
-  const {annotations, hasLoadError, isLoading, isSaving, hasError, isFull, add, removeAll, updateNote} = useChapterAnnotations(canAnnotate ? user?.uid : undefined, reference);
+  const isAllowed = status === 'allowed';
+  // A blocked account still sees its annotations, but cannot change them.
+  const isBlocked = useAuthStore((state) => isAllowed && state.isBlocked);
+  const canAnnotate = isAllowed && !isBlocked;
+  const {annotations, hasLoadError, isLoading, isSaving, hasError, isFull, add, removeAll, updateNote} = useChapterAnnotations(isAllowed ? user?.uid : undefined, reference);
   // Until annotations load, an action cannot know what is already marked, and could add a duplicate instead of removing.
   const areActionsDisabled = isLoading || isSaving || hasLoadError;
   const [noteEditor, setNoteEditor] = useState<NoteEditor | null>(null);
@@ -161,9 +165,11 @@ export function ChapterVerses({reference, verses, targetVerse, selection, studie
                 <p className={classes.noteText}>
                   {note.text}
                 </p>
-                <button type="button" className={classes.noteEdit} onClick={() => setNoteEditor({span: spanOf(note), note})}>
-                  {`Edit note on ${describe(spanOf(note))}`}
-                </button>
+                {canAnnotate && (
+                  <button type="button" className={classes.noteEdit} onClick={() => setNoteEditor({span: spanOf(note), note})}>
+                    {`Edit note on ${describe(spanOf(note))}`}
+                  </button>
+                )}
               </div>
             ))}
 
@@ -197,6 +203,13 @@ export function ChapterVerses({reference, verses, targetVerse, selection, studie
                   <Link className={classes.tool} to={memorizePath(referenceTo(selection))}>Memorize</Link>
                   <button type="button" className={classes.tool} onClick={() => onSelectionChange(null)}>Clear selection</button>
                 </div>
+                {isBlocked && (
+                  <BlockedNotice>
+                    {'Your account is blocked, so you cannot highlight, bookmark or add notes. Your saved verses are still in '}
+                    <Link to="/my-verses">My verses</Link>
+                    .
+                  </BlockedNotice>
+                )}
               </div>
             )}
           </div>
