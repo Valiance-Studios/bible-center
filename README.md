@@ -27,7 +27,7 @@ Bible Center is a monorepo built with React, TypeScript, Mantine and Firebase.
 - [docs/UI.md](docs/UI.md): pages and the design language.
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): deploying and App Check.
 
-Suggestions are welcome through GitHub issues.
+Suggestions are welcome through GitHub issues. Please report security problems privately instead; see [SECURITY.md](SECURITY.md).
 
 ## License
 
