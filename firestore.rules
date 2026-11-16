@@ -20,9 +20,13 @@ service cloud.firestore {
       return request.auth.token.email.lower();
     }
 
-    // Keep in sync with ROLES in packages/core/src/roles.ts. An entry with no role is a member.
+    function myRoleEntry() {
+      return /databases/$(database)/documents/roles/$(myEmail());
+    }
+
+    // Keep in sync with ROLES in packages/core/src/roles.ts. Anyone without an entry in `roles` is a member.
     function myRole() {
-      return get(/databases/$(database)/documents/allowedUsers/$(myEmail())).data.get('role', 'member');
+      return exists(myRoleEntry()) ? get(myRoleEntry()).data.role : 'member';
     }
 
     // Handles reports and the topics people start.
@@ -42,28 +46,49 @@ service cloud.firestore {
         && email.matches('[^@\\s/]+@[^@\\s/]+[.][^@\\s/]+');
     }
 
-    function isValidAllowedUser(data) {
-      return data.keys().hasOnly(['role', 'updatedBy', 'updatedAt'])
-        && data.keys().hasAll(['role', 'updatedBy', 'updatedAt'])
-        && data.role in ['member', 'reviewer', 'admin']
+    function isChangeRecord(data, fields) {
+      return data.keys().hasOnly(fields.concat(['updatedBy', 'updatedAt']))
+        && data.keys().hasAll(fields.concat(['updatedBy', 'updatedAt']))
         && data.updatedBy == request.auth.uid
         && data.updatedAt == request.time;
     }
 
-    // The allowlist, keyed by lowercase email, with each person's role. Users may check themselves. Admins manage
-    // everyone else in the app, but never their own entry, so the last admin cannot lock everyone out.
-    // The first admin is set in the Firebase console.
-    match /allowedUsers/{email} {
-      allow get: if request.auth != null
+    // A verified user may check their own entry in a collection keyed by lowercase email.
+    function isMyEmailKey(email) {
+      return request.auth != null
         && request.auth.token.email_verified == true
         && myEmail() == email;
+    }
+
+    // The allowlist of who can sign in, keyed by lowercase email. Users may check themselves. Admins manage
+    // everyone else in the app, but never their own entry, so they cannot lock themselves out.
+    // Older entries may still hold a `role`, which nothing reads.
+    match /allowedUsers/{email} {
+      allow get: if isMyEmailKey(email);
+
+      allow read: if isAdmin();
+
+      allow create: if isAdmin()
+        && email != myEmail()
+        && isEmailKey(email)
+        && isChangeRecord(request.resource.data, []);
+
+      allow delete: if isAdmin() && email != myEmail();
+    }
+
+    // Reviewers and admins, keyed by lowercase email. Everyone else is a member, so a member has no entry.
+    // Users may check their own role. Admins manage everyone else's in the app, but never their own, so the
+    // last admin cannot demote themselves and lock everyone out. The first admin is set in the Firebase console.
+    match /roles/{email} {
+      allow get: if isMyEmailKey(email);
 
       allow read: if isAdmin();
 
       allow create, update: if isAdmin()
         && email != myEmail()
         && isEmailKey(email)
-        && isValidAllowedUser(request.resource.data);
+        && isChangeRecord(request.resource.data, ['role'])
+        && request.resource.data.role in ['reviewer', 'admin'];
 
       allow delete: if isAdmin() && email != myEmail();
     }

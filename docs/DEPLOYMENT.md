@@ -29,7 +29,17 @@ Referrer restrictions are a light barrier, since non-browser clients can fake th
 
 ## Allowlist and Roles
 
-Admins add people, set their roles and remove them on the People page (`/people`). The first admin has to be made in the Firestore console: on `allowedUsers/<lowercase email>`, add a string field `role` set to `admin`. An entry with no `role` is a member. The email must be verified to count; see [Authentication and Access](../ARCHITECTURE.md#authentication-and-access).
+Admins add people, set their roles and remove them on the People page (`/people`). The first admin has to be made in the Firestore console: create `allowedUsers/<lowercase email>` with no fields, and `roles/<lowercase email>` with a string field `role` set to `admin`. Anyone without a `roles` entry is a member. The email must be verified to count; see [Authentication and Access](../ARCHITECTURE.md#authentication-and-access).
+
+### Moving Roles Off the Allowlist
+
+Roles used to be a `role` field on `allowedUsers/<email>`. The rules now read them only from `roles/<email>`, so before deploying those rules, copy each reviewer and admin across in the Firestore console:
+
+1. In `allowedUsers`, find every entry whose `role` is `reviewer` or `admin`.
+2. For each, create `roles/<the same email>` with a string field `role` holding that value. Members need nothing.
+3. Deploy the rules with `npm run deploy:rules`, then confirm the People page still opens for you.
+
+The old `role` fields are ignored afterwards and can be deleted. If the rules go out first, admins lose their role until their `roles` entry exists, but the console can always add it.
 
 Admins cannot change or remove their own entry, so there is always at least one admin. To demote the last admin, use the console.
 

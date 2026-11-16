@@ -1,6 +1,6 @@
 /**
- * What someone on the allowlist can do. Each role can do everything the ones before it can.
- * Keep in sync with `allowedUsers` in `firestore.rules`.
+ * What someone can do. Each role can do everything the ones before it can.
+ * Keep in sync with `roles` in `firestore.rules`, where only reviewers and admins have an entry.
  */
 export const ROLES = ['member', 'reviewer', 'admin'] as const;
 
@@ -12,7 +12,7 @@ export const ROLE_NAMES: Record<Role, string> = {
   admin: 'Admin',
 };
 
-/** An allowlist entry's role. Entries made before roles existed have none, and are members. */
+/** The role in someone's `roles` entry. Without one, they are a member. */
 export function parseRole(value: unknown): Role {
   return ROLES.find((role) => role === value) ?? 'member';
 }
@@ -31,12 +31,12 @@ export function isAdmin(role: Role): boolean {
 const EMAIL_PATTERN = /^[^@\s/]+@[^@\s/]+\.[^@\s/]+$/;
 const EMAIL_MAX_LENGTH = 254;
 
-/** An email as the allowlist keys it: trimmed and lowercase. */
+/** An email as the allowlist and roles key it: trimmed and lowercase. */
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-/** Whether a normalized email has the shape the allowlist accepts. */
+/** Whether a normalized email has the shape the allowlist and roles accept. */
 export function isEmailAddress(email: string): boolean {
   return email.length <= EMAIL_MAX_LENGTH && EMAIL_PATTERN.test(email);
 }
