@@ -3,6 +3,7 @@ import {Link} from 'react-router';
 import {BIBLE_BOOKS, BIBLE_SECTIONS} from '@bible-center/core';
 import {Drawer} from '@mantine/core';
 import {chapterPath} from '@/bible/paths';
+import {useAuthStore} from '@/stores/auth';
 import {AccountLinkLabel} from './AccountLinkLabel';
 import {ThemeToggle} from './ThemeToggle';
 import {useAccountLinks} from './useAccountLinks';
@@ -13,10 +14,13 @@ interface PhoneMenuProps {
   onClose: () => void;
   /** Opens the About dialog. */
   onAbout: () => void;
+  /** Opens the dialog that deletes the account. */
+  onDeleteAccount: () => void;
 }
 
 /** The left-hand menu on phones, where the thumb index becomes tabs that open to list their books. */
-export function PhoneMenu({opened, onClose, onAbout}: PhoneMenuProps) {
+export function PhoneMenu({opened, onClose, onAbout, onDeleteAccount}: PhoneMenuProps) {
+  const isSignedIn = useAuthStore((state) => state.user !== null);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const accountLinks = useAccountLinks();
 
@@ -35,9 +39,22 @@ export function PhoneMenu({opened, onClose, onAbout}: PhoneMenuProps) {
       >
         About
       </button>
+      <Link className={classes.link} to="/privacy" onClick={onClose}>Privacy</Link>
       {accountLinks.map((link) => (
         <Link key={link.to} className={classes.link} to={link.to} onClick={onClose}><AccountLinkLabel {...link} /></Link>
       ))}
+      {isSignedIn && (
+        <button
+          type="button"
+          className={classes.dangerLink}
+          onClick={() => {
+            onClose();
+            onDeleteAccount();
+          }}
+        >
+          Delete account
+        </button>
+      )}
 
       <h2 className={classes.heading}>Read the Bible</h2>
       <div className={classes.sections}>

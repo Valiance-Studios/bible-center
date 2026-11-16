@@ -23,6 +23,11 @@
   text-decoration: none;
 }
 
+.dangerLink {
+  composes: link;
+  color: var(--bc-rubric);
+}
+
 .heading {
   margin: 16px 16px 10px;
   font-family: 'Literata', serif;

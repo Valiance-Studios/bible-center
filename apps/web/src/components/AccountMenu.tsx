@@ -5,8 +5,13 @@ import {AccountLinkLabel} from './AccountLinkLabel';
 import {useAccountLinks} from './useAccountLinks';
 import classes from './AppLayout.module.scss';
 
+interface AccountMenuProps {
+  /** Opens the dialog that deletes the account. */
+  onDeleteAccount: () => void;
+}
+
 /** The sign-in button, or the signed-in person's menu. Shows nothing until the auth state is known. */
-export function AccountMenu() {
+export function AccountMenu({onDeleteAccount}: AccountMenuProps) {
   const status = useAuthStore((state) => state.status);
   const user = useAuthStore((state) => state.user);
   const signOut = useAuthStore((state) => state.signOut);
@@ -34,8 +39,10 @@ export function AccountMenu() {
         {status === 'allowed'
           ? links.map((link) => <Menu.Item key={link.to} component={Link} to={link.to}><AccountLinkLabel {...link} /></Menu.Item>)
           : <Menu.Item component={Link} to="/sign-in">Account status</Menu.Item>}
-        <Menu.Divider />
+        <Menu.Item component={Link} to="/privacy">Privacy</Menu.Item>
         <Menu.Item onClick={() => void signOut()}>Sign out</Menu.Item>
+        <Menu.Divider />
+        <Menu.Item color="red" onClick={onDeleteAccount}>Delete account</Menu.Item>
       </Menu.Dropdown>
     </Menu>
   );

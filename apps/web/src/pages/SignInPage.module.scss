@@ -127,3 +127,15 @@ $phone-width: 760px;
   text-underline-offset: 3px;
   cursor: pointer;
 }
+
+.terms {
+  margin: -8px 0 18px;
+  color: var(--bc-muted);
+  font-size: 14px;
+  line-height: 1.5;
+
+  a {
+    color: var(--bc-accent);
+    text-underline-offset: 3px;
+  }
+}

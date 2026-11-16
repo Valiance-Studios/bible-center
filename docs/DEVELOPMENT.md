@@ -74,6 +74,7 @@ ESLint (`eslint.config.js`) with `typescript-eslint`, `eslint-plugin-react-hooks
 ## Known Quirks
 
 - **E2E tests never reuse a running dev server.** They start their own on port 5174 in development mode, so they always use the emulators, even with `npm run dev:staging` running. Reusing a staging server once made them create real accounts in the hosted project.
+- **Deleting a Google account in the Auth emulator can break its sign-in popup.** In firebase-tools 15.35.0, choosing "Add new account" for an email that already exists gives that account a second Google id. Once the account is deleted, the extra id still points at it, and every later popup fails with "Internal state invariant broken". Pick existing accounts under "Choose an account" instead, as the E2E helper does, or restart the emulators to clear it.
 - **Firestore indexes are not checked locally.** The emulators answer any query, including ones the hosted project rejects for lack of a composite index. When adding a query that filters on one field and orders by another, or orders by more than one, add its index to `firestore.indexes.json` and deploy it with `npm run deploy:rules`.
 - **npm audit:** production dependencies are clean, using `overrides` in `package.json` for a newer `@grpc/grpc-js` under the Firestore SDK. Moderate findings remain in dev tooling (`firebase-tools`, `eslint`, `typescript-eslint`), where the only suggested fixes are major downgrades.
 - **Install scripts:** npm does not run dependencies' install scripts unless approved. The test suites and build pass without them.

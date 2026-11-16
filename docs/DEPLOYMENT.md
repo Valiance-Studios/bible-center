@@ -79,19 +79,34 @@ The functions live in `apps/functions`. Each runs as its own service account, wi
 | Function | Service account | Roles |
 | --- | --- | --- |
 | `blockAccount` | `sa-bc-block-account-dev` | Cloud Datastore User (`roles/datastore.user`), Firebase Authentication Viewer (`roles/firebaseauth.viewer`) |
+| `deleteAccount` | `sa-bc-delete-account-dev` | Cloud Datastore User (`roles/datastore.user`), Firebase Authentication Admin (`roles/firebaseauth.admin`), since it deletes accounts |
 
 Create each account before its first deploy, with a Google Cloud login that can manage IAM in the project:
 
 ```sh
 PROJECT=vs-bible-center-dev
-ACCOUNT=sa-bc-block-account-dev@$PROJECT.iam.gserviceaccount.com
 
-gcloud iam service-accounts create sa-bc-block-account-dev --project $PROJECT \
-  --display-name "Bible Center blockAccount (dev)" \
-  --description "Runs the blockAccount Cloud Function: finds and blocks accounts, and removes their content."
-gcloud projects add-iam-policy-binding $PROJECT --member "serviceAccount:$ACCOUNT" --role roles/datastore.user --condition None
-gcloud projects add-iam-policy-binding $PROJECT --member "serviceAccount:$ACCOUNT" --role roles/firebaseauth.viewer --condition None
+# Creates a function's service account and grants it the roles in the table above.
+create_function_account() { # <account name> <function> <description> <role>...
+  local name=$1 function=$2 description=$3
+  shift 3
+  gcloud iam service-accounts create "$name" --project $PROJECT \
+    --display-name "Bible Center $function (dev)" --description "$description"
+  for role in "$@"; do
+    gcloud projects add-iam-policy-binding $PROJECT \
+      --member "serviceAccount:$name@$PROJECT.iam.gserviceaccount.com" --role "$role" --condition None
+  done
+}
+
+create_function_account sa-bc-block-account-dev blockAccount \
+  "Runs the blockAccount Cloud Function: finds and blocks accounts, and removes their content." \
+  roles/datastore.user roles/firebaseauth.viewer
+create_function_account sa-bc-delete-account-dev deleteAccount \
+  "Runs the deleteAccount Cloud Function: deletes a person's own account and its data." \
+  roles/datastore.user roles/firebaseauth.admin
 ```
+
+An account that already exists makes its `create` line fail harmlessly; the role grants still apply.
 
 Whoever deploys needs Service Account User (`roles/iam.serviceAccountUser`) on each account; a project Owner has it already.
 

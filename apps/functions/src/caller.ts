@@ -10,6 +10,24 @@ export interface Caller {
   email: string;
 }
 
+/** A signed-in caller acting on their own account. */
+export interface AccountHolder {
+  uid: string;
+  /** Lowercase, and only when verified, since anyone can register a password account with someone else's address. */
+  verifiedEmail: string | null;
+}
+
+/** The caller, if they are signed in. Their email counts only once verified. */
+export function requireSignedIn(auth: CallableRequest['auth']): AccountHolder {
+  if (!auth) {
+    throw new HttpsError('unauthenticated', 'Sign in first.');
+  }
+
+  const email = typeof auth.token.email === 'string' && auth.token.email_verified === true ? auth.token.email.toLowerCase() : null;
+
+  return {uid: auth.uid, verifiedEmail: email};
+}
+
 /**
  * The caller, if they are a signed-in admin with a verified email who is not blocked. The same checks as `isAdmin`
  * in `firestore.rules`, since the Admin SDK skips the rules.

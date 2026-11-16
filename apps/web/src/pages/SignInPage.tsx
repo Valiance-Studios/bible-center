@@ -5,6 +5,7 @@ import {Link, Navigate} from 'react-router';
 import {Alert, Button, Loader, PasswordInput, TextInput} from '@mantine/core';
 import {useAuthStore} from '@/stores/auth';
 import {authErrorMessage} from '@/stores/authErrors';
+import {MINIMUM_AGE} from './PrivacyPage';
 import classes from './SignInPage.module.scss';
 
 const MIN_PASSWORD_LENGTH = 10;
@@ -119,6 +120,11 @@ function RegisterForm({onSignIn}: {onSignIn: () => void}) {
   return (
     <>
       <h1 className={classes.title}>Create an account</h1>
+      <p className={classes.terms}>
+        {`You must be ${MINIMUM_AGE} or older. Creating an account, with Google or by email, means you agree to the `}
+        <Link to="/privacy">privacy policy</Link>
+        .
+      </p>
       <GoogleButton />
       <div className={classes.or}>or</div>
       <form className={classes.fields} onSubmit={submit}>

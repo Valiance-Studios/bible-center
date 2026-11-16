@@ -144,6 +144,10 @@ $phone-width: 900px;
 }
 
 .footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 22px;
   max-width: 820px;
   margin: 0 180px 0 56px;
   padding: 16px 0 40px;
@@ -155,6 +159,9 @@ $phone-width: 900px;
 }
 
 .footerLink {
+  // Centers the text of the About button and the Privacy link alike; a link does not center its own.
+  display: inline-flex;
+  align-items: center;
   min-height: 44px;
   padding: 0;
   border: 0;

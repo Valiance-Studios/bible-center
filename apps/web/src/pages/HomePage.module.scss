@@ -47,3 +47,13 @@
     }
   }
 }
+
+.deleted {
+  max-width: 620px;
+  margin: 0 0 24px;
+  padding: 14px 18px;
+  border-radius: 6px;
+  background: var(--bc-panel);
+  font-size: 16px;
+  line-height: 1.55;
+}

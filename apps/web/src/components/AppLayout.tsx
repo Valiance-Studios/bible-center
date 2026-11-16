@@ -3,6 +3,7 @@ import {Link, Outlet, ScrollRestoration, useMatch} from 'react-router';
 import {BIBLE_BOOKS, BIBLE_SECTIONS} from '@bible-center/core';
 import {chapterPath} from '@/bible/paths';
 import {AboutDialog} from './AboutDialog';
+import {DeleteAccountDialog} from './account/DeleteAccountDialog';
 import {AccountMenu} from './AccountMenu';
 import {PhoneMenu} from './PhoneMenu';
 import {ThemeToggle} from './ThemeToggle';
@@ -19,6 +20,7 @@ function sectionPath(section: string): string {
 export function AppLayout() {
   const [menuOpened, setMenuOpened] = useState(false);
   const [aboutOpened, setAboutOpened] = useState(false);
+  const [deleteOpened, setDeleteOpened] = useState(false);
   const readerMatch = useMatch('/read/:book/:chapter');
   const currentSection = BIBLE_BOOKS.find((book) => book.slug === readerMatch?.params.book)?.section;
 
@@ -38,7 +40,7 @@ export function AppLayout() {
         <Link className={classes.navLink} to="/topics">Topics</Link>
         <Link className={classes.navLink} to="/memorize">Memorize</Link>
         <ThemeToggle />
-        <AccountMenu />
+        <AccountMenu onDeleteAccount={() => setDeleteOpened(true)} />
       </header>
 
       <nav className={classes.thumb} aria-label="Browse by section of the Bible">
@@ -54,15 +56,17 @@ export function AppLayout() {
         ))}
       </nav>
 
-      <PhoneMenu opened={menuOpened} onClose={() => setMenuOpened(false)} onAbout={() => setAboutOpened(true)} />
+      <PhoneMenu opened={menuOpened} onClose={() => setMenuOpened(false)} onAbout={() => setAboutOpened(true)} onDeleteAccount={() => setDeleteOpened(true)} />
 
       <Outlet />
 
       <footer className={classes.footer}>
         <button type="button" className={classes.footerLink} onClick={() => setAboutOpened(true)}>About Bible Center</button>
+        <Link className={classes.footerLink} to="/privacy">Privacy</Link>
       </footer>
 
       <AboutDialog opened={aboutOpened} onClose={() => setAboutOpened(false)} />
+      <DeleteAccountDialog opened={deleteOpened} onClose={() => setDeleteOpened(false)} />
     </div>
   );
 }
