@@ -21,3 +21,6 @@ playwright/.cache
 .idea
 .DS_Store
 *.tsbuildinfo
+
+# Google Cloud credentials written by google-github-actions/auth in CI
+gha-creds-*.json

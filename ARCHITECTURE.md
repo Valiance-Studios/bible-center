@@ -10,7 +10,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | --- | --- |
 | V1: reading, search, annotations, My verses, topics and voting, Hebrew and Greek study, memorization, Verse of the Day, accounts and sign-up, roles and review, blocking, privacy and account deletion, About | Built and released. [UI.md](docs/UI.md) describes each page |
 | Security: Firestore rules and indexes, App Check, two-step sign-in for staff, refusing temporary emails, write limits | Built and released; see [Security](#security) |
-| Environments: staging (`vs-bible-center-dev`) and production (`vs-bible-center-prod`, at `vs-bible-center.web.app`), CI in `.github/workflows/ci.yml` | Live. Production was first released November 16, 2026; see [Environments and Delivery](#environments-and-delivery) |
+| Environments: staging (`vs-bible-center-dev`) and production (`vs-bible-center-prod`, at `vs-bible-center.web.app`), CI in `.github/workflows/ci.yml` | Live. Production was first released November 16, 2026. Merging to `main` releases to both; see [Releasing](#releasing) |
 | Design mockups for V1 | Approved |
 | Boards | Next: design and mockups first |
 | AI topic suggestions | After boards |
@@ -22,7 +22,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 Last updated November 16, 2026.
 
 - **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. Everything in V1 is merged. Check what has merged before starting new work.
-- **Hosted projects:** staging is `vs-bible-center-dev`, at [vs-bible-center-dev.web.app](https://vs-bible-center-dev.web.app). Production is `vs-bible-center-prod`, at [vs-bible-center.web.app](https://vs-bible-center.web.app), released from `main` after testing on staging. The owner deploys both; see [DEPLOYMENT.md](docs/DEPLOYMENT.md), which also covers the API key's restrictions and moving the debug token aside before deploying Hosting.
+- **Hosted projects:** staging is `vs-bible-center-dev`, at [vs-bible-center-dev.web.app](https://vs-bible-center-dev.web.app). Production is `vs-bible-center-prod`, at [vs-bible-center.web.app](https://vs-bible-center.web.app), released automatically when a pull request merges to `main`. Branches are tried on staging by hand first; see [DEPLOYMENT.md](docs/DEPLOYMENT.md), which also covers the API key's restrictions and moving the debug token aside before deploying Hosting by hand.
 - **Set up in production:** Firebase, the `vs-bible-center` Hosting site, Firestore `(default)` in `nam5`, Google and email/password sign-in, Identity Platform with the password policy, reCAPTCHA in audit mode, two-step sign-in and email enumeration protection, authorized domains (without `localhost`), the billing budget and both alerts, the Cloud Functions APIs, the `sa-bc-*-prod` service accounts and the build role, the App Check reCAPTCHA key (in `apps/web/.env.production`), the API key's restrictions and the web app. The owner is its first admin, with two-step sign-in, and App Check is enforced for Firestore and Authentication.
 - **Set up in staging:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. The owner's account is the first admin, set in the console as [DEPLOYMENT.md](docs/DEPLOYMENT.md#roles) describes.
 
@@ -844,22 +844,35 @@ A pending topic is still reachable by its link, which is deliberate, since its s
 
 ## Environments and Delivery
 
+Staging and production are separate Firebase projects, with separate accounts, data, roles and service accounts. `scripts/environments.ts` gives each project its Vite mode, so a deploy builds only that project's config. Locally, commands talk to the emulators, and only `dev:staging` and a deploy by hand reach a real project:
+
 ```mermaid
 flowchart LR
   dev["npm run dev"] -- ".env.development" --> emulators["Local emulators<br/>demo-bible-center"]
   e2e["npm run test:e2e"] -- ".env.development" --> emulators
   rules["npm run test:emulator"] --> emulators
-  ci["GitHub Actions ci.yml<br/>pull requests, pushes to main"] --> e2e
-  ci --> rules
   devStaging["npm run dev:staging"] -- ".env.staging<br/>.env.staging.local" --> staging["vs-bible-center-dev<br/>vs-bible-center-dev.web.app"]
-  deployStaging["npm run deploy:staging<br/>any branch"] --> buildStaging["build-hosting.ts<br/>vite build --mode staging"]
+  deployStaging["npm run deploy:staging<br/>any branch, to try it"] --> buildStaging["build-hosting.ts<br/>vite build --mode staging"]
   buildStaging --> staging
-  deployProd["npm run deploy:production<br/>main, once tested on staging"] --> release["check-release.ts<br/>clean, at origin/main"]
-  release --> buildProd["build-hosting.ts<br/>vite build --mode production"]
-  buildProd --> production["vs-bible-center-prod<br/>vs-bible-center.web.app"]
 ```
 
-Staging and production are separate Firebase projects, with separate accounts, data, roles and service accounts. A change is merged, deployed to staging and tried there, then the same commit is deployed to production. `scripts/environments.ts` gives each project its Vite mode, so a deploy builds only that project's config, and `check-release.ts` refuses a production deploy of anything but a clean checkout of `main` on GitHub. Details are in [DEVELOPMENT.md](docs/DEVELOPMENT.md#environment-files) and [DEPLOYMENT.md](docs/DEPLOYMENT.md#deploying).
+### Releasing
+
+Merging a pull request releases it. `main` only takes pull requests whose CI checks pass and that are up to date with it, so what merges is what was tried on staging. CI then deploys the commit to staging and production, signing in through each project's Workload Identity pool, which trusts only this repository's `main`:
+
+```mermaid
+flowchart LR
+  pr["Pull request<br/>tried on staging by hand"] --> merge["Merge to main<br/>branch protection"]
+  merge --> checks["ci.yml: checks,<br/>emulator-tests"]
+  checks --> deployStaging["deploy-staging<br/>deploy.yml"]
+  deployStaging --> deployProd["deploy-production<br/>deploy.yml"]
+  deployStaging -- "pool github<br/>sa-bc-github-deploy-dev" --> stagingHooks["build-hosting.ts<br/>--mode staging"]
+  stagingHooks --> staging["vs-bible-center-dev<br/>vs-bible-center-dev.web.app"]
+  deployProd -- "pool github<br/>sa-bc-github-deploy-prod" --> prodHooks["check-release.ts<br/>build-hosting.ts<br/>--mode production"]
+  prodHooks --> production["vs-bible-center-prod<br/>vs-bible-center.web.app"]
+```
+
+Each deploy runs `firebase.json`'s predeploy hooks, whether from CI or a laptop: `check-release.ts` refuses a production deploy of anything but a clean checkout of `main` as it is on GitHub, and `build-hosting.ts` refuses a build with the wrong project's config, a missing App Check key or a debug token. Details are in [DEVELOPMENT.md](docs/DEVELOPMENT.md#environment-files) and [DEPLOYMENT.md](docs/DEPLOYMENT.md#releasing).
 
 ## Licensing
 
@@ -889,4 +902,4 @@ Before finishing a change, check whether it touches a source below, and update t
 | [Account Deletion](#account-deletion) | `apps/functions/src/deleteAccount.ts`, `apps/functions/src/userContent.ts`, `apps/web/src/components/account/`, `apps/web/src/firebase/account.ts` | Built |
 | [Blocking](#blocking) | `apps/functions/src/`, `firestore.rules`, `apps/web/src/firebase/blocking.ts`, `apps/web/src/components/blocking/`, `apps/web/src/components/review/AccountLine.tsx`, `apps/web/src/components/people/BlockedAccounts.tsx` | Built |
 | [Write Limits](#write-limits) | `packages/core/src/limits.ts`, `apps/web/src/firebase/userRecord.ts`, `apps/web/src/firebase/annotations.ts`, `apps/web/src/firebase/memoryVerses.ts`, `apps/web/src/firebase/topics.ts`, `firestore.rules` | Built |
-| [Environments and Delivery](#environments-and-delivery) | `package.json`, `apps/web/.env.*`, `firebase.json`, `.firebaserc`, `scripts/environments.ts`, `scripts/build-hosting.ts`, `scripts/check-release.ts`, `.github/workflows/ci.yml` | Built |
+| [Environments and Delivery](#environments-and-delivery) and [Releasing](#releasing) | `package.json`, `apps/web/.env.*`, `firebase.json`, `.firebaserc`, `scripts/environments.ts`, `scripts/build-hosting.ts`, `scripts/check-release.ts`, `.github/workflows/ci.yml`, `.github/workflows/deploy.yml`, the Workload Identity pools and branch protection | Built |

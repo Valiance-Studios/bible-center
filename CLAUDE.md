@@ -21,7 +21,7 @@ These were settled with the owner. Their reasoning is in `ARCHITECTURE.md`.
 - Search covers the selected translation only.
 - A signed-in My verses page will list all of a user's annotations, as its approved mockups show.
 - Anyone with a verified email can sign up. Roles (reviewer, admin) are entries in `roles/{email}`, members have none, and admins manage them on the People page.
-- Staging is the Firebase project `vs-bible-center-dev`, deployable from any branch. Production is `vs-bible-center-prod`, at `vs-bible-center.web.app`, deployed only from `main` after testing on staging. Boards come after V1, and are the next feature, ahead of AI suggestions and the ESV.
+- Staging is the Firebase project `vs-bible-center-dev`, deployable by hand from any branch. Production is `vs-bible-center-prod`, at `vs-bible-center.web.app`. Merging a pull request to `main` releases it to both through GitHub Actions, signing in with Workload Identity Federation (no service account keys). Boards come after V1, and are the next feature, ahead of AI suggestions and the ESV.
 
 ### Coding Principles
 
@@ -91,3 +91,4 @@ Mermaid diagrams in `ARCHITECTURE.md` are required, not optional, and a stale di
 * Only commit, push, or open a pull request when asked.
 * Before opening a pull request, run `npm run lint`, `npm run type-check`, `npm run build`, `npx vitest run`, `npm run test:emulator`, and `npm run test:e2e`.
 * Pull request descriptions include a Summary, a Test plan checklist, and Notes for decisions or caveats.
+* Merging releases to production, so a pull request's Notes must list anything to do in the consoles of both projects before merging, and its Test plan includes trying it on staging.

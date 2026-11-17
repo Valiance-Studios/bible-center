@@ -1,0 +1,54 @@
+name: Deploy
+
+# Deploys Hosting, Firestore rules and indexes, and Cloud Functions to one project. ci.yml calls it for staging, then
+# production, on pushes to main. It signs in to Google Cloud through Workload Identity Federation, which trusts only
+# this repository's main branch, so there is no key to store or leak. See "Releasing" in docs/DEPLOYMENT.md.
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: The GitHub environment, which records the deployment.
+        required: true
+        type: string
+      project:
+        description: The Firebase project id.
+        required: true
+        type: string
+      project-number:
+        description: The project's number, which names its identity pool.
+        required: true
+        type: string
+      service-account:
+        description: The deploy service account's name, without its domain.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.project }}
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ inputs.environment == 'production' && 'https://vs-bible-center.web.app' || 'https://vs-bible-center-dev.web.app' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: projects/${{ inputs.project-number }}/locations/global/workloadIdentityPools/github/providers/bible-center
+          service_account: ${{ inputs.service-account }}@${{ inputs.project }}.iam.gserviceaccount.com
+
+      # The same checks and builds as a deploy from a laptop: firebase.json's predeploy hooks run check-release.ts
+      # and build-hosting.ts. Removing a function needs a deploy by hand, since it asks first.
+      - run: npx firebase deploy --project ${{ inputs.project }} --only hosting,firestore,functions --non-interactive
