@@ -10,7 +10,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | --- | --- |
 | V1: reading, search, annotations, My verses, topics and voting, Hebrew and Greek study, memorization, Verse of the Day, accounts and sign-up, roles and review, blocking, privacy and account deletion, About | Built and released. [UI.md](docs/UI.md) describes each page |
 | Security: Firestore rules and indexes, App Check, two-step sign-in for staff, refusing temporary emails, write limits | Built and released; see [Security](#security) |
-| Environments: staging (`vs-bible-center-dev`) and production (`vs-bible-center-prod`, at `vs-bible-center.web.app`), CI in `.github/workflows/ci.yml` | Live. Production was first released November 16, 2026. Merging to `main` releases to both; see [Releasing](#releasing) |
+| Environments: staging (`vs-bible-center-dev`) and production (`vs-bible-center-prod`, at `vs-bible-center.web.app`), CI in `.github/workflows/ci.yml` | Live. Production was first released November 16, 2026. Merging to `main` releases to both, automatically since #39; see [Releasing](#releasing) |
 | Design mockups for V1 | Approved |
 | Boards | Next: design and mockups first |
 | AI topic suggestions | After boards |
@@ -43,6 +43,7 @@ Waiting on the owner:
 - Crossway's decision on the ESV API key. Once approved, the owner adds the key to Secret Manager and shares the secret's name.
 - Choose whether to keep the KJV source, the Pure Cambridge Edition from OpenBible, or swap to one with a clearer license statement. Review the UK Crown patent before a wider launch; see [Translations](#translations).
 - Switch reCAPTCHA for email and password from audit to enforce in each project, once a week of its scores looks right (production started November 16, 2026); see [Identity Platform](docs/DEPLOYMENT.md#identity-platform).
+- Before the release that adds the first new callable function, swap the deploy accounts' Cloud Functions Developer role for Cloud Functions Admin; see [How GitHub Signs In](docs/DEPLOYMENT.md#how-github-signs-in).
 - Try the password reset email on the hosted site. Registering by email, with its confirmation email, works there; password reset has only run against the emulators.
 
 To do when reached:
