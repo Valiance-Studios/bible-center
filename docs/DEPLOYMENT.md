@@ -4,12 +4,79 @@ There are two hosted environments, each its own Firebase project. `scripts/envir
 
 | Environment | Project | Site | Web app config | Deploys from |
 | --- | --- | --- | --- | --- |
-| Staging | `vs-bible-center-dev` | [vs-bible-center-dev.web.app](https://vs-bible-center-dev.web.app) | `apps/web/.env.staging` | Any branch, to try a change on a real project |
-| Production | `vs-bible-center-prod` | [vs-bible-center.web.app](https://vs-bible-center.web.app) | `apps/web/.env.production` | `main` only, after it has been tested on staging |
+| Staging | `vs-bible-center-dev` | [vs-bible-center-dev.web.app](https://vs-bible-center-dev.web.app) | `apps/web/.env.staging` | Any branch by hand, to try a change before merging; `main` automatically |
+| Production | `vs-bible-center-prod` | [vs-bible-center.web.app](https://vs-bible-center.web.app) | `apps/web/.env.production` | `main` only, automatically on every merge |
 
 Production's site is the second Hosting site in its project, `vs-bible-center`, rather than the default `vs-bible-center-prod`, which stays empty. `.firebaserc` maps the Hosting target `app` in `firebase.json` to each project's site.
 
-## Deploying
+## Releasing
+
+Merging a pull request releases it. When a push to `main` passes CI, the `deploy-staging` and then `deploy-production` jobs in `.github/workflows/ci.yml` deploy Hosting, Firestore rules and indexes, and Cloud Functions to each project, through `.github/workflows/deploy.yml`. So a pull request must be ready to release before it merges:
+
+1. Deploy the branch to staging with `npm run deploy:staging`, and try the change on [vs-bible-center-dev.web.app](https://vs-bible-center-dev.web.app).
+2. Do anything the change needs in the consoles of **both** projects first, such as a service account or a setting; the pull request's Notes list it. New indexes deploy with the release, and take a few minutes to build.
+3. Merge. `main` requires a pull request, both CI checks, and the branch up to date with `main`, so what merges is what was tested, and nobody can push to `main` directly, admins included.
+
+Each environment's build has its own config compiled in, so production is built again from the same commit rather than copied from staging. Runs on `main` never cancel each other, since a deploy stopped partway could leave functions half updated: a newer one waits, and an older run whose commit is no longer `main` is refused by `check-release.ts` and leaves production to the newer run.
+
+**Undoing a release:** revert the pull request, which releases again. For a broken site, roll Hosting back at once in the Firebase console under Hosting > release history; the next release replaces it.
+
+**Removing a function** fails the automatic deploy before it changes anything, since the Firebase CLI asks before deleting one. Release it by hand from `main` with `npm run deploy:staging -- --force`, then `npm run deploy:production -- --force`.
+
+### How GitHub Signs In
+
+The deploy jobs have no stored key. Each project trusts GitHub through Workload Identity Federation:
+
+- **Pool `github`, provider `bible-center`:** accepts GitHub's tokens only when `assertion.repository_id` is this repository's id (`1449040639`, which survives renames) and `assertion.ref` is `refs/heads/main`.
+- **GitHub environments `staging` and `production`:** only `main` may deploy to them, and they record each deployment.
+- **Deploy service account `sa-bc-github-deploy-<env>`:** the pool's principals for this repository may act as it (`roles/iam.workloadIdentityUser`). It has:
+
+| Role | For |
+| --- | --- |
+| Firebase Hosting Admin (`roles/firebasehosting.admin`) | Hosting |
+| Firebase Rules Admin (`roles/firebaserules.admin`) | Firestore rules |
+| Cloud Datastore Index Admin (`roles/datastore.indexAdmin`) | Firestore indexes |
+| Cloud Functions Developer (`roles/cloudfunctions.developer`) | Functions |
+| Service Account User (`roles/iam.serviceAccountUser`) on each function's account only | Running functions as their own accounts |
+| Service Usage Consumer (`roles/serviceusage.serviceUsageConsumer`) | Checking the APIs the deploy uses are on |
+| Firebase Viewer (`roles/firebase.viewer`) | Reading the project |
+
+If a deploy fails for lack of a permission, the job's log names it; grant the narrowest role that has it, in both projects, and add it here.
+
+To set it up in a new project, with `PROJECT`, `ENV` and the function accounts as in [Cloud Functions](#cloud-functions):
+
+```sh
+NUMBER=$(gcloud projects describe $PROJECT --format='value(projectNumber)')
+REPO_ID=1449040639
+DEPLOY=sa-bc-github-deploy-$ENV@$PROJECT.iam.gserviceaccount.com
+
+gcloud services enable iamcredentials.googleapis.com sts.googleapis.com --project $PROJECT
+gcloud iam workload-identity-pools create github --project $PROJECT --location global \
+  --display-name "GitHub Actions"
+gcloud iam workload-identity-pools providers create-oidc bible-center --project $PROJECT --location global \
+  --workload-identity-pool github --issuer-uri https://token.actions.githubusercontent.com \
+  --attribute-mapping "google.subject=assertion.sub,attribute.repository_id=assertion.repository_id,attribute.ref=assertion.ref" \
+  --attribute-condition "assertion.repository_id == '$REPO_ID' && assertion.ref == 'refs/heads/main'"
+gcloud iam service-accounts create sa-bc-github-deploy-$ENV --project $PROJECT \
+  --display-name "Bible Center GitHub deploy ($ENV)" --description "Deploys Bible Center from GitHub Actions on pushes to main."
+
+for role in roles/firebasehosting.admin roles/firebaserules.admin roles/datastore.indexAdmin \
+    roles/cloudfunctions.developer roles/serviceusage.serviceUsageConsumer roles/firebase.viewer; do
+  gcloud projects add-iam-policy-binding $PROJECT --member "serviceAccount:$DEPLOY" --role $role --condition None
+done
+for fn in block-account delete-account check-signup-email; do
+  gcloud iam service-accounts add-iam-policy-binding sa-bc-$fn-$ENV@$PROJECT.iam.gserviceaccount.com --project $PROJECT \
+    --member "serviceAccount:$DEPLOY" --role roles/iam.serviceAccountUser
+done
+gcloud iam service-accounts add-iam-policy-binding $DEPLOY --project $PROJECT --role roles/iam.workloadIdentityUser \
+  --member "principalSet://iam.googleapis.com/projects/$NUMBER/locations/global/workloadIdentityPools/github/attribute.repository_id/$REPO_ID"
+```
+
+Then add the project to `.github/workflows/ci.yml` as a deploy job, with its number and account. A new function's account needs the same Service Account User grant before the release that adds it.
+
+## Deploying by Hand
+
+For trying a branch on staging, or when an automatic release cannot run.
 
 | Command | Deploys |
 | --- | --- |
@@ -26,14 +93,6 @@ Every deploy runs these checks first, from the `predeploy` lists in `firebase.js
 - **`scripts/build-hosting.ts`**, for Hosting: builds the web app with the mode for the project being deployed to, after refusing a deploy whose env file is for another project, is missing Firebase config or the App Check site key, has an App Check debug token, or points at the emulators.
 
 **The Hosting check reads `apps/web/.env.<mode>.local` too, so a machine with a debug token in it cannot deploy that environment's Hosting.** Temporarily move the token out of the file. This is deliberate, since a build containing a registered debug token would let anyone pass App Check. Rules and functions deploys do not read it.
-
-### Releasing to Production
-
-1. Merge the pull request, then switch to `main` and pull.
-2. Deploy it to staging with `npm run deploy:staging`, and try the change on [vs-bible-center-dev.web.app](https://vs-bible-center-dev.web.app).
-3. Deploy the same commit with `npm run deploy:production`.
-
-Each environment's build has its own config compiled in, so production is built again from the same commit rather than copied from staging. If a step needs something done in the console, such as a new index or a service account, do it in both projects; the pull request's notes say what.
 
 ## API Key Restrictions
 
@@ -154,7 +213,7 @@ The functions live in `apps/functions`. Each runs as its own service account, wi
 | `deleteAccount` | `sa-bc-delete-account-<env>` | Cloud Datastore User (`roles/datastore.user`), Firebase Authentication Admin (`roles/firebaseauth.admin`), since it deletes accounts |
 | `checkSignUpEmail` | `sa-bc-check-signup-email-<env>` | None: it only checks the new account's email against a list it carries |
 
-Create each account in each project before its first deploy there, with a Google Cloud login that can manage IAM in the project:
+Create each account in each project before the release that adds its function, with a Google Cloud login that can manage IAM in the project, and let the deploy account use it (see [How GitHub Signs In](#how-github-signs-in)):
 
 ```sh
 PROJECT=vs-bible-center-prod ENV=prod  # or PROJECT=vs-bible-center-dev ENV=dev
@@ -210,8 +269,9 @@ Everything a new project needs before its first deploy, in order. Production was
 7. **Web app config:** fill in the mode's env file in `apps/web` from Project settings > Your apps.
 8. **API key:** restrict it (see [API Key Restrictions](#api-key-restrictions)).
 9. **Cloud Functions:** turn on the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry and Eventarc, create the service accounts, add `apps/functions/.env.<project id>`, and grant the build role (see [Cloud Functions](#cloud-functions)).
-10. **Deploy,** then make the first admin (see [Roles](#roles)), and enforce App Check for Firestore and Authentication once its metrics show verified requests (see [Enforcement](#enforcement)).
-11. **Try it on the site:** sign in with Google, register by email, set up two-step sign-in from the Review page, and register a `@mailinator.com` address to see it refused.
+10. **GitHub deploys:** the identity pool and deploy account (see [How GitHub Signs In](#how-github-signs-in)), and a deploy job in `ci.yml`.
+11. **Deploy,** then make the first admin (see [Roles](#roles)), and enforce App Check for Firestore and Authentication once its metrics show verified requests (see [Enforcement](#enforcement)).
+12. **Try it on the site:** sign in with Google, register by email, set up two-step sign-in from the Review page, and register a `@mailinator.com` address to see it refused.
 
 ## Secrets
 

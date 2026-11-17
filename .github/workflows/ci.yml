@@ -5,10 +5,11 @@ on:
   push:
     branches: [main]
 
-# A newer push to the same branch or PR cancels the run in progress.
+# A newer push to the same branch or PR cancels the run in progress. On main, where runs deploy, a newer run waits
+# instead, since stopping a deploy partway could leave functions half updated.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
@@ -31,7 +32,7 @@ jobs:
 
       - run: npm run type-check
 
-      # Builds without Firebase config: the web app config only matters for a deploy.
+      # Builds with the production config, which is public; it is the type and bundle check.
       - run: npm run build
 
       - run: npx vitest run
@@ -74,3 +75,32 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report/
           retention-days: 7
+
+  # Merging to main releases it: staging first, then production, once every check passes.
+  # See "Releasing" in docs/DEPLOYMENT.md.
+  deploy-staging:
+    name: Deploy to staging
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [checks, emulator-tests]
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: staging
+      project: vs-bible-center-dev
+      project-number: '501647012642'
+      service-account: sa-bc-github-deploy-dev
+
+  deploy-production:
+    name: Deploy to production
+    needs: deploy-staging
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: production
+      project: vs-bible-center-prod
+      project-number: '571475032694'
+      service-account: sa-bc-github-deploy-prod
