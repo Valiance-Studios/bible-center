@@ -93,6 +93,7 @@ function SignInForm({onRegister}: {onRegister: () => void}) {
       <p className={classes.switch}><button type="button" className={classes.textButton} onClick={resetPassword}>Forgot your password?</button></p>
       <p className={classes.switch}>
         New to Bible Center?
+        {' '}
         <button type="button" className={classes.textButton} onClick={onRegister}>Create an account</button>
       </p>
     </>
@@ -137,6 +138,7 @@ function RegisterForm({onSignIn}: {onSignIn: () => void}) {
       </form>
       <p className={classes.switch}>
         Already have an account?
+        {' '}
         <button type="button" className={classes.textButton} onClick={onSignIn}>Sign in</button>
       </p>
     </>
