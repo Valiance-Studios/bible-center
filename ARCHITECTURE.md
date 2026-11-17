@@ -8,48 +8,31 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 | Area | Status |
 | --- | --- |
-| Monorepo, tooling, tests, env files, Firebase and App Check wiring, deploy check | Done. App Check is enforced for Firestore and Authentication |
-| GitHub Actions CI (`.github/workflows/ci.yml`) | Built. Runs on pull requests and pushes to `main` |
-| Firestore rules and indexes: default deny, verified accounts, roles, blocked accounts, user settings, annotations, topics, daily verses, memory lists | Built and deployed |
-| Design mockups | Approved |
-| Two-step sign-in for staff, and refusing temporary emails | Built and deployed to staging; see [Two-Step Sign-In](#two-step-sign-in) |
-| Production environment | Set up in the repo: `vs-bible-center-prod`, served at `vs-bible-center.web.app`, with its own config, service accounts and release check. The first deploy waits on the owner; see [Environments and Delivery](#environments-and-delivery) |
-| Sign-in and registration | Built, and open to anyone with a verified email. Google sign-in and registering by email are confirmed on the hosted site |
-| App layout: app bar, thumb index, phone menu, footer, light and dark mode | Built |
-| Home page | Built, with Verse of the Day, search and the common topics |
-| Verse of the Day | Built: the automatic list, the admin dialog, and `dailyVerses` rules. The owner approved the list on November 10, 2026 |
-| Site icon (tab and bookmark) | Built |
-| Reader (BSB, KJV), translation switching | Built |
-| Reference and phrase search | Built |
-| Annotations: highlights, bookmarks, notes, on verses or ranges | Built |
-| Translation choice saved to the account | Built |
-| My verses page | Built |
-| About dialog | Built: a shorter version of the README with data credits, from the footer and the phone menu |
-| Privacy policy and account deletion | Built: `/privacy`, and deleting an account with the `deleteAccount` function; see [Account Deletion](#account-deletion) |
-| Topic search, voting, reports | Built: topic pages, the Topics page, voting ranked by `topicVerseScore` from accounts at least a week old, adding verses, starting topics and reports |
-| Admins and reviewers | Built: roles in `roles/{email}`, the People page for admins, the Review page for reported verses and new topics, and blocking accounts; see [Blocking](#blocking) |
-| Hebrew/Greek study | Built: the word panel beside the reader, or in a sheet on phones, from STEPBible data |
-| Scripture memorization | Built: flash cards, fading words, and the memory list; see [Memorization](#memorization) |
-| AI topic suggestions | After V1 |
-| ESV | After V1, once Crossway approves the API key |
-| Boards, plugins, paraphrase search (embeddings) | After V1 |
+| V1: reading, search, annotations, My verses, topics and voting, Hebrew and Greek study, memorization, Verse of the Day, accounts and sign-up, roles and review, blocking, privacy and account deletion, About | Built and released. [UI.md](docs/UI.md) describes each page |
+| Security: Firestore rules and indexes, App Check, two-step sign-in for staff, refusing temporary emails, write limits | Built and released; see [Security](#security) |
+| Environments: staging (`vs-bible-center-dev`) and production (`vs-bible-center-prod`, at `vs-bible-center.web.app`), CI in `.github/workflows/ci.yml` | Live. Production was first released November 16, 2026; see [Environments and Delivery](#environments-and-delivery) |
+| Design mockups for V1 | Approved |
+| Boards | Next: design and mockups first |
+| AI topic suggestions | After boards |
+| ESV | After AI suggestions, once Crossway approves the API key |
+| Plugins, paraphrase search (embeddings) | After V1, if there is demand |
 
 ### Current State
 
 Last updated November 16, 2026.
 
 - **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. Everything in V1 is merged. Check what has merged before starting new work.
-- **Hosted projects:** staging is `vs-bible-center-dev`, at [vs-bible-center-dev.web.app](https://vs-bible-center-dev.web.app). Production is `vs-bible-center-prod`, at [vs-bible-center.web.app](https://vs-bible-center.web.app), not yet deployed. The owner deploys both; see [DEPLOYMENT.md](docs/DEPLOYMENT.md), which also covers the API key's restrictions and moving the debug token aside before deploying Hosting.
-- **Set up in production so far:** Firebase, the `vs-bible-center` Hosting site, Firestore `(default)` in `nam5`, Google and email/password sign-in, Identity Platform with the password policy, reCAPTCHA in audit mode, two-step sign-in and email enumeration protection, authorized domains (without `localhost`), the billing budget and both alerts, the Cloud Functions APIs, the `sa-bc-*-prod` service accounts and the build role, the App Check reCAPTCHA key (in `apps/web/.env.production`), the API key's restrictions and the web app. The rest of [Setting Up a Project](docs/DEPLOYMENT.md#setting-up-a-project) waits on the owner.
+- **Hosted projects:** staging is `vs-bible-center-dev`, at [vs-bible-center-dev.web.app](https://vs-bible-center-dev.web.app). Production is `vs-bible-center-prod`, at [vs-bible-center.web.app](https://vs-bible-center.web.app), released from `main` after testing on staging. The owner deploys both; see [DEPLOYMENT.md](docs/DEPLOYMENT.md), which also covers the API key's restrictions and moving the debug token aside before deploying Hosting.
+- **Set up in production:** Firebase, the `vs-bible-center` Hosting site, Firestore `(default)` in `nam5`, Google and email/password sign-in, Identity Platform with the password policy, reCAPTCHA in audit mode, two-step sign-in and email enumeration protection, authorized domains (without `localhost`), the billing budget and both alerts, the Cloud Functions APIs, the `sa-bc-*-prod` service accounts and the build role, the App Check reCAPTCHA key (in `apps/web/.env.production`), the API key's restrictions and the web app. The owner is its first admin, with two-step sign-in, and App Check is enforced for Firestore and Authentication.
 - **Set up in staging:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. The owner's account is the first admin, set in the console as [DEPLOYMENT.md](docs/DEPLOYMENT.md#roles) describes.
 
 ### Next Steps
 
 V1 is complete. Build what comes after it one branch at a time, from `main` or from the latest unmerged branch, in this order:
 
-1. **AI topic suggestions:** the first function with a secret; see [AI Suggestions](#ai-suggestions).
-2. **ESV:** once Crossway approves the key; see [ESV Rules](#esv-rules).
-3. **Boards;** see [Scope](#scope).
+1. **Boards;** see [Scope](#scope). They have no design or mockups yet, so those come first.
+2. **AI topic suggestions:** the first function with a secret; see [AI Suggestions](#ai-suggestions).
+3. **ESV:** once Crossway approves the key; see [ESV Rules](#esv-rules).
 
 Later, if there is demand: plugins, and embeddings for search by meaning.
 
@@ -59,26 +42,15 @@ Waiting on the owner:
 
 - Crossway's decision on the ESV API key. Once approved, the owner adds the key to Secret Manager and shares the secret's name.
 - Choose whether to keep the KJV source, the Pure Cambridge Edition from OpenBible, or swap to one with a clearer license statement. Review the UK Crown patent before a wider launch; see [Translations](#translations).
-- Finish setting up production by [Setting Up a Project](docs/DEPLOYMENT.md#setting-up-a-project), then do its first release.
 - Switch reCAPTCHA for email and password from audit to enforce in each project, once a week of its scores looks right (production started November 16, 2026); see [Identity Platform](docs/DEPLOYMENT.md#identity-platform).
 - Try the password reset email on the hosted site. Registering by email, with its confirmation email, works there; password reset has only run against the emulators.
 
 To do when reached:
 
-- An Anthropic API key, a Secret Manager entry for it, and a $10 monthly spend limit are needed at the AI step.
-- App Check is enforced for Firestore and Authentication in the console, and by each callable function's `enforceAppCheck` option. Enforce each new console service once its requests show as verified; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#enforcement).
 - The main bundle is about 1.2 MB because every page loads Firebase and Mantine. Signed-out reading should not need Firestore or Auth up front, so split them out.
 - Add a Content Security Policy once the app's external origins are settled.
 - Check the first phrase search on a real phone, and move indexing to a Web Worker if it is slow.
-- reCAPTCHA for email sign-in and sign-up is in audit mode. Once its scores show real people pass, switch it to enforce; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#identity-platform).
-- Topics created by users start pending: they work by link but are not listed or linked from search until a reviewer approves them on the Review page. Topic names are the only public free text; see [What Is Public](#what-is-public).
-- A review decision cannot be undone in the app. A removed verse or a rejected topic can be restored by deleting its `removed` document or setting the topic back to `pending` in the console.
-- The `allowedUsers` collection from before sign-up opened is no longer read or writable by anyone, and can be deleted in the console.
 - Common topics are a fixed list for now. Later they could follow what people search for, which changes through the year (such as "resurrection" around Easter).
-
-### Resuming in a New Session
-
-Start with "Starting a Session" in `CLAUDE.md`, then the [Mockups](#mockups) section. Everything needed is in this repository, except the mockups, which live on the canvas linked there, and two local items: `apps/web/.env.staging.local`, which holds this machine's App Check debug token, and the owner's Google Cloud login. See [DEVELOPMENT.md](docs/DEVELOPMENT.md) to set up a new machine.
 
 ## Mockups
 
@@ -94,7 +66,6 @@ Start with "Starting a Session" in `CLAUDE.md`, then the [Mockups](#mockups) sec
 | `Topic.dc.html` | Topic results. Upvoting re-ranks live with the real formula |
 | `TopicAi.dc.html` | A topic with few results, showing AI suggestions |
 | `SetVerse.dc.html` | The admin dialog for Verse of the Day |
-| `SignIn.dc.html` | Sign in, register and verify email, from before sign-up opened; `SignInOpen.dc.html` replaces it |
 | `PhoneHome.dc.html` | Home on a phone |
 | `PhoneMenu.dc.html` | The phone menu, with sections and their books |
 | `PhoneReader.dc.html` | The reader and word panel on a phone |
@@ -111,7 +82,6 @@ Start with "Starting a Session" in `CLAUDE.md`, then the [Mockups](#mockups) sec
 | `TopicEmpty.dc.html` | A topic nobody has added a verse to yet |
 | `PhoneTopic.dc.html` | A topic on a phone, signed out |
 | `Review.dc.html` | Reviewers remove or keep reported verses, and approve or reject new topics |
-| `People.dc.html` | Admins add people, set their roles and remove access, from before sign-up opened; `PeopleOpen.dc.html` replaces it |
 | `AccountMenuRoles.dc.html` | The account menu for an admin, with Review and People |
 | `PhoneReview.dc.html` | Review on a phone |
 | `Memorize.dc.html` | Memorize: start a verse, and the memory list in its sections, or empty, or signed out |
@@ -151,7 +121,7 @@ Bible Center is a free, public, one-stop Bible resource. The [README](README.md)
 - Memorize scripture with flash cards and fading words, and keep a memory list; see [Memorization](#memorization).
 - An About dialog with the data credits.
 
-**After V1: AI topic suggestions and the ESV.** Both are designed below, and wait until V1 is done.
+**After V1: AI topic suggestions and the ESV.** Both are designed below, and come after boards.
 
 **After V1: boards.** Signed-in users create titled, infinitely scrolling boards holding photos, text boxes, embedded videos, links to other boards, and titled photo carousels whose navigation wraps in both directions. Items can be tagged and searched. Selecting a result jumps to the item, and for a photo in a carousel, makes that photo active.
 
@@ -210,8 +180,6 @@ flowchart LR
 | Build | Vite, npm workspaces |
 | Tests | Vitest with React Testing Library, Playwright, Firebase emulators |
 | Linting | ESLint with `@stylistic` and `react-hooks` |
-
-TypeScript stays on 6.0 until `typescript-eslint` supports 7.
 
 ## Bible Text
 
@@ -689,6 +657,7 @@ Reviewers and admins have an entry in `roles/{lowercase email}` holding their `r
 - **The queue:** `useReviewQueue` loads the open reports and pending topics, oldest first, which needs the two `status, createdAt` indexes. `groupReports` gathers reports by topic and verse, so a reviewer decides once for each. The account menu shows how many are waiting. A decision stays on the page, with its outcome, until the queue next loads.
 - **Resolving reports:** `resolveReports` closes every report in a group in one transaction. Removing also creates `topics/{slug}/removed/{key}` in the same write, and the rules only accept a report closed as removed when that document exists afterwards.
 - **Deciding topics:** `decideTopic` sets a pending topic to approved or rejected, once. Approved topics join the Topics page and search links; rejected ones are hidden and closed to new verses.
+- **Undoing a decision:** the app cannot. In the console, delete a removed verse's `removed` document, or set a topic back to `pending` so it returns to the queue.
 
 ```mermaid
 flowchart LR

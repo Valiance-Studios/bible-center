@@ -56,15 +56,13 @@ Anyone with a verified email can sign in, and is a member. Admins give, change a
 
 Admins cannot change or remove their own role, so there is always at least one admin. To demote the last admin, use the console.
 
-The `allowedUsers` collection from before sign-up opened is no longer read by anything and the rules close it to everyone, so it can be deleted in the console.
-
 ### Account Age for Voting
 
 Votes only count from accounts first seen at least a week ago, recorded as `createdAt` on `users/<uid>` at their first sign-in. To let someone vote sooner, set their `createdAt` to an earlier timestamp in the Firestore console; the app never can.
 
-## Before Opening Sign-Up
+## Abuse Protections
 
-Do these in each project's consoles before deploying the rules that let anyone sign up. They are [#23](https://github.com/Valiance-Studios/bible-center/issues/23).
+Anyone can sign up, so set these up in each project's consoles before its first deploy.
 
 1. **Email enumeration protection.** Firebase console > Authentication > Settings > User actions: turn on **Email enumeration protection**. Firebase then answers every failed email sign-in the same way, so nobody can test which addresses have accounts. The app already shows one message for a wrong email or password, and its password reset says "If an account uses …", so nothing in it changes.
 2. **A billing budget.** Google Cloud console > Billing > Budgets & alerts > Create budget, scoped to this project, with email alerts at 50%, 90% and 100%. A budget only warns; it does not stop spending. Start low, such as $25 a month, and raise it once real use is known.
@@ -76,7 +74,7 @@ Do these in each project's consoles before deploying the rules that let anyone s
 
 ## Identity Platform
 
-Do this in each project. [#22](https://github.com/Valiance-Studios/bible-center/issues/22) upgrades Authentication to Firebase Authentication with Identity Platform, which is free up to 50,000 monthly active users for email and Google sign-in. Firebase console > Authentication > Settings > **Upgrade**. Then:
+Do this in each project. Upgrade Authentication to Firebase Authentication with Identity Platform, which is free up to 50,000 monthly active users for email and Google sign-in. Firebase console > Authentication > Settings > **Upgrade**. Then:
 
 - **Password policy:** Authentication > Settings > Password policy: require at least 10 characters and turn on enforcement, so Firebase refuses short passwords even from a client other than the app.
 - **reCAPTCHA for email and password:** the console may only offer reCAPTCHA for SMS, so set it through the Identity Toolkit API with your Google Cloud login. Start in audit mode, which only logs scores:
@@ -140,11 +138,11 @@ Each machine should have its own token. Delete a token from the console if it mi
 
 ### Enforcement
 
-In staging, Cloud Firestore and Authentication are enforced, so their requests need a valid App Check token: from the deployed app, or from `localhost` with a registered [debug token](#debug-token). The emulators do not check it.
+In both projects, Cloud Firestore and Authentication are enforced, so their requests need a valid App Check token: from the deployed app, or from `localhost` with a registered [debug token](#debug-token). The emulators do not check it.
 
 Callable Cloud Functions enforce App Check themselves, through their `enforceAppCheck` option, from the moment they are deployed; the app already sends the tokens. Before enforcing another console service, deploy the app that sends its tokens and confirm in the console's App Check metrics that its requests are verified. Enforcement is per service for the whole project, and each project hosts only this app.
 
-A new project, such as production, can enforce Firestore and Authentication before its first deploy, since no older app uses it. Enforce them once the site is deployed and the App Check metrics show its requests as verified.
+In a new project, enforce Firestore and Authentication once its site is deployed and the App Check metrics show its requests as verified, as production did.
 
 ## Cloud Functions
 
@@ -203,11 +201,11 @@ The Firebase CLI cannot choose a different build account. The functions still ru
 
 Everything a new project needs before its first deploy, in order. Production was set up this way; the sections above have the details.
 
-1. **Billing:** the Blaze plan, which Cloud Functions need, and a budget (see [Before Opening Sign-Up](#before-opening-sign-up)).
+1. **Billing:** the Blaze plan, which Cloud Functions need, and a budget (see [Abuse Protections](#abuse-protections)).
 2. **Hosting:** the site. Add it to `.firebaserc` under `targets` as `app`, and the project to `scripts/environments.ts`.
 3. **Firestore:** create the `(default)` database in `nam5`, the same location as staging.
 4. **Authentication:** turn on Google and Email/Password sign-in, and add the site to Authentication > Settings > Authorized domains.
-5. **Identity Platform:** upgrade, then the password policy, reCAPTCHA for email and password, and two-step sign-in with authenticator apps (see [Identity Platform](#identity-platform)). Then email enumeration protection and the alerts (see [Before Opening Sign-Up](#before-opening-sign-up)).
+5. **Identity Platform:** upgrade, then the password policy, reCAPTCHA for email and password, and two-step sign-in with authenticator apps (see [Identity Platform](#identity-platform)). Then email enumeration protection and the alerts (see [Abuse Protections](#abuse-protections)).
 6. **App Check:** the reCAPTCHA Enterprise key, the web app's registration, and the site key in the env file (see [App Check Setup](#app-check-setup)).
 7. **Web app config:** fill in the mode's env file in `apps/web` from Project settings > Your apps.
 8. **API key:** restrict it (see [API Key Restrictions](#api-key-restrictions)).
