@@ -12,6 +12,7 @@ export type {CommunityTopicVerse, ReportReason, TopicFile, TopicFileVerse, Topic
 export type {VerseId, VerseLocation} from './verseId';
 export type {GrammarFile, LexiconEntry, LexiconFile, VerseWord, WordFile, WordFileLanguage, WordFileWord, WordLanguage, WordTranslation} from './words';
 
+export {TEMPORARY_EMAIL_ERROR} from './accounts';
 export {chapterIdOf, NOTE_MAX_LENGTH, selectVerse, spanContains, spanOf, spansOverlap, verseIdIn} from './annotations';
 export {automaticDailyVerse, DAILY_VERSE_COUNT, dateKeyOf, dayOfLeapYear, isDateKey} from './dailyVerses';
 export {BIBLE_BOOKS, chapterTitle, isOldTestament, nextChapter, parseChapterRef, previousChapter} from './bibleBooks';

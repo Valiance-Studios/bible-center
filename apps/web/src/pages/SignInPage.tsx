@@ -4,6 +4,7 @@ import {useState} from 'react';
 import {Link, Navigate} from 'react-router';
 import {Alert, Button, Loader, PasswordInput, TextInput} from '@mantine/core';
 import {useAuthStore} from '@/stores/auth';
+import {SUPPORT_EMAIL} from '@/components/SupportContact';
 import {authErrorMessage} from '@/stores/authErrors';
 import {MINIMUM_AGE} from './PrivacyPage';
 import classes from './SignInPage.module.scss';
@@ -218,6 +219,48 @@ function AccessCheckFailedPanel() {
   );
 }
 
+/** Asks for the code from the person's authenticator app, for an account with two-step sign-in. */
+function TwoStepCodePanel() {
+  const finishTwoStep = useAuthStore((state) => state.finishTwoStep);
+  const cancelTwoStep = useAuthStore((state) => state.cancelTwoStep);
+  const [code, setCode] = useState('');
+  const {busy, error, run} = useAuthAction();
+
+  return (
+    <>
+      <h1 className={classes.title}>Enter your code</h1>
+      <p className={classes.body}>This account has two-step sign-in. Open your authenticator app and enter the 6-digit code for Bible Center.</p>
+      <form
+        className={classes.fields}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void run(() => finishTwoStep(code.trim()));
+        }}
+      >
+        {error && <Alert color="red" role="alert">{error}</Alert>}
+        <TextInput
+          className={classes.code}
+          label="Code"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={6}
+          required
+          value={code}
+          onChange={(event) => setCode(event.currentTarget.value)}
+          data-autofocus
+        />
+        <Button type="submit" fullWidth size="md" radius="xl" loading={busy}>Sign in</Button>
+      </form>
+      <p className={classes.switch}><button type="button" className={classes.textButton} onClick={cancelTwoStep}>Use a different account</button></p>
+      <p className={classes.switch}>
+        {'Lost your phone or app? Write to '}
+        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
+        {' to have two-step sign-in reset.'}
+      </p>
+    </>
+  );
+}
+
 function panelFor(status: ReturnType<typeof useAuthStore.getState>['status']): ReactNode {
   switch (status) {
     case 'loading':
@@ -235,6 +278,7 @@ function panelFor(status: ReturnType<typeof useAuthStore.getState>['status']): R
 
 export function SignInPage() {
   const status = useAuthStore((state) => state.status);
+  const isWaitingForCode = useAuthStore((state) => state.twoStepResolver !== null);
 
   return (
     <div className={classes.page}>
@@ -246,7 +290,7 @@ export function SignInPage() {
         </div>
       </aside>
       <main className={classes.formSide}>
-        <div className={classes.form}>{panelFor(status)}</div>
+        <div className={classes.form}>{isWaitingForCode ? <TwoStepCodePanel /> : panelFor(status)}</div>
       </main>
     </div>
   );

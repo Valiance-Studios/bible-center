@@ -18,6 +18,10 @@ describe('requireAdmin', () => {
     await expect(requireAdmin(callerAuth(adminUid, 'Ada@Example.com'))).resolves.toEqual({uid: adminUid, email: 'ada@example.com'});
   });
 
+  it('turns away an admin who signed in without a second step', async () => {
+    await expect(requireAdmin(callerAuth(adminUid, 'ada@example.com', true, false))).rejects.toMatchObject({code: 'permission-denied'});
+  });
+
   it('turns away the signed out, the unverified, members and blocked admins', async () => {
     await expect(requireAdmin(undefined)).rejects.toMatchObject({code: 'unauthenticated'});
     await expect(requireAdmin(callerAuth(adminUid, 'ada@example.com', false))).rejects.toMatchObject({code: 'unauthenticated'});

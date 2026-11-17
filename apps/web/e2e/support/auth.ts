@@ -2,7 +2,7 @@ import type {Page} from '@playwright/test';
 import type {EmulatorRole} from '../../../../scripts/emulator-admin.ts';
 
 import {expect} from '@playwright/test';
-import {createGoogleAccount, setAccountAge, setRole, uidOf} from '../../../../scripts/emulator-admin.ts';
+import {createGoogleAccount, enrollSmsSecondFactor, googleIdTokenOf, latestSmsCode, setAccountAge, setRole, uidOf} from '../../../../scripts/emulator-admin.ts';
 
 export interface TestUser {
   email: string;
@@ -66,21 +66,59 @@ export async function signInWithGoogle(page: Page, user: TestUser): Promise<void
   }).toPass({timeout: 30_000});
 }
 
+/** The test-only module that signs staff in with a second step, as the dev server serves it to the browser. */
+const BROWSER_SIGN_IN_MODULE = '/e2e/support/browserSignIn.ts';
+
+interface BrowserSignIn {
+  startStaffSignIn: (googleIdToken: string) => Promise<void>;
+  finishStaffSignIn: (code: string) => Promise<void>;
+}
+
+/** A phone number unique to this call, for the emulator's SMS second factor. */
+function testPhoneNumber(): string {
+  return `+1555${String(Math.floor(Math.random() * 1e7)).padStart(7, '0')}`;
+}
+
+/**
+ * Signs a staff account in with a second step, as the rules require of reviewers and admins. The Auth emulator offers
+ * only SMS, so this enrolls an SMS second factor and signs in through the app's own Auth instance, where the hosted
+ * app asks for an authenticator app's code instead.
+ */
+async function signInAsStaff(page: Page, user: TestUser, accountAgeDays: number): Promise<void> {
+  const phoneNumber = testPhoneNumber();
+
+  await enrollSmsSecondFactor(await createGoogleAccount(user), phoneNumber);
+  await setAccountAge(await uidOf(user.email), accountAgeDays);
+  await page.goto('/');
+  await expect(page.getByRole('link', {name: 'Sign in'})).toBeVisible();
+  await page.evaluate(async ({path, token}) => (await import(/* @vite-ignore */ path) as BrowserSignIn).startStaffSignIn(token), {path: BROWSER_SIGN_IN_MODULE, token: googleIdTokenOf(user)});
+
+  const code = await latestSmsCode(phoneNumber);
+
+  await page.evaluate(async ({path, smsCode}) => (await import(/* @vite-ignore */ path) as BrowserSignIn).finishStaffSignIn(smsCode), {path: BROWSER_SIGN_IN_MODULE, smsCode: code});
+}
+
 /** Old enough to vote; see `VOTER_MIN_ACCOUNT_DAYS`. */
 const ESTABLISHED_ACCOUNT_DAYS = 30;
 
 /**
  * Signs in a new user, who has no annotations, with a role, and waits until the app knows they are
  * signed in. The account is made beforehand and recorded as a month old, so it can vote, unless `accountAgeDays`
- * says otherwise.
+ * says otherwise. Reviewers and admins sign in with a second step, as the rules require.
  */
 export async function signInAsNewUser(page: Page, role: EmulatorRole = 'member', accountAgeDays = ESTABLISHED_ACCOUNT_DAYS): Promise<TestUser> {
   const user = createTestUser();
 
   await setRole(user.email, role);
-  await createGoogleAccount(user);
-  await setAccountAge(await uidOf(user.email), accountAgeDays);
-  await signInWithGoogle(page, user);
+
+  if (role === 'member') {
+    await createGoogleAccount(user);
+    await setAccountAge(await uidOf(user.email), accountAgeDays);
+    await signInWithGoogle(page, user);
+  } else {
+    await signInAsStaff(page, user, accountAgeDays);
+  }
+
   await expect(page.getByRole('button', {name: 'Account menu'})).toBeVisible();
 
   return user;

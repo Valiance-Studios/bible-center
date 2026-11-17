@@ -42,14 +42,20 @@ service cloud.firestore {
       return exists(myRoleEntry()) ? get(myRoleEntry()).data.role : 'member';
     }
 
+    // This sign-in used a second step, which staff need, so a stolen password alone cannot act as them. The project
+    // offers only authenticator apps (TOTP); the Auth emulator offers only SMS, which the E2E tests use.
+    function hasSecondFactor() {
+      return request.auth.token.firebase.get('sign_in_second_factor', null) != null;
+    }
+
     // Handles reports and the topics people start.
     function isReviewer() {
-      return canWrite() && myRole() in ['reviewer', 'admin'];
+      return canWrite() && hasSecondFactor() && myRole() in ['reviewer', 'admin'];
     }
 
     // Manages roles and blocked accounts.
     function isAdmin() {
-      return canWrite() && myRole() == 'admin';
+      return canWrite() && hasSecondFactor() && myRole() == 'admin';
     }
 
     // Matches normalizeEmail and isEmailAddress in packages/core/src/roles.ts.

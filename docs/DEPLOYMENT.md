@@ -71,7 +71,30 @@ Do these in the consoles before deploying the rules that let anyone sign up. The
   ```
 
   Firebase creates its own reCAPTCHA Enterprise key for this, separate from the App Check key, and the web SDK attaches tokens to email sign-in and sign-up by itself, so the app needs no change; the emulators ignore it. After a week or so, check the key's scores under Security > reCAPTCHA in the Google Cloud console, then run the same command with `"ENFORCE"`, and register a `+test` address on the hosted site to confirm a person still gets through. A `GET` on the same URL, without `?updateMask…`, shows the current setting.
-- **Two-factor sign-in for staff,** and **a blocking function that turns away throwaway email domains,** need code as well as console switches: two-factor enrollment in the app, rules that require a second factor for reviewer and admin actions, and a `beforeUserCreated` function with its own service account. They come in their own change.
+- **Two-step sign-in with authenticator apps (TOTP).** The console only offers SMS, so turn on authenticator apps through the same API. Staff then set it up from the Review or People page:
+
+  ```sh
+  curl -X PATCH \
+    "https://identitytoolkit.googleapis.com/admin/v2/projects/$PROJECT/config?updateMask=mfa" \
+    -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+    -H "X-Goog-User-Project: $PROJECT" \
+    -H "Content-Type: application/json" \
+    -d '{"mfa": {"state": "ENABLED", "providerConfigs": [{"state": "ENABLED", "totpProviderConfig": {"adjacentIntervals": 5}}]}}'
+  ```
+
+  Leave SMS off: it costs per message and can be stolen by moving someone's number to another SIM. `adjacentIntervals` accepts codes up to five 30-second steps either side, for phones whose clocks drift.
+- **Turning away temporary email services.** The `checkSignUpEmail` blocking function does this. Create its service account (see [Cloud Functions](#cloud-functions)) and deploy the functions; the deploy registers it with Identity Platform, so it runs before every new account, by email or Google.
+
+### Resetting Two-Step Sign-In
+
+When someone loses their authenticator app, confirm it is really them (for example, from the email address on the account), then run, with your Google Cloud login:
+
+```sh
+node scripts/reset-two-step.ts --project vs-bible-center-dev --email person@example.com          # shows what is set up
+node scripts/reset-two-step.ts --project vs-bible-center-dev --email person@example.com --write  # turns it off
+```
+
+It turns two-step sign-in off and signs the account out everywhere. They sign in with their password or Google account, and set it up again from the Review or People page.
 
 ## App Check Setup
 
@@ -105,6 +128,7 @@ The functions live in `apps/functions`. Each runs as its own service account, wi
 | --- | --- | --- |
 | `blockAccount` | `sa-bc-block-account-dev` | Cloud Datastore User (`roles/datastore.user`), Firebase Authentication Viewer (`roles/firebaseauth.viewer`) |
 | `deleteAccount` | `sa-bc-delete-account-dev` | Cloud Datastore User (`roles/datastore.user`), Firebase Authentication Admin (`roles/firebaseauth.admin`), since it deletes accounts |
+| `checkSignUpEmail` | `sa-bc-check-signup-email-dev` | None: it only checks the new account's email against a list it carries |
 
 Create each account before its first deploy, with a Google Cloud login that can manage IAM in the project:
 
@@ -129,6 +153,8 @@ create_function_account sa-bc-block-account-dev blockAccount \
 create_function_account sa-bc-delete-account-dev deleteAccount \
   "Runs the deleteAccount Cloud Function: deletes a person's own account and its data." \
   roles/datastore.user roles/firebaseauth.admin
+create_function_account sa-bc-check-signup-email-dev checkSignUpEmail \
+  "Runs the checkSignUpEmail blocking function: turns away sign-ups from temporary email services."
 ```
 
 An account that already exists makes its `create` line fail harmlessly; the role grants still apply.

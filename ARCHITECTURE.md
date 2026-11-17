@@ -12,6 +12,7 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | GitHub Actions CI (`.github/workflows/ci.yml`) | Built. Runs on pull requests and pushes to `main` |
 | Firestore rules and indexes: default deny, verified accounts, roles, blocked accounts, user settings, annotations, topics, daily verses, memory lists | Built and deployed |
 | Design mockups | Approved |
+| Two-step sign-in for staff, and refusing temporary emails | Built; see [Two-Step Sign-In](#two-step-sign-in) |
 | Sign-in and registration | Built, and open to anyone with a verified email. Google sign-in and registering by email are confirmed on the hosted site |
 | App layout: app bar, thumb index, phone menu, footer, light and dark mode | Built |
 | Home page | Built, with Verse of the Day, search and the common topics |
@@ -48,7 +49,7 @@ V1 is complete. Build what comes after it one branch at a time, from `main` or f
 2. **ESV:** once Crossway approves the key; see [ESV Rules](#esv-rules).
 3. **Boards;** see [Scope](#scope).
 
-Before those, finish the console steps for sign-up in [DEPLOYMENT.md](docs/DEPLOYMENT.md#before-opening-sign-up), and the code half of #22 (two-factor sign-in for staff, and turning away throwaway email domains). Then set up **production**: a separate Firebase project for the public site, its own instances of the functions and their service accounts (`.env.<production project id>`, `sa-bc-<function>-prod`), `.env.production` for the app, and a release process for moving a tested build from staging to production.
+Before those, set up **production**: a separate Firebase project for the public site, its own instances of the functions and their service accounts (`.env.<production project id>`, `sa-bc-<function>-prod`), `.env.production` for the app, and a release process for moving a tested build from staging to production.
 
 Later, if there is demand: plugins, and embeddings for search by meaning.
 
@@ -67,7 +68,7 @@ To do when reached:
 - The main bundle is about 1.2 MB because every page loads Firebase and Mantine. Signed-out reading should not need Firestore or Auth up front, so split them out.
 - Add a Content Security Policy once the app's external origins are settled.
 - Check the first phrase search on a real phone, and move indexing to a Web Worker if it is slow.
-- The 10-character password minimum is only enforced in the app. Firebase's password policy could enforce it server-side.
+- reCAPTCHA for email sign-in and sign-up is in audit mode. Once its scores show real people pass, switch it to enforce; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#identity-platform).
 - Topics created by users start pending: they work by link but are not listed or linked from search until a reviewer approves them on the Review page. Topic names are the only public free text; see [What Is Public](#what-is-public).
 - A review decision cannot be undone in the app. A removed verse or a rejected topic can be restored by deleting its `removed` document or setting the topic back to `pending` in the console.
 - The `allowedUsers` collection from before sign-up opened is no longer read or writable by anyone, and can be deleted in the console.
@@ -124,6 +125,9 @@ Start with "Starting a Session" in `CLAUDE.md`, then the [Mockups](#mockups) sec
 | `Privacy.dc.html` | The privacy policy |
 | `DeleteAccount.dc.html` | Deleting your account from the account menu |
 | `BlockedAccount.dc.html` | What a blocked account sees wherever it would save |
+| `TwoStepSetup.dc.html` | Staff set up two-step sign-in from the Review or People page |
+| `TwoStepSignIn.dc.html` | The authenticator app's code at sign-in |
+| `SignUpRefused.dc.html` | A sign-up from a temporary email service refused |
 
 The canvas is the source of truth for the design. To work from it in a new session, read `project/canvas.json` and any `project/<artboard>` from that URL with the Artifact tool. The design language is in [UI.md](docs/UI.md#design-language).
 
@@ -164,7 +168,7 @@ flowchart LR
     auth["Authentication<br/>Google, email/password"]
     firestore[("Firestore<br/>roles, blocked accounts, annotations,<br/>votes, reports, daily verses, memory lists, AI cache")]
     appcheck["App Check<br/>reCAPTCHA Enterprise"]
-    functions["Cloud Functions<br/>apps/functions: blockAccount,<br/>deleteAccount"]
+    functions["Cloud Functions<br/>apps/functions: blockAccount,<br/>deleteAccount, checkSignUpEmail"]
     secrets["Secret Manager<br/>(planned)"]
   end
 
@@ -616,9 +620,12 @@ Anyone can read the Bible without an account. Anyone with a verified email can s
 ```mermaid
 flowchart TD
   start["User signs in"] --> method{"Method"}
-  method -- "Google" --> verified{"Email verified?"}
+  method -- "Google" --> twoStep{"Second step set up?"}
   method -- "Email and password" --> register["Firebase stores a salted scrypt hash<br/>and sends a verification email"]
-  register --> verified
+  register --> twoStep
+  twoStep -- "Yes" --> code["Ask for the authenticator app's code<br/>finishTwoStep"]
+  twoStep -- "No" --> verified{"Email verified?"}
+  code --> verified
   verified -- "No" --> prompt["status: unverified<br/>Ask them to verify"]
   prompt -- "recheckAccess refreshes the token" --> verified
   verified -- "Yes" --> role{"Read roles/email"}
@@ -632,6 +639,38 @@ flowchart TD
 **The verified-email check is what keeps sign-up safe.** Anyone can register a password account using someone else's address, so an unverified email proves nothing. `isVerified()` in `firestore.rules` requires `email_verified` before accepting any write, and `tests/rules/access.spec.ts` covers this. Abuse by accounts that are real but unwanted is handled by the [write limits](#write-limits), the week before an account can vote, [blocking](#blocking), and reviewing whatever becomes public.
 
 Firebase handles the password storage. The app never sees or stores a password. Firebase keeps one account per email by default, and a Google sign-in takes over an unverified password account with the same address, removing the password.
+
+### Two-Step Sign-In
+
+Reviewers and admins sign in with a second step, a code from an authenticator app (TOTP), so a stolen password or Google account alone cannot act as them. Members never need it.
+
+- **Rules:** `hasSecondFactor()` in `firestore.rules` checks that this sign-in used a second step (`firebase.sign_in_second_factor` in the token), and `isReviewer()` and `isAdmin()` require it. `requireAdmin` in `apps/functions` checks the same. The project offers only authenticator apps; the Auth emulator offers only SMS, which the rules accept the same way, so the E2E tests can act as staff.
+- **Setting it up:** `RoleGate` shows `TwoStepSetup` in place of the Review and People pages until the person has a second step on this sign-in. They confirm it is them (`confirmItIsYou`, by password or Google), scan a QR code or type the key (`startAuthenticatorSetup`, with `qrcode-generator`), and enter a code (`finishAuthenticatorSetup`). Only a new sign-in carries the second step, so they then sign in again. Someone who has it set up but signed in before setting it up is asked to sign in again.
+- **Signing in:** when an account with a second step signs in, Firebase asks for it. The auth store keeps the `twoStepResolver` (`signInWith`), and `SignInPage` shows `TwoStepCodePanel` until `finishTwoStep` succeeds. `apps/web/src/firebase/twoStep.ts` holds these Firebase calls.
+- **Losing the app:** `scripts/reset-two-step.ts` turns it off for one account; see [DEPLOYMENT.md](docs/DEPLOYMENT.md#resetting-two-step-sign-in).
+- **Temporary emails:** `checkSignUpEmail`, an Identity Platform blocking function, refuses a new account whose email is on mailchecker's list of temporary email services. Firebase passes the refusal to the app as an internal error with `TEMPORARY_EMAIL_ERROR` in its message, which `authErrorMessage` explains. Its service account has no roles.
+
+```mermaid
+sequenceDiagram
+  actor Staff as Reviewer or admin
+  participant Gate as RoleGate
+  participant Setup as TwoStepSetup
+  participant Auth as Authentication
+  participant Rules as firestore.rules
+
+  Staff->>Gate: Open Review or People
+  Gate->>Setup: No second step on this sign-in
+  Setup->>Auth: confirmItIsYou, then generateSecret
+  Setup-->>Staff: QR code and key
+  Staff->>Setup: Code from the authenticator app
+  Setup->>Auth: enroll, then sign out
+  Staff->>Auth: Sign in, then the code (finishTwoStep)
+  Auth-->>Staff: Token with sign_in_second_factor
+  Staff->>Rules: Review or People actions
+  Rules-->>Staff: Allowed: hasSecondFactor()
+```
+
+`tests/rules/access.spec.ts`, `tests/functions/checkSignUpEmail.spec.ts`, `apps/web/tests/TwoStepSetup.spec.tsx` and `apps/web/e2e/two-step.spec.ts` cover this.
 
 ## Roles and Review
 
@@ -874,6 +913,7 @@ Before finishing a change, check whether it touches a source below, and update t
 | [Roles and Review](#roles-and-review), structure, statuses and resolving a report | `packages/core/src/roles.ts`, `packages/core/src/review.ts`, `apps/web/src/firebase/review.ts`, `apps/web/src/firebase/people.ts`, `apps/web/src/components/review/`, `apps/web/src/components/people/`, `apps/web/src/components/RoleGate.tsx`, `apps/web/src/components/useAccountLinks.ts`, `apps/web/src/pages/ReviewPage.tsx`, `apps/web/src/pages/PeoplePage.tsx`, `firestore.rules` | Built |
 | [OpenBible Data](#openbible-data) | `scripts/build-topic-data.ts`, `apps/web/src/topics/topicData.ts`, `apps/web/src/pages/TopicPage.tsx`, `apps/web/src/pages/TopicsPage.tsx`, `apps/web/src/pages/SearchPage.tsx` | Built |
 | [Authentication and Access](#authentication-and-access) | `firestore.rules`, `apps/web/src/stores/auth.ts`, `apps/web/src/firebase/access.ts`, `apps/web/src/pages/SignInPage.tsx` | Built |
+| [Two-Step Sign-In](#two-step-sign-in) | `firestore.rules`, `apps/web/src/firebase/twoStep.ts`, `apps/web/src/components/account/TwoStepSetup.tsx`, `apps/web/src/components/RoleGate.tsx`, `apps/web/src/stores/auth.ts`, `apps/functions/src/checkSignUpEmail.ts` | Built |
 | [Account Deletion](#account-deletion) | `apps/functions/src/deleteAccount.ts`, `apps/functions/src/userContent.ts`, `apps/web/src/components/account/`, `apps/web/src/firebase/account.ts` | Built |
 | [Blocking](#blocking) | `apps/functions/src/`, `firestore.rules`, `apps/web/src/firebase/blocking.ts`, `apps/web/src/components/blocking/`, `apps/web/src/components/review/AccountLine.tsx`, `apps/web/src/components/people/BlockedAccounts.tsx` | Built |
 | [Write Limits](#write-limits) | `packages/core/src/limits.ts`, `apps/web/src/firebase/userRecord.ts`, `apps/web/src/firebase/annotations.ts`, `apps/web/src/firebase/memoryVerses.ts`, `apps/web/src/firebase/topics.ts`, `firestore.rules` | Built |

@@ -22,3 +22,6 @@ export interface BlockedAccountRecord {
   blockedByEmail: string;
   contentRemoved: boolean;
 }
+
+/** In the error Firebase returns when `checkSignUpEmail` refuses a temporary email service. */
+export const TEMPORARY_EMAIL_ERROR = 'temporary-email-service';

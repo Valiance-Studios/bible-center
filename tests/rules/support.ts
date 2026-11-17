@@ -59,10 +59,14 @@ export function useRulesTestEnvironment(seed: (db: Firestore) => Promise<void> =
   });
 }
 
-/** Firestore as this user, or as someone signed out when `uid` is null. */
-export function dbFor(uid: string | null, emailVerified = true): Firestore {
+/**
+ * Firestore as this user, or as someone signed out when `uid` is null. They signed in with a second step, as staff
+ * must, unless `secondFactor` is false.
+ */
+export function dbFor(uid: string | null, emailVerified = true, secondFactor = true): Firestore {
+  const firebase = {sign_in_provider: 'google.com', ...(secondFactor ? {sign_in_second_factor: 'totp'} : {})};
   const context = uid
-    ? testEnv.authenticatedContext(uid, {email: emailOf(uid), email_verified: emailVerified})
+    ? testEnv.authenticatedContext(uid, {email: emailOf(uid), email_verified: emailVerified, firebase} as never)
     : testEnv.unauthenticatedContext();
 
   return context.firestore() as unknown as Firestore;

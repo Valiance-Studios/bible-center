@@ -1,4 +1,4 @@
-import type {User} from 'firebase/auth';
+import type {MultiFactorResolver, User} from 'firebase/auth';
 import type {Role} from '@bible-center/core';
 
 import {
@@ -17,6 +17,7 @@ import {auth} from '@/firebase';
 import {FirebaseError} from 'firebase/app';
 import {getAccess, isAccountBlocked} from '@/firebase/access';
 import {recordFirstSignIn} from '@/firebase/settings';
+import {finishTwoStepSignIn, hasEnrolledSecondFactor, signedInWithSecondFactor, twoStepResolverFor} from '@/firebase/twoStep';
 
 /**
  * Where the current visitor stands. Reading is open in every state; `allowed` is what will unlock
@@ -39,6 +40,12 @@ interface AuthState {
   accountCreatedAt: Date | null;
   /** Whether an admin blocked this `allowed` account, so it can read but not save anything. */
   isBlocked: boolean;
+  /** Whether this sign-in used a second step, which the rules require for staff actions. */
+  hasSecondFactor: boolean;
+  /** Whether the account has two-step sign-in set up. */
+  isEnrolled: boolean;
+  /** Set while a sign-in waits for the code from the person's authenticator app. */
+  twoStepResolver: MultiFactorResolver | null;
   /** Follows Firebase's auth state. Returns the function that stops following it. */
   init: () => () => void;
   signInWithGoogle: () => Promise<void>;
@@ -50,6 +57,10 @@ interface AuthState {
   recheckAccess: () => Promise<AuthStatus>;
   /** Checks again whether the account is blocked, as after a save is refused. Returns whether it is. */
   recheckBlocked: () => Promise<boolean>;
+  /** Finishes a sign-in that is waiting for a code. Rejects with Firebase's error for a wrong one. */
+  finishTwoStep: (code: string) => Promise<void>;
+  /** Gives up on a sign-in that is waiting for a code. */
+  cancelTwoStep: () => void;
   signOut: () => Promise<void>;
 }
 
@@ -58,9 +69,11 @@ interface Access {
   role: Role;
   accountCreatedAt: Date | null;
   isBlocked: boolean;
+  hasSecondFactor: boolean;
+  isEnrolled: boolean;
 }
 
-const NO_ACCESS = {role: 'member', accountCreatedAt: null, isBlocked: false} as const;
+const NO_ACCESS = {role: 'member', accountCreatedAt: null, isBlocked: false, hasSecondFactor: false, isEnrolled: false} as const;
 
 /** A failed check counts as not blocked: the rules still refuse a blocked account's writes. */
 async function isBlockedOrUnknown(uid: string): Promise<boolean> {
@@ -105,9 +118,10 @@ async function accessFor(user: User): Promise<Access> {
   }
 
   const isBlocked = await isBlockedOrUnknown(user.uid);
+  const twoStep = {hasSecondFactor: await signedInWithSecondFactor(user), isEnrolled: hasEnrolledSecondFactor(user)};
 
   // A blocked account cannot save its first sign-in, and cannot vote either way.
-  return {status: 'allowed', role, isBlocked, accountCreatedAt: isBlocked ? null : await accountCreatedAtOf(user.uid)};
+  return {status: 'allowed', role, isBlocked, ...twoStep, accountCreatedAt: isBlocked ? null : await accountCreatedAtOf(user.uid)};
 }
 
 export const useAuthStore = create<AuthState>((set) => {
@@ -123,31 +137,54 @@ export const useAuthStore = create<AuthState>((set) => {
       return 'signedOut';
     }
 
-    const {status, role, accountCreatedAt, isBlocked} = await accessFor(user);
+    const access = await accessFor(user);
 
     if (update === latestUpdate) {
-      set({status, role, accountCreatedAt, isBlocked, user: {uid: user.uid, email: user.email, displayName: user.displayName}});
+      set({...access, user: {uid: user.uid, email: user.email, displayName: user.displayName}});
     }
 
-    return status;
+    return access.status;
+  }
+
+  /** Runs a sign-in, keeping it waiting for a code when the account has two-step sign-in. */
+  async function signInWith(attempt: () => Promise<unknown>): Promise<void> {
+    try {
+      await attempt();
+    } catch (error) {
+      const twoStepResolver = twoStepResolverFor(error);
+
+      if (!twoStepResolver) {
+        throw error;
+      }
+
+      set({twoStepResolver});
+    }
   }
 
   return {
     status: 'loading',
     user: null,
+    twoStepResolver: null,
     ...NO_ACCESS,
 
     init: () => onAuthStateChanged(auth, (user) => {
       void applyUser(user);
     }),
 
-    signInWithGoogle: async () => {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+    signInWithGoogle: () => signInWith(() => signInWithPopup(auth, new GoogleAuthProvider())),
+
+    signInWithEmail: (email, password) => signInWith(() => signInWithEmailAndPassword(auth, email, password)),
+
+    finishTwoStep: async (code) => {
+      const resolver = useAuthStore.getState().twoStepResolver;
+
+      if (resolver) {
+        await finishTwoStepSignIn(resolver, code);
+        set({twoStepResolver: null});
+      }
     },
 
-    signInWithEmail: async (email, password) => {
-      await signInWithEmailAndPassword(auth, email, password);
-    },
+    cancelTwoStep: () => set({twoStepResolver: null}),
 
     register: async (name, email, password) => {
       const {user} = await createUserWithEmailAndPassword(auth, email, password);

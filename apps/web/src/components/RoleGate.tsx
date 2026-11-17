@@ -4,6 +4,7 @@ import type {Role} from '@bible-center/core';
 import {Link} from 'react-router';
 import {Button, Loader} from '@mantine/core';
 import {useAuthStore} from '@/stores/auth';
+import {TwoStepSetup} from './account/TwoStepSetup';
 import {BlockedNotice} from './BlockedNotice';
 import {SupportContact} from './SupportContact';
 import classes from './RoleGate.module.scss';
@@ -26,6 +27,9 @@ export function RoleGate({canSee, audience, children}: RoleGateProps) {
   const role = useAuthStore((state) => state.role);
   const uid = useAuthStore((state) => state.user?.uid);
   const isBlocked = useAuthStore((state) => state.isBlocked);
+  const hasSecondFactor = useAuthStore((state) => state.hasSecondFactor);
+  const isEnrolled = useAuthStore((state) => state.isEnrolled);
+  const signOut = useAuthStore((state) => state.signOut);
 
   if (status === 'loading') {
     return <Loader aria-label="Loading" />;
@@ -52,6 +56,18 @@ export function RoleGate({canSee, audience, children}: RoleGateProps) {
         <SupportContact />
       </BlockedNotice>
     );
+  }
+
+  // Staff pages need a sign-in with a second step, as the rules do (`hasSecondFactor`).
+  if (!hasSecondFactor) {
+    return isEnrolled
+      ? (
+          <>
+            <p className={classes.body}>Two-step sign-in is on for your account. Sign in again, with a code from your authenticator app, to use this page.</p>
+            <Button component={Link} to="/sign-in" radius="xl" size="md" onClick={() => void signOut()}>Sign in again</Button>
+          </>
+        )
+      : <TwoStepSetup />;
   }
 
   return children(uid);

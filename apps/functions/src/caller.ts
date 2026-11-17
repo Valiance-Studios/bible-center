@@ -29,7 +29,7 @@ export function requireSignedIn(auth: CallableRequest['auth']): AccountHolder {
 }
 
 /**
- * The caller, if they are a signed-in admin with a verified email who is not blocked. The same checks as `isAdmin`
+ * The caller, if they are a signed-in admin with a verified email and a second sign-in step, who is not blocked. The same checks as `isAdmin`
  * in `firestore.rules`, since the Admin SDK skips the rules.
  */
 export async function requireAdmin(auth: CallableRequest['auth']): Promise<Caller> {
@@ -37,6 +37,11 @@ export async function requireAdmin(auth: CallableRequest['auth']): Promise<Calle
 
   if (!auth || !email || auth.token.email_verified !== true) {
     throw new HttpsError('unauthenticated', 'Sign in with a verified email.');
+  }
+
+  // As `hasSecondFactor` in `firestore.rules`: staff need a second step on this sign-in.
+  if (!auth.token.firebase.sign_in_second_factor) {
+    throw new HttpsError('permission-denied', 'Sign in with two-step sign-in first.');
   }
 
   const [role, blocked] = await Promise.all([
