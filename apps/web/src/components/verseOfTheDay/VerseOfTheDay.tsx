@@ -18,7 +18,7 @@ export function VerseOfTheDay() {
   const translation = findTranslation(useTranslationStore((state) => state.translationId));
   const today = useVerseOfTheDay(date);
   const {reference, label, passage} = useSpanText(today.verse, translation);
-  const adminUid = useAuthStore((state) => (state.status === 'allowed' && isAdmin(state.role) && !state.isBlocked ? state.user?.uid : undefined));
+  const adminUid = useAuthStore((state) => (state.status === 'allowed' && isAdmin(state.role) && !state.isBlocked && state.hasSecondFactor ? state.user?.uid : undefined));
   const [isSetting, setIsSetting] = useState(false);
   const isError = today.isError || passage.isError;
 

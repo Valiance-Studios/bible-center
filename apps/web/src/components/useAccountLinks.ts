@@ -15,7 +15,9 @@ export function useAccountLinks(): AccountLink[] {
   const role = useAuthStore((state) => state.role);
   const isAllowed = status === 'allowed';
   const isReviewer = isAllowed && canReview(role);
-  const {queue} = useReviewQueue(isReviewer);
+  // The queue needs a sign-in with a second step, as the rules do; until then the link shows no count.
+  const hasSecondFactor = useAuthStore((state) => state.hasSecondFactor);
+  const {queue} = useReviewQueue(isReviewer && hasSecondFactor);
   const links: AccountLink[] = [];
 
   if (isAllowed) {

@@ -3,9 +3,11 @@
  * are named in `.env.<project id>` (see docs/DEPLOYMENT.md).
  */
 import {onCall} from 'firebase-functions/v2/https';
+import {beforeUserCreated} from 'firebase-functions/v2/identity';
 import {defineString} from 'firebase-functions/params';
 import {blockAccount as block, parseBlockAccountRequest} from './blockAccount.ts';
 import {requireAdmin, requireSignedIn} from './caller.ts';
+import {checkSignUpEmail as checkEmail} from './checkSignUpEmail.ts';
 import {deleteAccount as deleteOwnAccount} from './deleteAccount.ts';
 
 /** The emulators do not check App Check, so requests there carry no token to enforce. */
@@ -21,4 +23,10 @@ export const blockAccount = onCall(
 export const deleteAccount = onCall(
   {serviceAccount: defineString('DELETE_ACCOUNT_SERVICE_ACCOUNT'), enforceAppCheck},
   async (request) => deleteOwnAccount(requireSignedIn(request.auth)),
+);
+
+/** Turns away sign-ups from temporary email services. Identity Platform calls it before creating any account. */
+export const checkSignUpEmail = beforeUserCreated(
+  {serviceAccount: defineString('CHECK_SIGNUP_EMAIL_SERVICE_ACCOUNT')},
+  (event) => checkEmail(event.data?.email),
 );

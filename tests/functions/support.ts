@@ -21,9 +21,11 @@ export async function createAccount(name: string): Promise<string> {
   return uid;
 }
 
-/** What a callable function sees of a caller signed in as this account. */
-export function callerAuth(uid: string, email: string, emailVerified = true): NonNullable<CallableRequest['auth']> {
-  return {uid, token: {email, email_verified: emailVerified} as never, rawToken: ''};
+/** What a callable function sees of a caller signed in as this account, with a second step unless `secondFactor` is false. */
+export function callerAuth(uid: string, email: string, emailVerified = true, secondFactor = true): NonNullable<CallableRequest['auth']> {
+  const firebase = {sign_in_provider: 'google.com', ...(secondFactor ? {sign_in_second_factor: 'totp'} : {})};
+
+  return {uid, token: {email, email_verified: emailVerified, firebase} as never, rawToken: ''};
 }
 
 export async function makeAdmin(email: string): Promise<void> {

@@ -114,6 +114,12 @@ $phone-width: 760px;
   margin: 20px 0 0;
   color: var(--bc-muted);
   font-size: 15px;
+  line-height: 1.5;
+
+  a {
+    color: var(--bc-accent);
+    text-underline-offset: 3px;
+  }
 }
 
 .textButton {
@@ -138,4 +144,10 @@ $phone-width: 760px;
     color: var(--bc-accent);
     text-underline-offset: 3px;
   }
+}
+
+.code input {
+  width: 200px;
+  font-size: 22px;
+  letter-spacing: 0.3em;
 }

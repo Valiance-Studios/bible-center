@@ -84,21 +84,53 @@ export async function confirmEmail(email: string): Promise<void> {
   });
 }
 
+/** The unsigned Google ID token the Auth emulator accepts for this account: just the claims, as JSON. */
+export function googleIdTokenOf(account: EmulatorAccount): string {
+  return JSON.stringify({sub: account.email, email: account.email, email_verified: true, name: account.displayName});
+}
+
 /**
  * Creates a verified Google account in the Auth emulator, the way its sign-in popup does, so the popup
  * then offers it under "Choose an account". Signing in again with the same email reuses the account.
+ * Returns a Firebase ID token for it.
  */
-export async function createGoogleAccount(account: EmulatorAccount): Promise<void> {
-  // The Auth emulator accepts an unsigned ID token: just the claims, as JSON.
-  const idToken = JSON.stringify({sub: account.email, email: account.email, email_verified: true, name: account.displayName});
+export async function createGoogleAccount(account: EmulatorAccount): Promise<string> {
   const url = `http://127.0.0.1:${ports.auth}/identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${env.VITE_FIREBASE_API_KEY}`;
   const body = {
     requestUri: 'http://localhost',
-    postBody: new URLSearchParams({id_token: idToken, providerId: 'google.com'}).toString(),
+    postBody: new URLSearchParams({id_token: googleIdTokenOf(account), providerId: 'google.com'}).toString(),
     returnSecureToken: true,
   };
+  const {idToken} = await request(url, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}, `create ${account.email}`) as {idToken: string};
 
-  await request(url, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}, `create ${account.email}`);
+  return idToken;
+}
+
+/** The latest SMS code the Auth emulator would have sent to this number. */
+export async function latestSmsCode(phoneNumber: string): Promise<string> {
+  const url = `http://127.0.0.1:${ports.auth}/emulator/v1/projects/${projectId}/verificationCodes`;
+  const {verificationCodes} = await request(url, {headers: ADMIN_HEADERS}, 'list SMS codes') as {verificationCodes: {phoneNumber: string; code: string}[]};
+  const code = verificationCodes.findLast((candidate) => candidate.phoneNumber === phoneNumber)?.code;
+
+  if (!code) {
+    throw new Error(`No SMS code was sent to ${phoneNumber}.`);
+  }
+
+  return code;
+}
+
+/**
+ * Enrolls an SMS second factor for the account, the only kind the Auth emulator offers. Staff need a second factor
+ * for the rules to let them act; the hosted project offers only authenticator apps, which the emulator cannot.
+ */
+export async function enrollSmsSecondFactor(idToken: string, phoneNumber: string): Promise<void> {
+  const base = `http://127.0.0.1:${ports.auth}/identitytoolkit.googleapis.com/v2/accounts/mfaEnrollment`;
+  const post = (path: string, body: object) => request(`${base}:${path}?key=${env.VITE_FIREBASE_API_KEY}`, {
+    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body),
+  }, `${path} SMS second factor`);
+  const {phoneSessionInfo} = await post('start', {idToken, phoneEnrollmentInfo: {phoneNumber}}) as {phoneSessionInfo: {sessionInfo: string}};
+
+  await post('finalize', {idToken, phoneVerificationInfo: {sessionInfo: phoneSessionInfo.sessionInfo, code: await latestSmsCode(phoneNumber)}});
 }
 
 /** The Auth emulator's user id for an email, as the security rules see it. */
