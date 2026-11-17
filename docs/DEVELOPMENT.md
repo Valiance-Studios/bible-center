@@ -15,7 +15,7 @@ Run every command from the repository root. The root holds the commands, shared 
 
 - `npm run emulators` in one terminal and `npm run dev` in another. The app is at http://localhost:5173 and the Emulator UI at http://127.0.0.1:4000. It builds the Cloud Functions first, and the Functions emulator reloads them whenever `apps/functions/lib` changes, so run `npm run watch:functions` in a third terminal while working on one. Their logs are in the Emulator UI's Logs tab.
 - Development runs against the **Firebase Local Emulator Suite** using the `demo-bible-center` project. The `demo-` prefix guarantees no real Firebase resources are touched.
-- `npm run dev:staging` runs the dev server against the hosted project (`apps/web/.env.staging`), with its real accounts and roles. It needs an App Check debug token in `apps/web/.env.staging.local` (see [Debug Token](DEPLOYMENT.md#debug-token)). It must run on port 5173, the only local port allowed on the API key (see [API Key Restrictions](DEPLOYMENT.md#api-key-restrictions)).
+- `npm run dev:staging` runs the dev server against staging (`apps/web/.env.staging`), with its real accounts and roles. It needs an App Check debug token in `apps/web/.env.staging.local` (see [Debug Token](DEPLOYMENT.md#debug-token)). It must run on port 5173, the only local port allowed on the API key (see [API Key Restrictions](DEPLOYMENT.md#api-key-restrictions)).
 
 ### Seed Data
 
@@ -46,8 +46,8 @@ The files live in `apps/web`, since only the web app reads `VITE_` variables. Th
 | File | Committed | Used for |
 | --- | --- | --- |
 | `.env.development` | Yes | The emulators (`demo-bible-center`): `npm run dev`, the seed, and the E2E tests. Vite's default mode. |
-| `.env.staging` | Yes | The hosted project (`vs-bible-center-dev`): `npm run dev:staging`, `npm run build:staging`, and every deploy. Firebase web config is compiled into the public site, so it is not secret. |
-| `.env.production` | Yes | Reserved for a future production project. None exists yet, so nothing builds with it. |
+| `.env.staging` | Yes | Staging (`vs-bible-center-dev`): `npm run dev:staging` and staging deploys. Firebase web config is compiled into the public site, so it is not secret. |
+| `.env.production` | Yes | Production (`vs-bible-center-prod`): production deploys, and `npm run build`, which CI runs as a bundle check. |
 | `.env.example` | Yes | Template for a new env file. |
 | `.env.<mode>.local` | No | Personal, machine-specific overrides, such as the App Check debug token in `.env.staging.local`. |
 
@@ -73,10 +73,10 @@ ESLint (`eslint.config.js`) with `typescript-eslint`, `eslint-plugin-react-hooks
 
 ## Known Quirks
 
-- **E2E tests never reuse a running dev server.** They start their own on port 5174 in development mode, so they always use the emulators, even with `npm run dev:staging` running. Reusing a staging server once made them create real accounts in the hosted project.
+- **E2E tests never reuse a running dev server.** They start their own on port 5174 in development mode, so they always use the emulators, even with `npm run dev:staging` running. Reusing a staging server once made them create real accounts in staging.
 - **Deleting a Google account in the Auth emulator can break its sign-in popup.** In firebase-tools 15.35.0, choosing "Add new account" for an email that already exists gives that account a second Google id. Once the account is deleted, the extra id still points at it, and every later popup fails with "Internal state invariant broken". Pick existing accounts under "Choose an account" instead, as the E2E helper does, or restart the emulators to clear it.
 - **The Auth emulator has no authenticator apps (TOTP).** It offers only SMS as a second step, which the rules accept too, so E2E tests give reviewer and admin accounts an SMS second factor (`enrollSmsSecondFactor`) and sign them in through `apps/web/e2e/support/browserSignIn.ts`, a test-only module the dev server serves to the page. The authenticator-app screens are covered by unit tests instead. To act as staff by hand locally, add the same SMS second factor in the Emulator UI, or use the hosted project.
-- **Firestore indexes are not checked locally.** The emulators answer any query, including ones the hosted project rejects for lack of a composite index. When adding a query that filters on one field and orders by another, or orders by more than one, add its index to `firestore.indexes.json` and deploy it with `npm run deploy:rules`.
+- **Firestore indexes are not checked locally.** The emulators answer any query, including ones the hosted project rejects for lack of a composite index. When adding a query that filters on one field and orders by another, or orders by more than one, add its index to `firestore.indexes.json` and deploy it with `npm run deploy:staging -- --only firestore`, and to production with the next release.
 - **npm audit:** production dependencies are clean, using `overrides` in `package.json` for a newer `@grpc/grpc-js` under the Firestore SDK. Moderate findings remain in dev tooling (`firebase-tools`, `eslint`, `typescript-eslint`), where the only suggested fixes are major downgrades.
 - **Install scripts:** npm does not run dependencies' install scripts unless approved. The test suites and build pass without them.
 - **TypeScript:** stays on 6.0 until `typescript-eslint` supports 7.

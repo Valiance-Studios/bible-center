@@ -28,7 +28,7 @@ These were settled with the owner. Their reasoning is in `ARCHITECTURE.md`.
 - Search covers the selected translation only.
 - A signed-in My verses page will list all of a user's annotations, as its approved mockups show.
 - Anyone with a verified email can sign up. Roles (reviewer, admin) are entries in `roles/{email}`, members have none, and admins manage them on the People page.
-- The Firebase project is `vs-bible-center-dev`. Boards come after V1.
+- Staging is the Firebase project `vs-bible-center-dev`, deployable from any branch. Production is `vs-bible-center-prod`, at `vs-bible-center.web.app`, deployed only from `main` after testing on staging. Boards come after V1.
 
 ### Coding Principles
 

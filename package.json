@@ -15,7 +15,6 @@
     "dev": "npm run dev -w @bible-center/web",
     "dev:staging": "npm run dev:staging -w @bible-center/web",
     "build": "npm run type-check && npm run build -w @bible-center/web",
-    "build:staging": "npm run type-check && npm run build:staging -w @bible-center/web",
     "type-check": "tsc --build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -29,12 +28,10 @@
     "topic-data": "node scripts/build-topic-data.ts",
     "word-data": "node scripts/build-word-data.ts",
     "daily-verses": "node scripts/build-daily-verses.ts",
-    "deploy": "firebase deploy --project dev --only hosting,firestore,functions",
-    "deploy:hosting": "firebase deploy --project dev --only hosting",
-    "deploy:rules": "firebase deploy --project dev --only firestore",
+    "deploy:staging": "firebase deploy --project dev --only hosting,firestore,functions",
+    "deploy:production": "firebase deploy --project prod --only hosting,firestore,functions",
     "build:functions": "npm run build -w @bible-center/functions",
-    "watch:functions": "npm run build -w @bible-center/functions -- --watch",
-    "deploy:functions": "firebase deploy --project dev --only functions"
+    "watch:functions": "npm run build -w @bible-center/functions -- --watch"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^6.0.0",
