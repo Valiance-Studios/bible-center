@@ -4,7 +4,7 @@ A free, one-stop Bible resource: read the Bible, search it, study the original l
 
 Anyone can read, search, study and practice without an account. Signing in, free for anyone with an email address, adds highlights, bookmarks, notes, a memory list and voting on topics.
 
-> **Status:** the first release is feature-complete. See [Project Status](ARCHITECTURE.md#project-status) for what comes next.
+> **Use it at [vs-bible-center.web.app](https://vs-bible-center.web.app).** See [Project Status](ARCHITECTURE.md#project-status) for what comes next.
 
 ## Features
 
@@ -16,7 +16,7 @@ Anyone can read, search, study and practice without an account. Signing in, free
 - **Memorize** verses with flash cards and fading words, and keep a memory list when signed in.
 - **Explore topics** by asking "What does the Bible say about ___?", with results ranked by community upvotes.
 
-Planned after the first release: AI suggestions for topics with few verses, the English Standard Version, and boards to gather related photos, notes and videos.
+Planned after the first release: boards to gather related photos, notes and videos, AI suggestions for topics with few verses, and the English Standard Version.
 
 ## Contributing
 

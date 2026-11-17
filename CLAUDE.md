@@ -6,14 +6,7 @@ Bible Center is a free, public Bible resource built with React, TypeScript, Mant
 2. Before any UI work, read the "Mockups" section of `ARCHITECTURE.md` and `docs/UI.md`. Read the mockup source from the canvas with the Artifact tool. Do not build a feature's UI before its mockup is approved.
 3. Check `git status` and the current branch, as local work may not be committed yet.
 
-### Repository Layout
-
-- `apps/web`: the React app, with its env files, Vite and Playwright config, unit tests (`tests`) and E2E specs (`e2e`).
-- `apps/functions`: `@bible-center/functions`, the Cloud Functions. Each has its own service account.
-- `packages/core`: `@bible-center/core`, pure shared types and logic with no browser or Firebase dependencies.
-- `scripts`: emulator helpers, the deploy check, and generators for the Bible data and icons.
-- `tests`: tests for the repo as a whole (security rules, scripts).
-- Root: commands, shared tool config, and Firebase project files. Run every command from the root. Config for one workspace lives in that workspace.
+`ARCHITECTURE.md` maps the repository under "Repository Layout". Everything needed is in the repository except the mockups, on the canvas linked from "Mockups", and two local items: `apps/web/.env.staging.local`, which holds this machine's App Check debug token, and the owner's Google Cloud login. `docs/DEVELOPMENT.md` sets up a new machine.
 
 ### Decisions Not to Reopen
 
@@ -28,7 +21,7 @@ These were settled with the owner. Their reasoning is in `ARCHITECTURE.md`.
 - Search covers the selected translation only.
 - A signed-in My verses page will list all of a user's annotations, as its approved mockups show.
 - Anyone with a verified email can sign up. Roles (reviewer, admin) are entries in `roles/{email}`, members have none, and admins manage them on the People page.
-- Staging is the Firebase project `vs-bible-center-dev`, deployable from any branch. Production is `vs-bible-center-prod`, at `vs-bible-center.web.app`, deployed only from `main` after testing on staging. Boards come after V1.
+- Staging is the Firebase project `vs-bible-center-dev`, deployable from any branch. Production is `vs-bible-center-prod`, at `vs-bible-center.web.app`, deployed only from `main` after testing on staging. Boards come after V1, and are the next feature, ahead of AI suggestions and the ESV.
 
 ### Coding Principles
 
