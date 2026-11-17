@@ -5,15 +5,16 @@
  * Confirm who is asking before running this: anyone can claim to have lost their phone.
  *
  * Usage, with Google Cloud credentials for the project (gcloud auth application-default login):
- *   node scripts/reset-two-step.ts --project vs-bible-center-dev --email person@example.com            (dry run)
- *   node scripts/reset-two-step.ts --project vs-bible-center-dev --email person@example.com --write
+ *   node scripts/reset-two-step.ts --project vs-bible-center-prod --email person@example.com            (dry run)
+ *   node scripts/reset-two-step.ts --project vs-bible-center-prod --email person@example.com --write
  */
 import {parseArgs} from 'node:util';
 import {applicationDefault, initializeApp} from 'firebase-admin/app';
 import {getAuth} from 'firebase-admin/auth';
+import {HOSTED_PROJECTS} from './environments.ts';
 
-/** The projects this may change. Add a production project's id once it exists. */
-const PROJECTS = new Set(['vs-bible-center-dev']);
+/** The projects this may change. */
+const PROJECTS = new Set(HOSTED_PROJECTS.keys());
 const {values} = parseArgs({options: {project: {type: 'string'}, email: {type: 'string'}, write: {type: 'boolean', default: false}}});
 
 if (!values.project || !PROJECTS.has(values.project) || !values.email) {

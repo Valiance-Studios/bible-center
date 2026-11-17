@@ -12,7 +12,8 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 | GitHub Actions CI (`.github/workflows/ci.yml`) | Built. Runs on pull requests and pushes to `main` |
 | Firestore rules and indexes: default deny, verified accounts, roles, blocked accounts, user settings, annotations, topics, daily verses, memory lists | Built and deployed |
 | Design mockups | Approved |
-| Two-step sign-in for staff, and refusing temporary emails | Built; see [Two-Step Sign-In](#two-step-sign-in) |
+| Two-step sign-in for staff, and refusing temporary emails | Built and deployed to staging; see [Two-Step Sign-In](#two-step-sign-in) |
+| Production environment | Set up in the repo: `vs-bible-center-prod`, served at `vs-bible-center.web.app`, with its own config, service accounts and release check. The first deploy waits on the owner; see [Environments and Delivery](#environments-and-delivery) |
 | Sign-in and registration | Built, and open to anyone with a verified email. Google sign-in and registering by email are confirmed on the hosted site |
 | App layout: app bar, thumb index, phone menu, footer, light and dark mode | Built |
 | Home page | Built, with Verse of the Day, search and the common topics |
@@ -35,21 +36,20 @@ How Bible Center is designed, why, and where the work stands. This is the main h
 
 ### Current State
 
-Last updated November 10, 2026.
+Last updated November 16, 2026.
 
 - **Repository:** [Valiance-Studios/bible-center](https://github.com/Valiance-Studios/bible-center) is public. Everything in V1 is merged. Check what has merged before starting new work.
-- **Hosted project:** `vs-bible-center-dev`, at [vs-bible-center-dev.web.app](https://vs-bible-center-dev.web.app). The owner deploys it; see [DEPLOYMENT.md](docs/DEPLOYMENT.md), which also covers the API key's restrictions and moving the debug token aside before deploying Hosting.
-- **Set up in the project:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. The owner's account is the first admin, set in the console as [DEPLOYMENT.md](docs/DEPLOYMENT.md#roles) describes.
+- **Hosted projects:** staging is `vs-bible-center-dev`, at [vs-bible-center-dev.web.app](https://vs-bible-center-dev.web.app). Production is `vs-bible-center-prod`, at [vs-bible-center.web.app](https://vs-bible-center.web.app), not yet deployed. The owner deploys both; see [DEPLOYMENT.md](docs/DEPLOYMENT.md), which also covers the API key's restrictions and moving the debug token aside before deploying Hosting.
+- **Set up in production so far:** Firebase, the `vs-bible-center` Hosting site, Firestore `(default)` in `nam5`, Google and email/password sign-in, Identity Platform with the password policy, reCAPTCHA in audit mode, two-step sign-in and email enumeration protection, authorized domains (without `localhost`), the billing budget and both alerts, the Cloud Functions APIs, the `sa-bc-*-prod` service accounts and the build role, the App Check reCAPTCHA key (in `apps/web/.env.production`), the API key's restrictions and the web app. The rest of [Setting Up a Project](docs/DEPLOYMENT.md#setting-up-a-project) waits on the owner.
+- **Set up in staging:** billing, Firestore `(default)` in `nam5`, Hosting, the web app, the reCAPTCHA Enterprise key, App Check registration, Google and email/password sign-in, and the APIs for Cloud Functions, Cloud Run, Cloud Build, Artifact Registry, Eventarc and Secret Manager. The owner's account is the first admin, set in the console as [DEPLOYMENT.md](docs/DEPLOYMENT.md#roles) describes.
 
 ### Next Steps
 
 V1 is complete. Build what comes after it one branch at a time, from `main` or from the latest unmerged branch, in this order:
 
-1. **AI topic suggestions:** the first Cloud Function; see [AI Suggestions](#ai-suggestions).
+1. **AI topic suggestions:** the first function with a secret; see [AI Suggestions](#ai-suggestions).
 2. **ESV:** once Crossway approves the key; see [ESV Rules](#esv-rules).
 3. **Boards;** see [Scope](#scope).
-
-Before those, set up **production**: a separate Firebase project for the public site, its own instances of the functions and their service accounts (`.env.<production project id>`, `sa-bc-<function>-prod`), `.env.production` for the app, and a release process for moving a tested build from staging to production.
 
 Later, if there is demand: plugins, and embeddings for search by meaning.
 
@@ -59,6 +59,8 @@ Waiting on the owner:
 
 - Crossway's decision on the ESV API key. Once approved, the owner adds the key to Secret Manager and shares the secret's name.
 - Choose whether to keep the KJV source, the Pure Cambridge Edition from OpenBible, or swap to one with a clearer license statement. Review the UK Crown patent before a wider launch; see [Translations](#translations).
+- Finish setting up production by [Setting Up a Project](docs/DEPLOYMENT.md#setting-up-a-project), then do its first release.
+- Switch reCAPTCHA for email and password from audit to enforce in each project, once a week of its scores looks right (production started November 16, 2026); see [Identity Platform](docs/DEPLOYMENT.md#identity-platform).
 - Try the password reset email on the hosted site. Registering by email, with its confirmation email, works there; password reset has only run against the emulators.
 
 To do when reached:
@@ -163,7 +165,7 @@ Public-domain Bible text and OpenBible data are static files, so reading costs a
 flowchart LR
   browser["React app<br/>apps/web"]
 
-  subgraph firebase["Firebase project: vs-bible-center-dev"]
+  subgraph firebase["Firebase project: vs-bible-center-dev (staging) or vs-bible-center-prod (production)"]
     hosting["Hosting<br/>app and static data"]
     auth["Authentication<br/>Google, email/password"]
     firestore[("Firestore<br/>roles, blocked accounts, annotations,<br/>votes, reports, daily verses, memory lists, AI cache")]
@@ -193,7 +195,7 @@ flowchart LR
 | --- | --- |
 | `apps/web` | The React app, with its env files, Vite and Playwright config, unit tests in `tests` and E2E specs in `e2e`. `@/` is an alias for its `src`. |
 | `packages/core` | `@bible-center/core`: types and pure logic shared across the repo, with no browser or Firebase dependencies. |
-| `scripts` | Emulator helpers and the deploy check. |
+| `scripts` | Emulator helpers, the deploy checks and the list of hosted projects (`environments.ts`), and the data generators. |
 | `tests` | Tests that belong to the repo as a whole: security rules and scripts. Workspace unit tests live in each workspace's `tests` folder. |
 | `apps/functions` | `@bible-center/functions`: the Cloud Functions, each with its own service account named in `.env.<project id>`. They share only types with `@bible-center/core`, since a deploy uploads this folder alone. Built to `lib` with `npm run build:functions`, which the emulator and deploy commands run first. |
 
@@ -880,14 +882,15 @@ flowchart LR
   rules["npm run test:emulator"] --> emulators
   ci["GitHub Actions ci.yml<br/>pull requests, pushes to main"] --> e2e
   ci --> rules
-  staging["npm run dev:staging"] -- ".env.staging<br/>.env.staging.local" --> project["vs-bible-center-dev"]
-  deploy["npm run deploy"] --> check["check-firebase-config.ts"]
-  check --> build["vite build --mode staging"]
-  build --> project
-  project --> site["vs-bible-center-dev.web.app"]
+  devStaging["npm run dev:staging"] -- ".env.staging<br/>.env.staging.local" --> staging["vs-bible-center-dev<br/>vs-bible-center-dev.web.app"]
+  deployStaging["npm run deploy:staging<br/>any branch"] --> buildStaging["build-hosting.ts<br/>vite build --mode staging"]
+  buildStaging --> staging
+  deployProd["npm run deploy:production<br/>main, once tested on staging"] --> release["check-release.ts<br/>clean, at origin/main"]
+  release --> buildProd["build-hosting.ts<br/>vite build --mode production"]
+  buildProd --> production["vs-bible-center-prod<br/>vs-bible-center.web.app"]
 ```
 
-Staging is production until a separate production project exists. Details are in [DEVELOPMENT.md](docs/DEVELOPMENT.md#environment-files) and [DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Staging and production are separate Firebase projects, with separate accounts, data, roles and service accounts. A change is merged, deployed to staging and tried there, then the same commit is deployed to production. `scripts/environments.ts` gives each project its Vite mode, so a deploy builds only that project's config, and `check-release.ts` refuses a production deploy of anything but a clean checkout of `main` on GitHub. Details are in [DEVELOPMENT.md](docs/DEVELOPMENT.md#environment-files) and [DEPLOYMENT.md](docs/DEPLOYMENT.md#deploying).
 
 ## Licensing
 
@@ -917,4 +920,4 @@ Before finishing a change, check whether it touches a source below, and update t
 | [Account Deletion](#account-deletion) | `apps/functions/src/deleteAccount.ts`, `apps/functions/src/userContent.ts`, `apps/web/src/components/account/`, `apps/web/src/firebase/account.ts` | Built |
 | [Blocking](#blocking) | `apps/functions/src/`, `firestore.rules`, `apps/web/src/firebase/blocking.ts`, `apps/web/src/components/blocking/`, `apps/web/src/components/review/AccountLine.tsx`, `apps/web/src/components/people/BlockedAccounts.tsx` | Built |
 | [Write Limits](#write-limits) | `packages/core/src/limits.ts`, `apps/web/src/firebase/userRecord.ts`, `apps/web/src/firebase/annotations.ts`, `apps/web/src/firebase/memoryVerses.ts`, `apps/web/src/firebase/topics.ts`, `firestore.rules` | Built |
-| [Environments and Delivery](#environments-and-delivery) | `package.json`, `apps/web/.env.*`, `firebase.json`, `scripts/`, `.github/workflows/ci.yml` | Built |
+| [Environments and Delivery](#environments-and-delivery) | `package.json`, `apps/web/.env.*`, `firebase.json`, `.firebaserc`, `scripts/environments.ts`, `scripts/build-hosting.ts`, `scripts/check-release.ts`, `.github/workflows/ci.yml` | Built |

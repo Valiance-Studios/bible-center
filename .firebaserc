@@ -1,6 +1,23 @@
 {
   "projects": {
     "default": "demo-bible-center",
-    "dev": "vs-bible-center-dev"
+    "dev": "vs-bible-center-dev",
+    "prod": "vs-bible-center-prod"
+  },
+  "targets": {
+    "vs-bible-center-dev": {
+      "hosting": {
+        "app": [
+          "vs-bible-center-dev"
+        ]
+      }
+    },
+    "vs-bible-center-prod": {
+      "hosting": {
+        "app": [
+          "vs-bible-center"
+        ]
+      }
+    }
   }
 }

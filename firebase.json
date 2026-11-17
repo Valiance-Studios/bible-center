@@ -1,7 +1,10 @@
 {
   "firestore": {
     "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
+    "indexes": "firestore.indexes.json",
+    "predeploy": [
+      "node scripts/check-release.ts"
+    ]
   },
   "functions": [
     {
@@ -14,12 +17,13 @@
         "*.log"
       ],
       "predeploy": [
+        "node scripts/check-release.ts",
         "npm run build -w @bible-center/functions"
       ]
     }
   ],
   "hosting": {
-    "site": "vs-bible-center-dev",
+    "target": "app",
     "public": "apps/web/dist",
     "ignore": [
       "firebase.json",
@@ -79,8 +83,8 @@
       }
     ],
     "predeploy": [
-      "node scripts/check-firebase-config.ts staging",
-      "npm run build:staging"
+      "node scripts/check-release.ts",
+      "node scripts/build-hosting.ts"
     ]
   },
   "emulators": {

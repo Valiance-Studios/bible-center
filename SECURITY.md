@@ -19,7 +19,7 @@ We will acknowledge the report, keep you informed as we fix it, and credit you i
 In scope:
 
 - The code in this repository.
-- The hosted app at [vs-bible-center-dev.web.app](https://vs-bible-center-dev.web.app), including its Firestore security rules and sign-in.
+- The hosted app at [vs-bible-center.web.app](https://vs-bible-center.web.app) and its staging copy at [vs-bible-center-dev.web.app](https://vs-bible-center-dev.web.app), including their Firestore security rules and sign-in.
 
 Out of scope:
 
