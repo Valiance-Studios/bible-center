@@ -38,10 +38,13 @@ The deploy jobs have no stored key. Each project trusts GitHub through Workload 
 | Cloud Datastore Index Admin (`roles/datastore.indexAdmin`) | Firestore indexes |
 | Cloud Functions Developer (`roles/cloudfunctions.developer`) | Functions |
 | Service Account User (`roles/iam.serviceAccountUser`) on each function's account only | Running functions as their own accounts |
+| Service Account User on `<project id>@appspot.gserviceaccount.com` only | The Firebase CLI checks for it before every functions deploy, though no function runs as it. That account has no roles, so this adds no access; keep it without roles |
 | Service Usage Consumer (`roles/serviceusage.serviceUsageConsumer`) | Checking the APIs the deploy uses are on |
 | Firebase Viewer (`roles/firebase.viewer`) | Reading the project |
 
 If a deploy fails for lack of a permission, the job's log names it; grant the narrowest role that has it, in both projects, and add it here.
+
+**Before a release that adds a new callable function,** swap Cloud Functions Developer for Cloud Functions Admin (`roles/cloudfunctions.admin`) in both projects. The CLI makes a new callable public with `cloudfunctions.functions.setIamPolicy`, which only Admin has, and refuses the deploy without it. That pull request's Notes should say so.
 
 To set it up in a new project, with `PROJECT`, `ENV` and the function accounts as in [Cloud Functions](#cloud-functions):
 
@@ -68,6 +71,8 @@ for fn in block-account delete-account check-signup-email; do
   gcloud iam service-accounts add-iam-policy-binding sa-bc-$fn-$ENV@$PROJECT.iam.gserviceaccount.com --project $PROJECT \
     --member "serviceAccount:$DEPLOY" --role roles/iam.serviceAccountUser
 done
+gcloud iam service-accounts add-iam-policy-binding $PROJECT@appspot.gserviceaccount.com --project $PROJECT \
+  --member "serviceAccount:$DEPLOY" --role roles/iam.serviceAccountUser
 gcloud iam service-accounts add-iam-policy-binding $DEPLOY --project $PROJECT --role roles/iam.workloadIdentityUser \
   --member "principalSet://iam.googleapis.com/projects/$NUMBER/locations/global/workloadIdentityPools/github/attribute.repository_id/$REPO_ID"
 ```
