@@ -39,8 +39,11 @@ The deploy jobs have no stored key. Each project trusts GitHub through Workload 
 | Cloud Functions Developer (`roles/cloudfunctions.developer`) | Functions |
 | Service Account User (`roles/iam.serviceAccountUser`) on each function's account only | Running functions as their own accounts |
 | Service Account User on `<project id>@appspot.gserviceaccount.com` only | The Firebase CLI checks for it before every functions deploy, though no function runs as it. That account has no roles, so this adds no access; keep it without roles |
+| Service Account User on `<project number>-compute@developer.gserviceaccount.com` only | Updating functions, which Cloud Build builds as that account. The deploy account can use that account's roles, so give it no more than [its builds need](#cloud-functions) |
 | Service Usage Consumer (`roles/serviceusage.serviceUsageConsumer`) | Checking the APIs the deploy uses are on |
 | Firebase Viewer (`roles/firebase.viewer`) | Reading the project |
+
+A release only needs some of these when a function changes, since the CLI skips unchanged functions. A hand deploy to staging beforehand hides a missing grant there too, because CI then finds nothing to update.
 
 If a deploy fails for lack of a permission, the job's log names it; grant the narrowest role that has it, in both projects, and add it here.
 
@@ -72,6 +75,8 @@ for fn in block-account delete-account check-signup-email; do
     --member "serviceAccount:$DEPLOY" --role roles/iam.serviceAccountUser
 done
 gcloud iam service-accounts add-iam-policy-binding $PROJECT@appspot.gserviceaccount.com --project $PROJECT \
+  --member "serviceAccount:$DEPLOY" --role roles/iam.serviceAccountUser
+gcloud iam service-accounts add-iam-policy-binding $NUMBER-compute@developer.gserviceaccount.com --project $PROJECT \
   --member "serviceAccount:$DEPLOY" --role roles/iam.serviceAccountUser
 gcloud iam service-accounts add-iam-policy-binding $DEPLOY --project $PROJECT --role roles/iam.workloadIdentityUser \
   --member "principalSet://iam.googleapis.com/projects/$NUMBER/locations/global/workloadIdentityPools/github/attribute.repository_id/$REPO_ID"
@@ -259,7 +264,11 @@ gcloud projects add-iam-policy-binding $PROJECT \
   --role roles/cloudbuild.builds.builder --condition None
 ```
 
-The Firebase CLI cannot choose a different build account. The functions still run as their own accounts; the default one only builds them. Then deploy them with the environment's deploy command, which builds them first. The service accounts have no keys, and none should be made: the functions run as them without one.
+The Firebase CLI cannot choose a different build account. A dedicated one would have to be set outside the CLI for each new function, and gains little while the default account only builds functions and has only the role above. Reconsider if anything else runs as it, it needs more roles, or the CLI adds the option. The functions still run as their own accounts; the default one only builds them. Then deploy them with the environment's deploy command, which builds them first. The service accounts have no keys, and none should be made: the functions run as them without one.
+
+**After `checkSignUpEmail`'s first deploy,** register its `run.app` URL as the sign-up check. The Firebase CLI registers the `cloudfunctions.net` URL when it creates the function but wants the `run.app` one (`serviceConfig.uri`) when it updates it, so the next release that changes it would try to update the Identity Platform config, which the deploy account may not do. Both URLs reach the same function. Deploying a change to it once by hand, as an Owner, makes the switch. Both projects have the `run.app` URL now.
+
+**Check that a new callable function is public** after its first deploy: called without signing in, it should answer 401 with `UNAUTHENTICATED`, not Cloud Run's 403. The CLI appears to make a callable public only when it creates it, so one whose first deploy failed partway stays closed. Grant `allUsers` the Cloud Run Invoker role (`roles/run.invoker`) on its service; the function still checks App Check and the caller itself.
 
 ## Setting Up a Project
 
