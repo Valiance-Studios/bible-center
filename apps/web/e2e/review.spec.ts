@@ -26,7 +26,13 @@ async function openAccountMenu(page: Page) {
 test('a reviewer removes a reported verse from its topic', async ({page}) => {
   const {name, slug} = await startUniqueTopic('remove');
 
-  await addReport({topic: slug, verseKey: VERSE_ID, reason: 'reference', details: 'I meant Psalm 34:18.', createdAt: new Date()});
+  await addReport({
+    topic: slug,
+    verseKey: VERSE_ID,
+    reason: 'reference',
+    details: 'I meant Psalm 34:18.',
+    createdAt: new Date(),
+  });
   await signInAsNewUser(page, 'reviewer');
 
   await openAccountMenu(page);
@@ -90,7 +96,9 @@ test('a reviewer approves one topic, which is then listed, and rejects another, 
 
   await page.goto('/topics');
   await page.getByLabel('Find a topic').fill(approved.name);
-  await expect(page.getByRole('list', {name: 'Matching topics'}).getByRole('link', {name: approved.name})).toBeVisible();
+  await expect(
+    page.getByRole('list', {name: 'Matching topics'}).getByRole('link', {name: approved.name}),
+  ).toBeVisible();
 
   await page.goto(`/topics/${rejected.slug}`);
   await expect(page.getByText('This topic is not available.')).toBeVisible();
@@ -121,12 +129,16 @@ test.describe('on a phone', () => {
     await page.getByRole('button', {name: 'Open menu'}).click();
     await page.getByRole('link', {name: /^Review/}).click();
     await expect(page.getByRole('article', {name: `${REFERENCE} on ${name}`})).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth),
+    ).toBeLessThanOrEqual(0);
 
     await page.getByRole('button', {name: 'Open menu'}).click();
     await page.getByRole('link', {name: 'People'}).click();
     await expect(page.getByRole('heading', {name: 'People'})).toBeVisible();
     await expect(page.getByText('You', {exact: true})).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth),
+    ).toBeLessThanOrEqual(0);
   });
 });

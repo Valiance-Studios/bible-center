@@ -40,7 +40,7 @@ export function useMemoryList() {
   const add = useMutation({mutationFn: (span: MemorySpan) => addMemoryVerse(requireUid(), span), onSettled: refresh});
   const practice = useMutation({
     // Practicing still works for a blocked account; it just is not recorded.
-    mutationFn: async ({key, status}: Practice) => isBlocked ? undefined : recordPractice(requireUid(), key, status),
+    mutationFn: async ({key, status}: Practice) => (isBlocked ? undefined : recordPractice(requireUid(), key, status)),
     onSettled: refresh,
   });
   const remove = useMutation({mutationFn: (key: string) => removeMemoryVerse(requireUid(), key), onSettled: refresh});

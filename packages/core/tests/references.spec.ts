@@ -60,8 +60,20 @@ describe('referenceOf', () => {
   const john = BIBLE_BOOKS.find(({name}) => name === 'John');
 
   it('names the book, chapters and verses between two verse ids', () => {
-    expect(referenceOf({startVerse: '43001001', endVerse: '43001003'})).toEqual({book: john, startChapter: 1, startVerse: 1, endChapter: 1, endVerse: 3});
-    expect(referenceOf({startVerse: '43001051', endVerse: '43002002'})).toEqual({book: john, startChapter: 1, startVerse: 51, endChapter: 2, endVerse: 2});
+    expect(referenceOf({startVerse: '43001001', endVerse: '43001003'})).toEqual({
+      book: john,
+      startChapter: 1,
+      startVerse: 1,
+      endChapter: 1,
+      endVerse: 3,
+    });
+    expect(referenceOf({startVerse: '43001051', endVerse: '43002002'})).toEqual({
+      book: john,
+      startChapter: 1,
+      startVerse: 51,
+      endChapter: 2,
+      endVerse: 2,
+    });
   });
 
   it('is null for malformed verse ids', () => {

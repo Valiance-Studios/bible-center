@@ -6,8 +6,7 @@ export function SupportContact() {
   return (
     <>
       {' If you think this is a mistake, write to '}
-      <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
-      .
+      <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
     </>
   );
 }

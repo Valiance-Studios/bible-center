@@ -39,7 +39,9 @@ export function RoleGate({canSee, audience, children}: RoleGateProps) {
     return (
       <>
         <p className={classes.body}>{`This page is for ${audience}. Sign in to see it.`}</p>
-        <Button component={Link} to="/sign-in" radius="xl" size="md">Sign in</Button>
+        <Button component={Link} to="/sign-in" radius="xl" size="md">
+          Sign in
+        </Button>
       </>
     );
   }
@@ -60,14 +62,19 @@ export function RoleGate({canSee, audience, children}: RoleGateProps) {
 
   // Staff pages need a sign-in with a second step, as the rules do (`hasSecondFactor`).
   if (!hasSecondFactor) {
-    return isEnrolled
-      ? (
-          <>
-            <p className={classes.body}>Two-step sign-in is on for your account. Sign in again, with a code from your authenticator app, to use this page.</p>
-            <Button component={Link} to="/sign-in" radius="xl" size="md" onClick={() => void signOut()}>Sign in again</Button>
-          </>
-        )
-      : <TwoStepSetup />;
+    return isEnrolled ? (
+      <>
+        <p className={classes.body}>
+          Two-step sign-in is on for your account. Sign in again, with a code from your authenticator app, to use this
+          page.
+        </p>
+        <Button component={Link} to="/sign-in" radius="xl" size="md" onClick={() => void signOut()}>
+          Sign in again
+        </Button>
+      </>
+    ) : (
+      <TwoStepSetup />
+    );
   }
 
   return children(uid);

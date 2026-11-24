@@ -23,7 +23,8 @@ function wordTranslationOf(translationId: string): WordTranslation {
  */
 export function useVerseWords(reference: ChapterRef, verse: number | null, translationId: string) {
   const chapter = useQuery(wordChapterQuery(reference));
-  const words = chapter.data && verse !== null ? wordsOfVerse(chapter.data, wordTranslationOf(translationId), verse) : [];
+  const words =
+    chapter.data && verse !== null ? wordsOfVerse(chapter.data, wordTranslationOf(translationId), verse) : [];
   const grammar = useQuery({...grammarQuery(chapter.data?.language ?? 'hebrew'), enabled: chapter.data !== undefined});
   const groups = [...new Set(words.flatMap(({strongs}) => lexiconGroup(strongs) ?? []))];
   const lexicons = useQueries({queries: groups.map((group) => lexiconQuery(group))});

@@ -7,7 +7,11 @@ export function AccountLinkLabel({label, count}: AccountLink) {
   return (
     <span className={classes.label}>
       {label}
-      {count ? <span className={classes.count} aria-label={`${count} waiting`}>{count}</span> : null}
+      {count ? (
+        <span className={classes.count} aria-label={`${count} waiting`}>
+          {count}
+        </span>
+      ) : null}
     </span>
   );
 }

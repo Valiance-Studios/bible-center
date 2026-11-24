@@ -14,7 +14,9 @@ const projectId = process.env.GCLOUD_PROJECT;
 const mode = hostedMode(projectId);
 
 if (!projectId || !mode) {
-  console.error(`Refusing to deploy Hosting to "${projectId ?? 'no project'}": scripts/environments.ts does not list it.`);
+  console.error(
+    `Refusing to deploy Hosting to "${projectId ?? 'no project'}": scripts/environments.ts does not list it.`,
+  );
   process.exit(1);
 }
 

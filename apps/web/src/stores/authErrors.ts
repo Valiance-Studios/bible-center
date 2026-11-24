@@ -18,7 +18,8 @@ const MESSAGES: Record<string, string> = {
 };
 
 /** What `checkSignUpEmail` refusing a sign-up looks like to the person. */
-const TEMPORARY_EMAIL_MESSAGE = 'Bible Center does not accept sign-ups from temporary email services. Use an email address you keep, such as a personal or work one.';
+const TEMPORARY_EMAIL_MESSAGE =
+  'Bible Center does not accept sign-ups from temporary email services. Use an email address you keep, such as a personal or work one.';
 
 const FALLBACK_MESSAGE = 'That did not work. Try again.';
 

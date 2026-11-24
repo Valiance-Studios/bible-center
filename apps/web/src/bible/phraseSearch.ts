@@ -30,7 +30,11 @@ const MIN_WORDS_MATCHED = 0.5;
 
 /** Words only, so `"mercies never fail,"` matches `mercies never fail.` */
 function normalize(text: string): string {
-  return text.toLowerCase().replaceAll(/[^\p{L}\p{N}\s]/gu, ' ').replaceAll(/\s+/g, ' ').trim();
+  return text
+    .toLowerCase()
+    .replaceAll(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replaceAll(/\s+/g, ' ')
+    .trim();
 }
 
 export interface PhraseIndex {
@@ -57,7 +61,7 @@ export function buildPhraseIndex(verses: readonly SearchableVerse[]): PhraseInde
 
       const wordCount = new Set(phrase.split(' ')).size;
       const results = index.search(phrase, {
-        fuzzy: (term) => term.length >= MIN_LOOSE_MATCH_LENGTH ? FUZZINESS : false,
+        fuzzy: (term) => (term.length >= MIN_LOOSE_MATCH_LENGTH ? FUZZINESS : false),
         prefix: (term) => term.length >= MIN_LOOSE_MATCH_LENGTH,
         combineWith: 'OR',
       });

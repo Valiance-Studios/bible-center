@@ -1,7 +1,9 @@
 import {expect, test} from '@playwright/test';
 import {createTestUser, signInAsNewUser} from './support/auth';
 
-test('an admin gives a role by email, changes it and makes them a member again, but cannot change their own', async ({page}) => {
+test('an admin gives a role by email, changes it and makes them a member again, but cannot change their own', async ({
+  page,
+}) => {
   const me = await signInAsNewUser(page, 'admin');
   const person = createTestUser().email;
 
@@ -47,7 +49,9 @@ test('an admin is told when an email is not one', async ({page}) => {
 
   await form.getByRole('textbox', {name: 'Email'}).fill('not an email');
   await form.getByRole('button', {name: 'Give role'}).click();
-  await expect(page.getByRole('region', {name: 'Reviewers and admins'}).getByRole('alert')).toHaveText('Enter an email address, such as name@example.com.');
+  await expect(page.getByRole('region', {name: 'Reviewers and admins'}).getByRole('alert')).toHaveText(
+    'Enter an email address, such as name@example.com.',
+  );
 });
 
 test('a reviewer cannot see the People page', async ({page}) => {

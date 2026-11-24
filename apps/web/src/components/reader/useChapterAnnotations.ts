@@ -13,7 +13,11 @@ const NO_ANNOTATIONS: Annotation[] = [];
 export function useChapterAnnotations(uid: string | undefined, reference: ChapterRef) {
   const queryClient = useQueryClient();
   const chapterId = chapterIdOf(reference);
-  const {data = NO_ANNOTATIONS, isError: hasLoadError, isLoading} = useQuery({
+  const {
+    data = NO_ANNOTATIONS,
+    isError: hasLoadError,
+    isLoading,
+  } = useQuery({
     queryKey: annotationQueryKeys.chapter(uid, chapterId),
     queryFn: () => listChapterAnnotations(uid ?? '', chapterId),
     enabled: uid !== undefined,

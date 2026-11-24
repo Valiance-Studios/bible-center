@@ -20,7 +20,13 @@ vi.mock('@/firebase/twoStep', () => ({
 const PENDING = {secret: {}, qrCodeImage: 'data:image/gif;base64,AAAA', key: 'JBSW Y3DP EHPK 3PXP'};
 
 function renderSetup() {
-  render(<MantineProvider><MemoryRouter><TwoStepSetup /></MemoryRouter></MantineProvider>);
+  render(
+    <MantineProvider>
+      <MemoryRouter>
+        <TwoStepSetup />
+      </MemoryRouter>
+    </MantineProvider>,
+  );
 }
 
 describe('TwoStepSetup', () => {
@@ -38,7 +44,10 @@ describe('TwoStepSetup', () => {
     fireEvent.change(screen.getByLabelText('Password for grace@example.com'), {target: {value: 'a-long-password'}});
     fireEvent.click(screen.getByRole('button', {name: 'Continue'}));
 
-    expect(await screen.findByRole('img', {name: 'QR code to scan with your authenticator app'})).toHaveProperty('src', PENDING.qrCodeImage);
+    expect(await screen.findByRole('img', {name: 'QR code to scan with your authenticator app'})).toHaveProperty(
+      'src',
+      PENDING.qrCodeImage,
+    );
     expect(screen.getByText(PENDING.key)).toBeTruthy();
     expect(confirmItIsYou).toHaveBeenCalledWith(user, 'a-long-password');
 
@@ -72,7 +81,9 @@ describe('TwoStepSetup', () => {
     fireEvent.change(screen.getByLabelText('Then enter the 6-digit code the app shows'), {target: {value: '000000'}});
     fireEvent.click(screen.getByRole('button', {name: 'Turn on two-step sign-in'}));
 
-    expect((await screen.findByRole('alert')).textContent).toBe('That code did not match. Codes change every 30 seconds; try the current one.');
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      'That code did not match. Codes change every 30 seconds; try the current one.',
+    );
     expect(screen.getByRole('button', {name: 'Turn on two-step sign-in'})).toBeTruthy();
   });
 });

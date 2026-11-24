@@ -3,7 +3,14 @@ import type {ChapterRef, VerseSpan} from '@bible-center/core';
 import {useEffect, useState} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {Link, Navigate, useLocation, useNavigate, useParams} from 'react-router';
-import {BIBLE_BOOKS, chapterTitle, isOldTestament, nextChapter, parseChapterRef, previousChapter} from '@bible-center/core';
+import {
+  BIBLE_BOOKS,
+  chapterTitle,
+  isOldTestament,
+  nextChapter,
+  parseChapterRef,
+  previousChapter,
+} from '@bible-center/core';
 import {Alert, Button, Drawer, Loader, NativeSelect} from '@mantine/core';
 import {useMediaQuery} from '@mantine/hooks';
 import {ArrowIcon} from '@/components/ArrowIcon';
@@ -16,13 +23,27 @@ import {TranslationSelect} from '@/components/TranslationSelect';
 import {useTranslationStore} from '@/stores/translation';
 import classes from './ReaderPage.module.scss';
 
-function ChapterLink({target, label, direction}: {target: ChapterRef | null; label: string; direction: 'previous' | 'next'}) {
+function ChapterLink({
+  target,
+  label,
+  direction,
+}: {
+  target: ChapterRef | null;
+  label: string;
+  direction: 'previous' | 'next';
+}) {
   const icon = <ArrowIcon direction={direction} />;
 
   // Kept in place at either end of the Bible, so the other button does not move.
-  return target
-    ? <Link className={classes.chapterNav} to={chapterPath(target)} aria-label={`${label}: ${chapterTitle(target)}`}>{icon}</Link>
-    : <span className={classes.chapterNavEnd} aria-hidden="true">{icon}</span>;
+  return target ? (
+    <Link className={classes.chapterNav} to={chapterPath(target)} aria-label={`${label}: ${chapterTitle(target)}`}>
+      {icon}
+    </Link>
+  ) : (
+    <span className={classes.chapterNavEnd} aria-hidden="true">
+      {icon}
+    </span>
+  );
 }
 
 /** Below this width the word panel moves from beside the text into a sheet, opened from a verse's tools. */
@@ -56,13 +77,15 @@ function Chapter({reference}: {reference: ChapterRef}) {
       reference={reference}
       verse={study?.verse ?? null}
       translationId={translationId}
-      steps={study && isStudyingRange
-        ? {
-            position: study.verse - study.span.start + 1,
-            count: study.span.end - study.span.start + 1,
-            onStep: (by) => setStudy({...study, verse: study.verse + by}),
-          }
-        : undefined}
+      steps={
+        study && isStudyingRange
+          ? {
+              position: study.verse - study.span.start + 1,
+              count: study.span.end - study.span.start + 1,
+              onStep: (by) => setStudy({...study, verse: study.verse + by}),
+            }
+          : undefined
+      }
     />
   );
 
@@ -133,13 +156,22 @@ function Chapter({reference}: {reference: ChapterRef}) {
         )}
       </main>
 
-      {isPhone
-        ? (
-            <Drawer opened={isSheetOpen} onClose={() => setIsSheetOpen(false)} position="bottom" size="auto" title={wordsLabel} classNames={{body: classes.sheet, title: classes.sheetTitle}}>
-              {wordStudy}
-            </Drawer>
-          )
-        : <aside className={classes.study} aria-label={wordsLabel}>{wordStudy}</aside>}
+      {isPhone ? (
+        <Drawer
+          opened={isSheetOpen}
+          onClose={() => setIsSheetOpen(false)}
+          position="bottom"
+          size="auto"
+          title={wordsLabel}
+          classNames={{body: classes.sheet, title: classes.sheetTitle}}
+        >
+          {wordStudy}
+        </Drawer>
+      ) : (
+        <aside className={classes.study} aria-label={wordsLabel}>
+          {wordStudy}
+        </aside>
+      )}
     </div>
   );
 }
@@ -149,5 +181,9 @@ export function ReaderPage() {
   const reference = parseChapterRef(book, chapter);
 
   // Keyed by chapter so a selection does not carry over to the next one.
-  return reference ? <Chapter key={`${reference.book.slug}-${reference.chapter}`} reference={reference} /> : <Navigate to="/read" replace />;
+  return reference ? (
+    <Chapter key={`${reference.book.slug}-${reference.chapter}`} reference={reference} />
+  ) : (
+    <Navigate to="/read" replace />
+  );
 }

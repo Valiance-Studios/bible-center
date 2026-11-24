@@ -25,23 +25,42 @@ export function BlockDialog({title, about, isBlocking, onConfirm, onClose}: Bloc
       await onConfirm(removeContent);
       onClose();
     } catch (error) {
-      setProblem(error instanceof BlockAccountError ? error.message : 'The account could not be blocked. Check your connection and try again.');
+      setProblem(
+        error instanceof BlockAccountError
+          ? error.message
+          : 'The account could not be blocked. Check your connection and try again.',
+      );
     }
   }
 
   return (
     <Modal opened onClose={onClose} title={title}>
-      <Text>{[about, 'It will still be able to read, but nothing it tries to save will be accepted. This takes effect at once.'].filter(Boolean).join(' ')}</Text>
+      <Text>
+        {[
+          about,
+          'It will still be able to read, but nothing it tries to save will be accepted. This takes effect at once.',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      </Text>
       <Checkbox
         mt="md"
         checked={removeContent}
         onChange={(event) => setRemoveContent(event.currentTarget.checked)}
         label="Also remove its upvotes, the verses it added, the topics it started and its reports"
       />
-      {problem && <Alert color="red" mt="md" role="alert">{problem}</Alert>}
+      {problem && (
+        <Alert color="red" mt="md" role="alert">
+          {problem}
+        </Alert>
+      )}
       <Group justify="flex-end" mt="md">
-        <Button variant="default" onClick={onClose} disabled={isBlocking} data-autofocus>Cancel</Button>
-        <Button color="red" onClick={() => void confirm()} loading={isBlocking}>Block</Button>
+        <Button variant="default" onClick={onClose} disabled={isBlocking} data-autofocus>
+          Cancel
+        </Button>
+        <Button color="red" onClick={() => void confirm()} loading={isBlocking}>
+          Block
+        </Button>
       </Group>
     </Modal>
   );

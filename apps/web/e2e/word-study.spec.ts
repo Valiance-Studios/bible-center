@@ -20,7 +20,9 @@ test('selecting a verse shows its Hebrew words, and a word its meaning, without 
   // The title "A Psalm of David" is part of verse 1, as the BSB numbers it.
   await expect(panel(page).getByRole('button', {name: /^מִזְמוֹר, mizmor/})).toHaveAttribute('aria-pressed', 'true');
 
-  await panel(page).getByRole('button', {name: /, ro'i, /}).click();
+  await panel(page)
+    .getByRole('button', {name: /, ro'i, /})
+    .click();
   await expect(panel(page).getByRole('definition').filter({hasText: 'to pasture, tend, graze, feed'})).toBeVisible();
   await expect(panel(page).getByText('Verb, Qal, participle, masculine, singular, construct')).toBeVisible();
   await expect(panel(page).getByRole('link', {name: 'H7462'})).toHaveAttribute('href', /strong=H7462B/);
@@ -46,7 +48,10 @@ test('arrows step through the words of each selected verse', async ({page}) => {
 
   await next.click();
   await expect(panel(page).getByRole('heading', {name: 'Hebrew words in verse 2'})).toBeVisible();
-  await expect(page.getByRole('button', {name: 'Select verse 2', exact: true})).toHaveCSS('text-decoration-line', 'underline');
+  await expect(page.getByRole('button', {name: 'Select verse 2', exact: true})).toHaveCSS(
+    'text-decoration-line',
+    'underline',
+  );
 
   await next.click();
   await expect(panel(page).getByRole('heading', {name: 'Hebrew words in verse 3'})).toBeVisible();
@@ -61,7 +66,7 @@ test('arrows step through the words of each selected verse', async ({page}) => {
   await expect(next).toHaveCount(0);
 });
 
-test('Daniel\'s Aramaic is labeled as Aramaic', async ({page}) => {
+test("Daniel's Aramaic is labeled as Aramaic", async ({page}) => {
   await page.goto('/read/daniel/3');
   await selectVerse(page, 1);
 
@@ -107,7 +112,7 @@ test.describe('in a narrow window', () => {
 test.describe('on a phone', () => {
   test.use({viewport: {width: 390, height: 844}});
 
-  test('a verse\'s tools open its words in a sheet, and the page does not scroll sideways', async ({page}) => {
+  test("a verse's tools open its words in a sheet, and the page does not scroll sideways", async ({page}) => {
     await page.goto('/read/john/1');
     await expect(page.getByRole('complementary')).toHaveCount(0);
 
@@ -120,7 +125,9 @@ test.describe('on a phone', () => {
     await sheet.getByRole('button', {name: /, archē, /}).click();
     await expect(sheet.getByRole('definition').filter({hasText: 'beginning'}).first()).toBeVisible();
 
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
 
     expect(overflow).toBeLessThanOrEqual(0);
   });

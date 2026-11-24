@@ -54,7 +54,9 @@ function StartForm() {
           setError(null);
         }}
       />
-      <Button type="submit" size="md">Start</Button>
+      <Button type="submit" size="md">
+        Start
+      </Button>
     </form>
   );
 }
@@ -72,8 +74,13 @@ function MemoryList() {
   if (list.authStatus === 'signedOut') {
     return (
       <div className={classes.signedOut}>
-        <p>Sign in to keep a list of the verses you are learning, and see which are ready to review. Anyone can practice without an account.</p>
-        <Button component={Link} to="/sign-in" radius="xl">Sign in</Button>
+        <p>
+          Sign in to keep a list of the verses you are learning, and see which are ready to review. Anyone can practice
+          without an account.
+        </p>
+        <Button component={Link} to="/sign-in" radius="xl">
+          Sign in
+        </Button>
       </div>
     );
   }
@@ -97,7 +104,11 @@ function MemoryList() {
   }
 
   if (list.entries.length === 0) {
-    return <p className={classes.empty}>Verses you add will appear here. Start with one above, then choose Add to my memory list.</p>;
+    return (
+      <p className={classes.empty}>
+        Verses you add will appear here. Start with one above, then choose Add to my memory list.
+      </p>
+    );
   }
 
   return (
@@ -105,9 +116,7 @@ function MemoryList() {
       {groupMemoryVerses(list.entries, now).map(({group, verses}) => (
         <section key={group} className={classes.group} aria-label={GROUPS[group].title}>
           <h3 className={classes.groupTitle}>
-            {GROUPS[group].title}
-            {' '}
-            <span>{verses.length}</span>
+            {GROUPS[group].title} <span>{verses.length}</span>
           </h3>
           {GROUPS[group].note && <p className={classes.groupNote}>{GROUPS[group].note}</p>}
           {verses.map((entry) => (
@@ -122,7 +131,11 @@ function MemoryList() {
           ))}
         </section>
       ))}
-      {list.hasSaveError && <p className={classes.saveError} role="alert">Your memory list could not be changed. Check your connection and try again.</p>}
+      {list.hasSaveError && (
+        <p className={classes.saveError} role="alert">
+          Your memory list could not be changed. Check your connection and try again.
+        </p>
+      )}
     </>
   );
 }
@@ -133,9 +146,13 @@ export function MemorizePage() {
     <main className={pageClasses.content}>
       <title>Memorize | Bible Center</title>
       <h1 className={pageClasses.title}>Memorize</h1>
-      <p className={pageClasses.intro}>Learn a verse by heart with flash cards, or by letting its words fade a few at a time until you can say it all.</p>
+      <p className={pageClasses.intro}>
+        Learn a verse by heart with flash cards, or by letting its words fade a few at a time until you can say it all.
+      </p>
       <StartForm />
-      <p className={classes.hint}>You can also choose Memorize on a verse in the reader, or beside the verse of the day.</p>
+      <p className={classes.hint}>
+        You can also choose Memorize on a verse in the reader, or beside the verse of the day.
+      </p>
       <h2 className={classes.listTitle}>My memory list</h2>
       <MemoryList />
     </main>

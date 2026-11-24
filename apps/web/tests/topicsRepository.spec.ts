@@ -6,7 +6,7 @@ vi.mock('@/firebase', () => ({db: {}}));
 vi.mock('firebase/firestore', () => ({
   collection: vi.fn(),
   collectionGroup: vi.fn(),
-  doc: (parent: unknown, ...path: string[]) => path.length > 0 ? path.join('/') : 'reports/new',
+  doc: (parent: unknown, ...path: string[]) => (path.length > 0 ? path.join('/') : 'reports/new'),
   getDocFromServer: vi.fn(),
   getDocs: vi.fn(),
   query: vi.fn(),
@@ -19,7 +19,10 @@ vi.mock('firebase/firestore', () => ({
 function snapshot(fromCache: boolean, documents: {data?: Record<string, unknown>; verseKey?: string}[] = []) {
   return {
     metadata: {fromCache},
-    docs: documents.map(({data = {}, verseKey}) => ({data: () => data, ref: {parent: {parent: verseKey ? {id: verseKey} : null}}})),
+    docs: documents.map(({data = {}, verseKey}) => ({
+      data: () => data,
+      ref: {parent: {parent: verseKey ? {id: verseKey} : null}},
+    })),
   } as never;
 }
 
@@ -35,11 +38,15 @@ describe('listCommunityVerses', () => {
   });
 
   it('returns each verse with its upvotes', async () => {
-    vi.mocked(getDocs).mockResolvedValue(snapshot(false, [
-      {data: {startVerse: '40005004', endVerse: '40005004', upvotes: 3, createdBy: 'someone', createdAt: 'then'}},
-    ]));
+    vi.mocked(getDocs).mockResolvedValue(
+      snapshot(false, [
+        {data: {startVerse: '40005004', endVerse: '40005004', upvotes: 3, createdBy: 'someone', createdAt: 'then'}},
+      ]),
+    );
 
-    await expect(listCommunityVerses('grief')).resolves.toEqual([{startVerse: '40005004', endVerse: '40005004', upvotes: 3}]);
+    await expect(listCommunityVerses('grief')).resolves.toEqual([
+      {startVerse: '40005004', endVerse: '40005004', upvotes: 3},
+    ]);
   });
 });
 
@@ -59,7 +66,12 @@ describe('reportVerse', () => {
     await reportVerse('uid', {topic: 'grief', verseKey: '40005004', reason: 'fit'});
 
     expect(transaction.set).toHaveBeenCalledWith('reports/new', {
-      topic: 'grief', verseKey: '40005004', reason: 'fit', reportedBy: 'uid', createdAt: 'now', status: 'open',
+      topic: 'grief',
+      verseKey: '40005004',
+      reason: 'fit',
+      reportedBy: 'uid',
+      createdAt: 'now',
+      status: 'open',
     });
     // The cooldown's stamp goes on the user's record in the same write.
     expect(transaction.set).toHaveBeenCalledWith('users/uid', {lastReportAt: 'now'}, {merge: true});

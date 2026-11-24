@@ -64,13 +64,17 @@ export async function setRole(email: string, role: EmulatorRole = 'member'): Pro
 
   await (role === 'member'
     ? request(url, {method: 'DELETE', headers: ADMIN_HEADERS}, `clear the role of ${email}`)
-    : request(url, {method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields: {role: {stringValue: role}}})}, `make ${email} ${role}`));
+    : request(
+        url,
+        {method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields: {role: {stringValue: role}}})},
+        `make ${email} ${role}`,
+      ));
 }
 
 /** Opens the confirmation link the Auth emulator would have emailed, as the person would from their inbox. */
 export async function confirmEmail(email: string): Promise<void> {
   const url = `http://127.0.0.1:${ports.auth}/emulator/v1/projects/${projectId}/oobCodes`;
-  const {oobCodes} = await request(url, {headers: ADMIN_HEADERS}, 'list emailed links') as {
+  const {oobCodes} = (await request(url, {headers: ADMIN_HEADERS}, 'list emailed links')) as {
     oobCodes: {email: string; requestType: string; oobLink: string}[];
   };
   const code = oobCodes.findLast((candidate) => candidate.email === email && candidate.requestType === 'VERIFY_EMAIL');
@@ -101,7 +105,11 @@ export async function createGoogleAccount(account: EmulatorAccount): Promise<str
     postBody: new URLSearchParams({id_token: googleIdTokenOf(account), providerId: 'google.com'}).toString(),
     returnSecureToken: true,
   };
-  const {idToken} = await request(url, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}, `create ${account.email}`) as {idToken: string};
+  const {idToken} = (await request(
+    url,
+    {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)},
+    `create ${account.email}`,
+  )) as {idToken: string};
 
   return idToken;
 }
@@ -109,7 +117,9 @@ export async function createGoogleAccount(account: EmulatorAccount): Promise<str
 /** The latest SMS code the Auth emulator would have sent to this number. */
 export async function latestSmsCode(phoneNumber: string): Promise<string> {
   const url = `http://127.0.0.1:${ports.auth}/emulator/v1/projects/${projectId}/verificationCodes`;
-  const {verificationCodes} = await request(url, {headers: ADMIN_HEADERS}, 'list SMS codes') as {verificationCodes: {phoneNumber: string; code: string}[]};
+  const {verificationCodes} = (await request(url, {headers: ADMIN_HEADERS}, 'list SMS codes')) as {
+    verificationCodes: {phoneNumber: string; code: string}[];
+  };
   const code = verificationCodes.findLast((candidate) => candidate.phoneNumber === phoneNumber)?.code;
 
   if (!code) {
@@ -125,18 +135,34 @@ export async function latestSmsCode(phoneNumber: string): Promise<string> {
  */
 export async function enrollSmsSecondFactor(idToken: string, phoneNumber: string): Promise<void> {
   const base = `http://127.0.0.1:${ports.auth}/identitytoolkit.googleapis.com/v2/accounts/mfaEnrollment`;
-  const post = (path: string, body: object) => request(`${base}:${path}?key=${env.VITE_FIREBASE_API_KEY}`, {
-    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body),
-  }, `${path} SMS second factor`);
-  const {phoneSessionInfo} = await post('start', {idToken, phoneEnrollmentInfo: {phoneNumber}}) as {phoneSessionInfo: {sessionInfo: string}};
+  const post = (path: string, body: object) =>
+    request(
+      `${base}:${path}?key=${env.VITE_FIREBASE_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body),
+      },
+      `${path} SMS second factor`,
+    );
+  const {phoneSessionInfo} = (await post('start', {idToken, phoneEnrollmentInfo: {phoneNumber}})) as {
+    phoneSessionInfo: {sessionInfo: string};
+  };
 
-  await post('finalize', {idToken, phoneVerificationInfo: {sessionInfo: phoneSessionInfo.sessionInfo, code: await latestSmsCode(phoneNumber)}});
+  await post('finalize', {
+    idToken,
+    phoneVerificationInfo: {sessionInfo: phoneSessionInfo.sessionInfo, code: await latestSmsCode(phoneNumber)},
+  });
 }
 
 /** The Auth emulator's user id for an email, as the security rules see it. */
 export async function uidOf(email: string): Promise<string> {
   const url = `http://127.0.0.1:${ports.auth}/identitytoolkit.googleapis.com/v1/projects/${projectId}/accounts:lookup`;
-  const {users} = await request(url, {method: 'POST', headers: ADMIN_HEADERS, body: JSON.stringify({email: [email]})}, `look up ${email}`) as {
+  const {users} = (await request(
+    url,
+    {method: 'POST', headers: ADMIN_HEADERS, body: JSON.stringify({email: [email]})},
+    `look up ${email}`,
+  )) as {
     users?: {localId: string}[];
   };
   const uid = users?.[0]?.localId;
@@ -159,13 +185,21 @@ export interface SeedUserRecord {
 
 /** Sets these fields on a user's record, leaving the others. */
 export async function updateUserRecord(uid: string, record: SeedUserRecord): Promise<void> {
-  const fields = Object.fromEntries(Object.entries(record).map(([name, value]) => [
-    name,
-    value instanceof Date ? {timestampValue: value.toISOString()} : {integerValue: String(value)},
-  ]));
-  const mask = Object.keys(fields).map((name) => `updateMask.fieldPaths=${name}`).join('&');
+  const fields = Object.fromEntries(
+    Object.entries(record).map(([name, value]) => [
+      name,
+      value instanceof Date ? {timestampValue: value.toISOString()} : {integerValue: String(value)},
+    ]),
+  );
+  const mask = Object.keys(fields)
+    .map((name) => `updateMask.fieldPaths=${name}`)
+    .join('&');
 
-  await request(`${documentsUrl(`users/${uid}`)}?${mask}`, {method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields})}, `update the record of ${uid}`);
+  await request(
+    `${documentsUrl(`users/${uid}`)}?${mask}`,
+    {method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields})},
+    `update the record of ${uid}`,
+  );
 }
 
 /** Records an account as first seen `daysAgo` days ago, so it is old enough to vote. */
@@ -183,7 +217,11 @@ export async function blockAccount(uid: string, email: string): Promise<void> {
     contentRemoved: {booleanValue: false},
   };
 
-  await request(documentsUrl(`blockedUsers/${uid}`), {method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields})}, `block ${email}`);
+  await request(
+    documentsUrl(`blockedUsers/${uid}`),
+    {method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields})},
+    `block ${email}`,
+  );
 }
 
 export interface SeedAnnotation {
@@ -199,19 +237,25 @@ export interface SeedAnnotation {
 export async function addAnnotations(uid: string, annotations: SeedAnnotation[]): Promise<void> {
   const url = documentsUrl(`users/${uid}/annotations`);
 
-  await Promise.all(annotations.map(({type, startVerse, endVerse, text, createdAt}) => {
-    const fields = {
-      type: {stringValue: type},
-      chapterId: {stringValue: startVerse.slice(0, 5)},
-      startVerse: {stringValue: startVerse},
-      endVerse: {stringValue: endVerse},
-      ...(text === undefined ? {} : {text: {stringValue: text}}),
-      createdAt: {timestampValue: createdAt.toISOString()},
-      updatedAt: {timestampValue: createdAt.toISOString()},
-    };
+  await Promise.all(
+    annotations.map(({type, startVerse, endVerse, text, createdAt}) => {
+      const fields = {
+        type: {stringValue: type},
+        chapterId: {stringValue: startVerse.slice(0, 5)},
+        startVerse: {stringValue: startVerse},
+        endVerse: {stringValue: endVerse},
+        ...(text === undefined ? {} : {text: {stringValue: text}}),
+        createdAt: {timestampValue: createdAt.toISOString()},
+        updatedAt: {timestampValue: createdAt.toISOString()},
+      };
 
-    return request(url, {method: 'POST', headers: ADMIN_HEADERS, body: JSON.stringify({fields})}, `add a ${type} for ${uid}`);
-  }));
+      return request(
+        url,
+        {method: 'POST', headers: ADMIN_HEADERS, body: JSON.stringify({fields})},
+        `add a ${type} for ${uid}`,
+      );
+    }),
+  );
 }
 
 /**
@@ -222,16 +266,34 @@ export async function startTopic(slug: string, name: string, verseId: string, cr
   const by = {stringValue: 'e2e-seed'};
   const at = {timestampValue: createdAt.toISOString()};
 
-  await request(documentsUrl(`topics/${slug}`), {
-    method: 'PATCH',
-    headers: ADMIN_HEADERS,
-    body: JSON.stringify({fields: {name: {stringValue: name}, status: {stringValue: 'pending'}, createdBy: by, createdAt: at}}),
-  }, `start ${name}`);
-  await request(documentsUrl(`topics/${slug}/verses/${verseId}`), {
-    method: 'PATCH',
-    headers: ADMIN_HEADERS,
-    body: JSON.stringify({fields: {startVerse: {stringValue: verseId}, endVerse: {stringValue: verseId}, upvotes: {integerValue: '1'}, createdBy: by, createdAt: at}}),
-  }, `add ${verseId} to ${name}`);
+  await request(
+    documentsUrl(`topics/${slug}`),
+    {
+      method: 'PATCH',
+      headers: ADMIN_HEADERS,
+      body: JSON.stringify({
+        fields: {name: {stringValue: name}, status: {stringValue: 'pending'}, createdBy: by, createdAt: at},
+      }),
+    },
+    `start ${name}`,
+  );
+  await request(
+    documentsUrl(`topics/${slug}/verses/${verseId}`),
+    {
+      method: 'PATCH',
+      headers: ADMIN_HEADERS,
+      body: JSON.stringify({
+        fields: {
+          startVerse: {stringValue: verseId},
+          endVerse: {stringValue: verseId},
+          upvotes: {integerValue: '1'},
+          createdBy: by,
+          createdAt: at,
+        },
+      }),
+    },
+    `add ${verseId} to ${name}`,
+  );
 }
 
 export interface SeedReport {
@@ -245,7 +307,14 @@ export interface SeedReport {
 }
 
 /** Files an open report, as someone reporting a verse on a topic would. */
-export async function addReport({topic, verseKey, reason, details, createdAt, reportedBy = 'e2e-seed'}: SeedReport): Promise<void> {
+export async function addReport({
+  topic,
+  verseKey,
+  reason,
+  details,
+  createdAt,
+  reportedBy = 'e2e-seed',
+}: SeedReport): Promise<void> {
   const fields = {
     topic: {stringValue: topic},
     verseKey: {stringValue: verseKey},
@@ -256,7 +325,11 @@ export async function addReport({topic, verseKey, reason, details, createdAt, re
     status: {stringValue: 'open'},
   };
 
-  await request(documentsUrl('reports'), {method: 'POST', headers: ADMIN_HEADERS, body: JSON.stringify({fields})}, `report ${verseKey} on ${topic}`);
+  await request(
+    documentsUrl('reports'),
+    {method: 'POST', headers: ADMIN_HEADERS, body: JSON.stringify({fields})},
+    `report ${verseKey} on ${topic}`,
+  );
 }
 
 export interface SeedMemoryVerse {
@@ -270,16 +343,22 @@ export interface SeedMemoryVerse {
 
 /** Puts verses on someone's memory list, for tests that need them practiced in the past. */
 export async function addMemoryVerses(uid: string, verses: SeedMemoryVerse[]): Promise<void> {
-  await Promise.all(verses.map(({startVerse, endVerse, status, createdAt, practicedAt}) => {
-    const key = startVerse === endVerse ? startVerse : `${startVerse}-${endVerse}`;
-    const fields = {
-      startVerse: {stringValue: startVerse},
-      endVerse: {stringValue: endVerse},
-      status: {stringValue: status},
-      createdAt: {timestampValue: createdAt.toISOString()},
-      practicedAt: {timestampValue: practicedAt.toISOString()},
-    };
+  await Promise.all(
+    verses.map(({startVerse, endVerse, status, createdAt, practicedAt}) => {
+      const key = startVerse === endVerse ? startVerse : `${startVerse}-${endVerse}`;
+      const fields = {
+        startVerse: {stringValue: startVerse},
+        endVerse: {stringValue: endVerse},
+        status: {stringValue: status},
+        createdAt: {timestampValue: createdAt.toISOString()},
+        practicedAt: {timestampValue: practicedAt.toISOString()},
+      };
 
-    return request(documentsUrl(`users/${uid}/memoryVerses/${key}`), {method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields})}, `add ${key} to ${uid}'s memory list`);
-  }));
+      return request(
+        documentsUrl(`users/${uid}/memoryVerses/${key}`),
+        {method: 'PATCH', headers: ADMIN_HEADERS, body: JSON.stringify({fields})},
+        `add ${key} to ${uid}'s memory list`,
+      );
+    }),
+  );
 }

@@ -21,7 +21,12 @@ function plainStrongs(strongs: string): string {
 }
 
 /** The `lang` of a language's words: Hebrew, Aramaic (in Hebrew script) or Koine Greek. */
-const LANG: Record<WordLanguage, string> = {'Hebrew': 'he', 'Aramaic': 'arc', 'Hebrew and Aramaic': 'he', 'Greek': 'grc'};
+const LANG: Record<WordLanguage, string> = {
+  'Hebrew': 'he',
+  'Aramaic': 'arc',
+  'Hebrew and Aramaic': 'he',
+  'Greek': 'grc',
+};
 
 function WordEntry({word, language}: {word: StudyWord; language: WordLanguage}) {
   const isGreek = language === 'Greek';
@@ -29,7 +34,9 @@ function WordEntry({word, language}: {word: StudyWord; language: WordLanguage}) 
 
   return (
     <div className={classes.entry} aria-live="polite">
-      <p className={`${classes.entryWord} ${textClass}`} lang={LANG[language]} dir={isGreek ? 'ltr' : 'rtl'}>{word.text}</p>
+      <p className={`${classes.entryWord} ${textClass}`} lang={LANG[language]} dir={isGreek ? 'ltr' : 'rtl'}>
+        {word.text}
+      </p>
       <p className={classes.transliteration}>{word.transliteration}</p>
       <dl className={classes.facts}>
         <dt>In English</dt>
@@ -38,7 +45,9 @@ function WordEntry({word, language}: {word: StudyWord; language: WordLanguage}) 
           <>
             <dt>Dictionary form</dt>
             <dd>
-              <bdi className={textClass} lang={LANG[language]}>{word.entry.lemma}</bdi>
+              <bdi className={textClass} lang={LANG[language]}>
+                {word.entry.lemma}
+              </bdi>
               {`, ${word.entry.transliteration}, “${word.entry.gloss}”`}
             </dd>
             <dt>Meaning</dt>
@@ -50,7 +59,11 @@ function WordEntry({word, language}: {word: StudyWord; language: WordLanguage}) 
         {word.strongs && (
           <>
             <dt>Strong’s</dt>
-            <dd><a href={strongsUrl(word.strongs)} target="_blank" rel="noreferrer">{plainStrongs(word.strongs)}</a></dd>
+            <dd>
+              <a href={strongsUrl(word.strongs)} target="_blank" rel="noreferrer">
+                {plainStrongs(word.strongs)}
+              </a>
+            </dd>
           </>
         )}
       </dl>
@@ -78,10 +91,22 @@ interface WordStudyProps {
 function StepButtons({position, count, onStep}: VerseSteps) {
   return (
     <>
-      <button type="button" className={classes.step} aria-label="Previous verse" disabled={position === 1} onClick={() => onStep(-1)}>
+      <button
+        type="button"
+        className={classes.step}
+        aria-label="Previous verse"
+        disabled={position === 1}
+        onClick={() => onStep(-1)}
+      >
         <ArrowIcon direction="previous" />
       </button>
-      <button type="button" className={classes.step} aria-label="Next verse" disabled={position === count} onClick={() => onStep(1)}>
+      <button
+        type="button"
+        className={classes.step}
+        aria-label="Next verse"
+        disabled={position === count}
+        onClick={() => onStep(1)}
+      >
         <ArrowIcon direction="next" />
       </button>
     </>
@@ -106,7 +131,9 @@ export function WordStudy({reference, verse, translationId, steps}: WordStudyPro
     return (
       <p className={classes.hint}>
         {'The original words could not be loaded. '}
-        <Button variant="subtle" size="compact-sm" onClick={retry}>Try again</Button>
+        <Button variant="subtle" size="compact-sm" onClick={retry}>
+          Try again
+        </Button>
       </p>
     );
   }
@@ -128,12 +155,18 @@ export function WordStudy({reference, verse, translationId, steps}: WordStudyPro
       </div>
       <p className={classes.hint}>
         {steps && `Verse ${steps.position} of the ${steps.count} selected. `}
-        {isGreek ? 'The Greek this translation follows. Select a word to see its meaning.' : 'Select a word to see its meaning.'}
+        {isGreek
+          ? 'The Greek this translation follows. Select a word to see its meaning.'
+          : 'Select a word to see its meaning.'}
       </p>
 
       {words.length === 0 && <p className={classes.hint}>This translation has no words here in the original text.</p>}
 
-      <div className={`${classes.words} ${isGreek ? classes.greek : classes.hebrew}`} lang={LANG[language]} dir={isGreek ? 'ltr' : 'rtl'}>
+      <div
+        className={`${classes.words} ${isGreek ? classes.greek : classes.hebrew}`}
+        lang={LANG[language]}
+        dir={isGreek ? 'ltr' : 'rtl'}
+      >
         {words.map((word, index) => (
           <button
             // Words repeat, so their place in the verse tells them apart.
@@ -153,8 +186,7 @@ export function WordStudy({reference, verse, translationId, steps}: WordStudyPro
 
       <p className={classes.credit}>
         {`${isGreek ? 'Greek' : 'Hebrew'} data from `}
-        <a href={STEPBIBLE_DATA_URL}>STEP Bible</a>
-        , Tyndale House, CC BY 4.0.
+        <a href={STEPBIBLE_DATA_URL}>STEP Bible</a>, Tyndale House, CC BY 4.0.
       </p>
     </>
   );

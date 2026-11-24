@@ -70,7 +70,9 @@ test('search covers the selected translation, which can be changed on the result
 
   await page.getByLabel('Translation').selectOption('kjv');
 
-  await expect(page.getByRole('main').getByRole('article').first().getByRole('link')).not.toHaveText('1 Corinthians 13:4');
+  await expect(page.getByRole('main').getByRole('article').first().getByRole('link')).not.toHaveText(
+    '1 Corinthians 13:4',
+  );
 });
 
 test('no matches explains what to try, including the other translation', async ({page}) => {
@@ -87,7 +89,7 @@ test('no matches explains what to try, including the other translation', async (
 test('a failed search says so and can be retried', async ({page}) => {
   let shouldFail = true;
 
-  await page.route('**/bible/bsb/verses.json', (route) => shouldFail ? route.abort() : route.continue());
+  await page.route('**/bible/bsb/verses.json', (route) => (shouldFail ? route.abort() : route.continue()));
   await page.goto('/search?q=mercies%20never%20fail');
 
   await expect(page.getByText('Could not load these results')).toBeVisible();
@@ -137,7 +139,9 @@ test.describe('on a phone', () => {
 
     await expect(page.getByRole('link', {name: 'Lamentations 3:22'})).toBeVisible();
 
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
 
     expect(overflow).toBeLessThanOrEqual(0);
   });

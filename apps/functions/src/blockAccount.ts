@@ -20,10 +20,15 @@ export function parseBlockAccountRequest(data: unknown): BlockAccountRequest {
 
 async function findAccount(request: BlockAccountRequest): Promise<UserRecord> {
   try {
-    return 'email' in request ? await auth.getUserByEmail(request.email.trim().toLowerCase()) : await auth.getUser(request.uid);
+    return 'email' in request
+      ? await auth.getUserByEmail(request.email.trim().toLowerCase())
+      : await auth.getUser(request.uid);
   } catch (error) {
     if ((error as {code?: string}).code === 'auth/user-not-found') {
-      throw new HttpsError('not-found', 'email' in request ? 'No account uses that email.' : 'That account no longer exists.');
+      throw new HttpsError(
+        'not-found',
+        'email' in request ? 'No account uses that email.' : 'That account no longer exists.',
+      );
     }
 
     throw error;

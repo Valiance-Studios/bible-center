@@ -53,10 +53,11 @@ export function useTopicVotes(slug: string, uid: string | undefined) {
     savingKey: change.isPending ? change.variables.key : undefined,
     hasSaveError: change.isError,
     /** With `startTopicName`, also starts the topic if nobody has. */
-    upvote: (span: TopicSpan, startTopicName?: string) => change.mutateAsync({
-      key: topicVerseKey(span.startVerse, span.endVerse),
-      run: (userId) => upvoteVerse(userId, slug, span, startTopicName),
-    }),
+    upvote: (span: TopicSpan, startTopicName?: string) =>
+      change.mutateAsync({
+        key: topicVerseKey(span.startVerse, span.endVerse),
+        run: (userId) => upvoteVerse(userId, slug, span, startTopicName),
+      }),
     removeUpvote: (key: string) => change.mutateAsync({key, run: (userId) => removeUpvote(userId, slug, key)}),
   };
 }

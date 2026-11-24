@@ -36,8 +36,9 @@ describe('counting', () => {
   });
 
   it('refuses once the limit is reached, writing nothing', () => {
-    expect(() => addToCount(transaction as never, 'uid', {annotationCount: WRITE_LIMITS.annotations}, 'annotations'))
-      .toThrow(WriteLimitError);
+    expect(() =>
+      addToCount(transaction as never, 'uid', {annotationCount: WRITE_LIMITS.annotations}, 'annotations'),
+    ).toThrow(WriteLimitError);
     expect(transaction.set).not.toHaveBeenCalled();
   });
 
@@ -46,13 +47,22 @@ describe('counting', () => {
     takeFromCount(transaction as never, 'uid', {}, 'memoryVerses', '19023001');
 
     expect(transaction.set).toHaveBeenCalledOnce();
-    expect(transaction.set).toHaveBeenCalledWith('users/uid', {annotationCount: 2, annotationChange: 'abc'}, {merge: true});
+    expect(transaction.set).toHaveBeenCalledWith(
+      'users/uid',
+      {annotationCount: 2, annotationChange: 'abc'},
+      {merge: true},
+    );
   });
 });
 
 describe('cooldowns', () => {
   it('stamps now when there is no cooldown running', () => {
-    stampAfterCooldown(transaction as never, 'uid', {lastReportAt: new Timestamp(new Date(Date.now() - 120_000) as never, 0)}, 'report');
+    stampAfterCooldown(
+      transaction as never,
+      'uid',
+      {lastReportAt: new Timestamp(new Date(Date.now() - 120_000) as never, 0)},
+      'report',
+    );
 
     expect(transaction.set).toHaveBeenCalledWith('users/uid', {lastReportAt: 'now'}, {merge: true});
   });
@@ -65,7 +75,11 @@ describe('cooldowns', () => {
       expect.unreachable();
     } catch (error) {
       expect(error).toBeInstanceOf(WriteLimitError);
-      expect((error as WriteLimitError).limit).toEqual({type: 'cooldown', kind: 'topic', endsAt: new Date(last.getTime() + 10 * 60 * 1000)});
+      expect((error as WriteLimitError).limit).toEqual({
+        type: 'cooldown',
+        kind: 'topic',
+        endsAt: new Date(last.getTime() + 10 * 60 * 1000),
+      });
     }
 
     expect(transaction.set).not.toHaveBeenCalled();

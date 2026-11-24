@@ -16,4 +16,6 @@ const DEV_ACCOUNT: EmulatorAccount = {email: 'dev@example.com', displayName: 'De
 await createGoogleAccount(DEV_ACCOUNT);
 await setRole(DEV_ACCOUNT.email, 'admin');
 
-console.log(`Seeded ${DEV_ACCOUNT.displayName} (${DEV_ACCOUNT.email}), an admin: pick it under "Choose an account" in the sign-in popup.`);
+console.log(
+  `Seeded ${DEV_ACCOUNT.displayName} (${DEV_ACCOUNT.email}), an admin: pick it under "Choose an account" in the sign-in popup.`,
+);

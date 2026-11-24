@@ -22,7 +22,11 @@ export function AccountMenu({onDeleteAccount}: AccountMenuProps) {
   }
 
   if (!user) {
-    return <Button component={Link} to="/sign-in" radius="xl">Sign in</Button>;
+    return (
+      <Button component={Link} to="/sign-in" radius="xl">
+        Sign in
+      </Button>
+    );
   }
 
   const name = user.displayName || user.email || 'Account';
@@ -36,13 +40,25 @@ export function AccountMenu({onDeleteAccount}: AccountMenuProps) {
       </Menu.Target>
       <Menu.Dropdown>
         <Menu.Label>{name}</Menu.Label>
-        {status === 'allowed'
-          ? links.map((link) => <Menu.Item key={link.to} component={Link} to={link.to}><AccountLinkLabel {...link} /></Menu.Item>)
-          : <Menu.Item component={Link} to="/sign-in">Account status</Menu.Item>}
-        <Menu.Item component={Link} to="/privacy">Privacy</Menu.Item>
+        {status === 'allowed' ? (
+          links.map((link) => (
+            <Menu.Item key={link.to} component={Link} to={link.to}>
+              <AccountLinkLabel {...link} />
+            </Menu.Item>
+          ))
+        ) : (
+          <Menu.Item component={Link} to="/sign-in">
+            Account status
+          </Menu.Item>
+        )}
+        <Menu.Item component={Link} to="/privacy">
+          Privacy
+        </Menu.Item>
         <Menu.Item onClick={() => void signOut()}>Sign out</Menu.Item>
         <Menu.Divider />
-        <Menu.Item color="red" onClick={onDeleteAccount}>Delete account</Menu.Item>
+        <Menu.Item color="red" onClick={onDeleteAccount}>
+          Delete account
+        </Menu.Item>
       </Menu.Dropdown>
     </Menu>
   );

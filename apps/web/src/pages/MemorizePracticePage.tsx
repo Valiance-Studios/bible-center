@@ -57,16 +57,22 @@ export function MemorizePracticePage() {
   return (
     <main className={pageClasses.content}>
       <title>{`Memorize ${title || 'a verse'} | Bible Center`}</title>
-      <Link className={classes.back} to="/memorize">{list.canKeepList ? 'My memory list' : 'Memorize'}</Link>
+      <Link className={classes.back} to="/memorize">
+        {list.canKeepList ? 'My memory list' : 'Memorize'}
+      </Link>
       <div className={classes.head}>
         <h1 className={pageClasses.title}>{title || 'Memorize'}</h1>
-        <div className={classes.translation}><TranslationSelect /></div>
+        <div className={classes.translation}>
+          <TranslationSelect />
+        </div>
       </div>
 
       {problem && (
         <>
           <p className={classes.problem}>{problem}</p>
-          <Button component={Link} to="/memorize" variant="outline" radius="xl">Choose another verse</Button>
+          <Button component={Link} to="/memorize" variant="outline" radius="xl">
+            Choose another verse
+          </Button>
         </>
       )}
 
@@ -93,9 +99,17 @@ export function MemorizePracticePage() {
           />
 
           {/* Keyed by what is shown, so changing the passage or translation starts again. */}
-          {mode === 'card'
-            ? <FlashCard key={`${key}-${translation.id}`} title={title} label={label} sections={passage.sections} onAnswer={recordPractice} />
-            : <FadingWords key={`${key}-${translation.id}`} text={passage.text} label={label} onFinish={recordPractice} />}
+          {mode === 'card' ? (
+            <FlashCard
+              key={`${key}-${translation.id}`}
+              title={title}
+              label={label}
+              sections={passage.sections}
+              onAnswer={recordPractice}
+            />
+          ) : (
+            <FadingWords key={`${key}-${translation.id}`} text={passage.text} label={label} onFinish={recordPractice} />
+          )}
 
           <MemoryListBox span={span} list={list} />
           <p className={classes.credit}>{translation.credit}</p>

@@ -11,5 +11,5 @@ export async function fetchStaticJson<T>(path: string): Promise<T | null> {
 
   const isJson = response.headers.get('content-type')?.includes('json') ?? false;
 
-  return response.ok && isJson ? await response.json() as T : null;
+  return response.ok && isJson ? ((await response.json()) as T) : null;
 }

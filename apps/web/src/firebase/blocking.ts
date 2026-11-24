@@ -27,8 +27,15 @@ export async function blockAccount(request: BlockAccountRequest): Promise<BlockA
   try {
     return (await callBlockAccount(request)).data;
   } catch (error) {
-    if (error instanceof FirebaseError && (error.code === 'functions/not-found' || error.code === 'functions/invalid-argument')) {
-      throw new BlockAccountError(error.code === 'functions/not-found' && 'email' in request ? `No account uses ${request.email}.` : error.message);
+    if (
+      error instanceof FirebaseError &&
+      (error.code === 'functions/not-found' || error.code === 'functions/invalid-argument')
+    ) {
+      throw new BlockAccountError(
+        error.code === 'functions/not-found' && 'email' in request
+          ? `No account uses ${request.email}.`
+          : error.message,
+      );
     }
 
     throw error;
@@ -41,7 +48,11 @@ export async function listBlockedAccounts(): Promise<BlockedAccount[]> {
   const accounts = documents.map((document) => {
     const data = document.data() as BlockedAccountRecord & {blockedAt: unknown};
 
-    return {...data, uid: document.id, blockedAt: data.blockedAt instanceof Timestamp ? data.blockedAt.toDate() : new Date(0)};
+    return {
+      ...data,
+      uid: document.id,
+      blockedAt: data.blockedAt instanceof Timestamp ? data.blockedAt.toDate() : new Date(0),
+    };
   });
 
   return accounts.sort((a, b) => b.blockedAt.getTime() - a.blockedAt.getTime());

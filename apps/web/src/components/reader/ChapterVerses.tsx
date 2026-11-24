@@ -2,7 +2,16 @@ import type {Annotation, AnnotationType, ChapterRef, Verse, VerseReference, Vers
 
 import {useState} from 'react';
 import {Link} from 'react-router';
-import {chapterIdOf, formatReference, selectVerse, spanContains, spanOf, spansOverlap, verseIdIn, WRITE_LIMITS} from '@bible-center/core';
+import {
+  chapterIdOf,
+  formatReference,
+  selectVerse,
+  spanContains,
+  spanOf,
+  spansOverlap,
+  verseIdIn,
+  WRITE_LIMITS,
+} from '@bible-center/core';
 import {Alert} from '@mantine/core';
 import {memorizePath} from '@/bible/paths';
 import {BlockedNotice} from '@/components/BlockedNotice';
@@ -39,20 +48,33 @@ function overlapping(annotations: Annotation[], span: VerseSpan): Annotation[] {
   return annotations.filter((annotation) => spansOverlap(spanOf(annotation), span));
 }
 
-const RibbonIcon = <svg width="13" height="16" viewBox="0 0 13 16" fill="currentColor" role="img" aria-label="Bookmarked"><path d="M0 0h13v16l-6.5-4L0 16z" /></svg>;
+const RibbonIcon = (
+  <svg width="13" height="16" viewBox="0 0 13 16" fill="currentColor" role="img" aria-label="Bookmarked">
+    <path d="M0 0h13v16l-6.5-4L0 16z" />
+  </svg>
+);
 
 /**
  * A chapter's verses. Anyone can select a verse, alone or as a range, to study its original words.
  * Allowlisted users can also annotate the selection.
  */
-export function ChapterVerses({reference, verses, targetVerse, selection, studiedVerse, onSelectionChange, wordsTool}: ChapterVersesProps) {
+export function ChapterVerses({
+  reference,
+  verses,
+  targetVerse,
+  selection,
+  studiedVerse,
+  onSelectionChange,
+  wordsTool,
+}: ChapterVersesProps) {
   const status = useAuthStore((state) => state.status);
   const user = useAuthStore((state) => state.user);
   const isAllowed = status === 'allowed';
   // A blocked account still sees its annotations, but cannot change them.
   const isBlocked = useAuthStore((state) => isAllowed && state.isBlocked);
   const canAnnotate = isAllowed && !isBlocked;
-  const {annotations, hasLoadError, isLoading, isSaving, hasError, isFull, add, removeAll, updateNote} = useChapterAnnotations(isAllowed ? user?.uid : undefined, reference);
+  const {annotations, hasLoadError, isLoading, isSaving, hasError, isFull, add, removeAll, updateNote} =
+    useChapterAnnotations(isAllowed ? user?.uid : undefined, reference);
   // Until annotations load, an action cannot know what is already marked, and could add a duplicate instead of removing.
   const areActionsDisabled = isLoading || isSaving || hasLoadError;
   const [noteEditor, setNoteEditor] = useState<NoteEditor | null>(null);
@@ -82,7 +104,12 @@ export function ChapterVerses({reference, verses, targetVerse, selection, studie
   }
 
   function toNewAnnotation(type: AnnotationType, {start, end}: VerseSpan) {
-    return {type, chapterId: chapterIdOf(reference), startVerse: verseIdIn(reference, start), endVerse: verseIdIn(reference, end)};
+    return {
+      type,
+      chapterId: chapterIdOf(reference),
+      startVerse: verseIdIn(reference, start),
+      endVerse: verseIdIn(reference, end),
+    };
   }
 
   /** Removes this kind of mark from the selection if it has any, and otherwise adds it. */
@@ -139,7 +166,11 @@ export function ChapterVerses({reference, verses, targetVerse, selection, studie
       )}
 
       {/* Without this, a failed load would look like having no annotations. */}
-      {hasLoadError && <Alert color="red" mb="md">Your highlights, bookmarks and notes could not be loaded. Check your connection and refresh the page.</Alert>}
+      {hasLoadError && (
+        <Alert color="red" mb="md">
+          Your highlights, bookmarks and notes could not be loaded. Check your connection and refresh the page.
+        </Alert>
+      )}
 
       {verses.map(({verse, text}) => {
         const isSelected = selection !== null && spanContains(selection, verse);
@@ -162,11 +193,13 @@ export function ChapterVerses({reference, verses, targetVerse, selection, studie
 
             {verseNotes.map((note) => (
               <div key={note.id} className={classes.note}>
-                <p className={classes.noteText}>
-                  {note.text}
-                </p>
+                <p className={classes.noteText}>{note.text}</p>
                 {canAnnotate && (
-                  <button type="button" className={classes.noteEdit} onClick={() => setNoteEditor({span: spanOf(note), note})}>
+                  <button
+                    type="button"
+                    className={classes.noteEdit}
+                    onClick={() => setNoteEditor({span: spanOf(note), note})}
+                  >
                     {`Edit note on ${describe(spanOf(note))}`}
                   </button>
                 )}
@@ -181,13 +214,27 @@ export function ChapterVerses({reference, verses, targetVerse, selection, studie
                     : `${describe(selection)} selected.`}
                 </p>
                 <div className={classes.toolButtons}>
-                  {wordsTool && <button type="button" className={classes.tool} onClick={wordsTool.onClick}>{wordsTool.label}</button>}
+                  {wordsTool && (
+                    <button type="button" className={classes.tool} onClick={wordsTool.onClick}>
+                      {wordsTool.label}
+                    </button>
+                  )}
                   {canAnnotate && (
                     <>
-                      <button type="button" className={classes.tool} disabled={areActionsDisabled} onClick={() => void toggle('highlight', highlights, selection)}>
+                      <button
+                        type="button"
+                        className={classes.tool}
+                        disabled={areActionsDisabled}
+                        onClick={() => void toggle('highlight', highlights, selection)}
+                      >
                         {overlapping(highlights, selection).length > 0 ? 'Remove highlight' : 'Highlight'}
                       </button>
-                      <button type="button" className={classes.tool} disabled={areActionsDisabled} onClick={() => void toggle('bookmark', bookmarks, selection)}>
+                      <button
+                        type="button"
+                        className={classes.tool}
+                        disabled={areActionsDisabled}
+                        onClick={() => void toggle('bookmark', bookmarks, selection)}
+                      >
                         {overlapping(bookmarks, selection).length > 0 ? 'Remove bookmark' : 'Bookmark'}
                       </button>
                       <button
@@ -200,14 +247,19 @@ export function ChapterVerses({reference, verses, targetVerse, selection, studie
                       </button>
                     </>
                   )}
-                  <Link className={classes.tool} to={memorizePath(referenceTo(selection))}>Memorize</Link>
-                  <button type="button" className={classes.tool} onClick={() => onSelectionChange(null)}>Clear selection</button>
+                  <Link className={classes.tool} to={memorizePath(referenceTo(selection))}>
+                    Memorize
+                  </Link>
+                  <button type="button" className={classes.tool} onClick={() => onSelectionChange(null)}>
+                    Clear selection
+                  </button>
                 </div>
                 {isBlocked && (
                   <BlockedNotice>
-                    {'Your account is blocked, so you cannot highlight, bookmark or add notes. Your saved verses are still in '}
-                    <Link to="/my-verses">My verses</Link>
-                    .
+                    {
+                      'Your account is blocked, so you cannot highlight, bookmark or add notes. Your saved verses are still in '
+                    }
+                    <Link to="/my-verses">My verses</Link>.
                   </BlockedNotice>
                 )}
               </div>
@@ -216,15 +268,18 @@ export function ChapterVerses({reference, verses, targetVerse, selection, studie
         );
       })}
 
-      {hasError && (isFull
-        ? (
-            <Alert color="red" mt="md">
-              {`You have ${WRITE_LIMITS.annotations.toLocaleString('en-US')} highlights, bookmarks and notes, the most one account can keep. Remove some in `}
-              <Link to="/my-verses">My verses</Link>
-              {' to add more.'}
-            </Alert>
-          )
-        : <Alert color="red" mt="md">Your change could not be saved. Check your connection and try again.</Alert>)}
+      {hasError &&
+        (isFull ? (
+          <Alert color="red" mt="md">
+            {`You have ${WRITE_LIMITS.annotations.toLocaleString('en-US')} highlights, bookmarks and notes, the most one account can keep. Remove some in `}
+            <Link to="/my-verses">My verses</Link>
+            {' to add more.'}
+          </Alert>
+        ) : (
+          <Alert color="red" mt="md">
+            Your change could not be saved. Check your connection and try again.
+          </Alert>
+        ))}
 
       {noteEditor && (
         <NoteDialog

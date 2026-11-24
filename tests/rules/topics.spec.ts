@@ -83,7 +83,13 @@ useRulesTestEnvironment(async (db) => {
   }
 
   await setDoc(doc(db, 'users', NEWT), {createdAt: new Date(Date.now() - DAY_MS)});
-  await setDoc(verseRef(db, VOTED), {startVerse: VOTED, endVerse: VOTED, upvotes: 1, createdBy: BOB, createdAt: new Date()});
+  await setDoc(verseRef(db, VOTED), {
+    startVerse: VOTED,
+    endVerse: VOTED,
+    upvotes: 1,
+    createdBy: BOB,
+    createdAt: new Date(),
+  });
   await setDoc(voteRef(db, VOTED, BOB), {uid: BOB, topic: TOPIC, createdAt: new Date()});
 });
 
@@ -98,7 +104,7 @@ describe('topic votes', () => {
     await assertSucceeds(upvote(dbFor(ALICE), ALICE, VOTED));
     await assertSucceeds(removeUpvote(dbFor(BOB), BOB, VOTED));
 
-    if (await upvotesOf(UNVOTED) !== 2 || await upvotesOf(VOTED) !== 1) {
+    if ((await upvotesOf(UNVOTED)) !== 2 || (await upvotesOf(VOTED)) !== 1) {
       throw new Error('The counts did not follow the votes.');
     }
   });
@@ -153,7 +159,7 @@ describe('topic votes', () => {
     await assertFails(removeUpvote(db, BOB, VOTED));
   });
 
-  it('checks a new verse\'s key, ids and fields', async () => {
+  it("checks a new verse's key, ids and fields", async () => {
     const db = dbFor(ALICE);
     const withVerse = (key: string, verse: Record<string, unknown>) => {
       const batch = writeBatch(db);
@@ -176,8 +182,9 @@ describe('topic votes', () => {
     await assertFails(upvote(dbFor(ALICE, false), ALICE, UNVOTED));
   });
 
-  it('keeps each person\'s votes private to them', async () => {
-    const mine = (uid: string) => query(collectionGroup(dbFor(uid), 'votes'), where('uid', '==', uid), where('topic', '==', TOPIC));
+  it("keeps each person's votes private to them", async () => {
+    const mine = (uid: string) =>
+      query(collectionGroup(dbFor(uid), 'votes'), where('uid', '==', uid), where('topic', '==', TOPIC));
 
     await assertSucceeds(getDocs(mine(BOB)));
     await assertFails(getDocs(query(collectionGroup(dbFor(ALICE), 'votes'), where('uid', '==', BOB))));
@@ -220,11 +227,15 @@ describe('started topics', () => {
     await assertFails(startTopic(ALICE, doc(db, 'topics', 'screen-time'), topic({createdBy: BOB})));
     await assertSucceeds(startTopic(ALICE, doc(db, 'topics', 'screen-time'), topic()));
     await assertFails(updateDoc(doc(db, 'topics', 'screen-time'), {status: 'approved'}));
-    await assertFails(startTopic(BOB, doc(dbFor(BOB, false), 'topics', 'other'), topic({name: 'other', createdBy: BOB})));
+    await assertFails(
+      startTopic(BOB, doc(dbFor(BOB, false), 'topics', 'other'), topic({name: 'other', createdBy: BOB})),
+    );
   });
 
   it('can be started by anyone with a verified email, on their first visit', async () => {
-    await assertSucceeds(startTopic(MALLORY, doc(dbFor(MALLORY), 'topics', 'other'), topic({name: 'other', createdBy: MALLORY})));
+    await assertSucceeds(
+      startTopic(MALLORY, doc(dbFor(MALLORY), 'topics', 'other'), topic({name: 'other', createdBy: MALLORY})),
+    );
   });
 
   it('stamps when each one is started, and waits ten minutes between them', async () => {
@@ -245,7 +256,15 @@ function sendReport(uid: string, data: object) {
 
 describe('reports', () => {
   function report(overrides: Record<string, unknown> = {}) {
-    return {topic: TOPIC, verseKey: VOTED, reason: 'fit', reportedBy: ALICE, createdAt: serverTimestamp(), status: 'open', ...overrides};
+    return {
+      topic: TOPIC,
+      verseKey: VOTED,
+      reason: 'fit',
+      reportedBy: ALICE,
+      createdAt: serverTimestamp(),
+      status: 'open',
+      ...overrides,
+    };
   }
 
   it('lets a member report a verse, with optional details', async () => {
@@ -265,7 +284,9 @@ describe('reports', () => {
     await assertFails(sendReport(ALICE, report({reportedBy: BOB})));
     await assertFails(sendReport(ALICE, report({status: 'resolved'})));
     await assertFails(sendReport(ALICE, report({verseKey: 'nonsense'})));
-    await assertFails(createStamped(BOB, doc(collection(dbFor(BOB, false), 'reports')), report({reportedBy: BOB}), 'lastReportAt'));
+    await assertFails(
+      createStamped(BOB, doc(collection(dbFor(BOB, false), 'reports')), report({reportedBy: BOB}), 'lastReportAt'),
+    );
   });
 
   it('can be sent by anyone with a verified email, on their first visit', async () => {
@@ -283,7 +304,12 @@ describe('reviewing topics', () => {
 
   /** Each person can start one topic every ten minutes, so a second topic in a test needs another starter. */
   async function seedTopic(slug: string, status: string, uid = ALICE) {
-    await startTopic(uid, doc(dbFor(uid), 'topics', slug), {name: slug.replaceAll('-', ' '), status: 'pending', createdBy: uid, createdAt: serverTimestamp()});
+    await startTopic(uid, doc(dbFor(uid), 'topics', slug), {
+      name: slug.replaceAll('-', ' '),
+      status: 'pending',
+      createdBy: uid,
+      createdAt: serverTimestamp(),
+    });
 
     if (status !== 'pending') {
       await updateDoc(doc(dbFor(RITA), 'topics', slug), decision(status));
@@ -294,7 +320,8 @@ describe('reviewing topics', () => {
     return {status, reviewedBy: uid, reviewedAt: serverTimestamp()};
   }
 
-  const pending = (db: Firestore) => query(collection(db, 'topics'), where('status', '==', 'pending'), orderBy('createdAt'));
+  const pending = (db: Firestore) =>
+    query(collection(db, 'topics'), where('status', '==', 'pending'), orderBy('createdAt'));
   const approved = (db: Firestore) => query(collection(db, 'topics'), where('status', '==', 'approved'));
 
   it('lets a reviewer list pending topics, and anyone list approved ones', async () => {
@@ -348,9 +375,19 @@ describe('resolving reports', () => {
   async function seedReport(): Promise<string> {
     const report = doc(collection(dbFor(ALICE), 'reports'));
 
-    await createStamped(ALICE, report, {
-      topic: TOPIC, verseKey: VOTED, reason: 'fit', reportedBy: ALICE, createdAt: serverTimestamp(), status: 'open',
-    }, 'lastReportAt');
+    await createStamped(
+      ALICE,
+      report,
+      {
+        topic: TOPIC,
+        verseKey: VOTED,
+        reason: 'fit',
+        reportedBy: ALICE,
+        createdAt: serverTimestamp(),
+        status: 'open',
+      },
+      'lastReportAt',
+    );
 
     return report.id;
   }
@@ -358,7 +395,9 @@ describe('resolving reports', () => {
   it('lets a reviewer read the open reports, oldest first', async () => {
     await seedReport();
 
-    await assertSucceeds(getDocs(query(collection(dbFor(RITA), 'reports'), where('status', '==', 'open'), orderBy('createdAt'))));
+    await assertSucceeds(
+      getDocs(query(collection(dbFor(RITA), 'reports'), where('status', '==', 'open'), orderBy('createdAt'))),
+    );
   });
 
   it('lets a reviewer keep a reported verse', async () => {

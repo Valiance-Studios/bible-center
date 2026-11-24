@@ -18,7 +18,11 @@ describe('BIBLE_BOOKS', () => {
   });
 
   it('gives each book a chapter count and URL slug', () => {
-    expect(BIBLE_BOOKS.find((book) => book.name === 'Psalms')).toMatchObject({chapters: 150, slug: 'psalms', section: 'Wisdom'});
+    expect(BIBLE_BOOKS.find((book) => book.name === 'Psalms')).toMatchObject({
+      chapters: 150,
+      slug: 'psalms',
+      section: 'Wisdom',
+    });
     expect(BIBLE_BOOKS.find((book) => book.name === 'Song of Solomon')?.slug).toBe('song-of-solomon');
     expect(BIBLE_BOOKS.at(-1)).toMatchObject({name: 'Revelation', chapters: 22});
   });

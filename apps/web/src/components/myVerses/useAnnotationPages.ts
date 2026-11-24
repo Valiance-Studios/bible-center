@@ -12,17 +12,19 @@ const NO_ANNOTATIONS: Annotation[] = [];
 /** A user's annotations a page at a time, filtered and ordered by Firestore, and a way to remove one. */
 export function useAnnotationPages(uid: string | undefined, type: AnnotationType | null, order: AnnotationOrder) {
   const queryClient = useQueryClient();
-  const {data, isError, isFetchNextPageError, isLoading, refetch, hasNextPage, fetchNextPage, isFetchingNextPage} = useInfiniteQuery({
-    queryKey: annotationQueryKeys.pages(uid, type, order),
-    queryFn: ({pageParam}) => listAnnotationPage(uid ?? '', {type, order, after: pageParam, pageSize: ANNOTATION_PAGE_SIZE}),
-    initialPageParam: null as AnnotationCursor | null,
-    getNextPageParam: (lastPage) => lastPage.next,
-    enabled: uid !== undefined,
-    // Annotations change in the reader, and this browser may not be the only one changing them.
-    staleTime: 0,
-    // Being offline counts as a failure here (see listAnnotationPage), so give a brief one time to pass.
-    retry: 4,
-  });
+  const {data, isError, isFetchNextPageError, isLoading, refetch, hasNextPage, fetchNextPage, isFetchingNextPage} =
+    useInfiniteQuery({
+      queryKey: annotationQueryKeys.pages(uid, type, order),
+      queryFn: ({pageParam}) =>
+        listAnnotationPage(uid ?? '', {type, order, after: pageParam, pageSize: ANNOTATION_PAGE_SIZE}),
+      initialPageParam: null as AnnotationCursor | null,
+      getNextPageParam: (lastPage) => lastPage.next,
+      enabled: uid !== undefined,
+      // Annotations change in the reader, and this browser may not be the only one changing them.
+      staleTime: 0,
+      // Being offline counts as a failure here (see listAnnotationPage), so give a brief one time to pass.
+      retry: 4,
+    });
   const remove = useMutation({
     mutationFn: async (id: string) => {
       if (uid) {

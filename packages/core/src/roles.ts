@@ -4,7 +4,7 @@
  */
 export const ROLES = ['member', 'reviewer', 'admin'] as const;
 
-export type Role = typeof ROLES[number];
+export type Role = (typeof ROLES)[number];
 
 export const ROLE_NAMES: Record<Role, string> = {
   member: 'Member',
@@ -15,7 +15,7 @@ export const ROLE_NAMES: Record<Role, string> = {
 /** The roles an admin can give, each stored as an entry in `roles`. Everyone else is a member. */
 export const STAFF_ROLES = ['reviewer', 'admin'] as const;
 
-export type StaffRole = typeof STAFF_ROLES[number];
+export type StaffRole = (typeof STAFF_ROLES)[number];
 
 /** The role in someone's `roles` entry. Without one, they are a member. */
 export function parseRole(value: unknown): Role {

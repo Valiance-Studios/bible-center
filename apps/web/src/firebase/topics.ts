@@ -49,7 +49,9 @@ export async function listCommunityVerses(slug: string): Promise<CommunityTopicV
 
 /** The keys of the topic's verses this user has upvoted. */
 export async function listMyVotes(uid: string, slug: string): Promise<Set<string>> {
-  const votes = await fetchFromServer(query(collectionGroup(db, 'votes'), where('uid', '==', uid), where('topic', '==', slug)));
+  const votes = await fetchFromServer(
+    query(collectionGroup(db, 'votes'), where('uid', '==', uid), where('topic', '==', slug)),
+  );
 
   // A vote sits under its verse, whose id is the verse's key.
   return new Set(votes.flatMap((vote) => vote.ref.parent.parent?.id ?? []));
@@ -95,7 +97,12 @@ export async function listRemovedVerseKeys(slug: string): Promise<Set<string>> {
  * The vote and the count change together, as the security rules require. With `startTopicName`,
  * it also starts the topic, pending review, if nobody has.
  */
-export async function upvoteVerse(uid: string, slug: string, {startVerse, endVerse}: TopicSpan, startTopicName?: string): Promise<void> {
+export async function upvoteVerse(
+  uid: string,
+  slug: string,
+  {startVerse, endVerse}: TopicSpan,
+  startTopicName?: string,
+): Promise<void> {
   const key = topicVerseKey(startVerse, endVerse);
 
   await runTransaction(db, async (transaction) => {
@@ -105,13 +112,24 @@ export async function upvoteVerse(uid: string, slug: string, {startVerse, endVer
 
     if (startTopicName && topic && record && !topic.exists()) {
       stampAfterCooldown(transaction, uid, record, 'topic');
-      transaction.set(doc(db, 'topics', slug), {name: startTopicName, status: 'pending', createdBy: uid, createdAt: serverTimestamp()});
+      transaction.set(doc(db, 'topics', slug), {
+        name: startTopicName,
+        status: 'pending',
+        createdBy: uid,
+        createdAt: serverTimestamp(),
+      });
     }
 
     if (verse.exists()) {
       transaction.update(verseRef(slug, key), {upvotes: (verse.data() as CommunityTopicVerse).upvotes + 1});
     } else {
-      transaction.set(verseRef(slug, key), {startVerse, endVerse, upvotes: 1, createdBy: uid, createdAt: serverTimestamp()});
+      transaction.set(verseRef(slug, key), {
+        startVerse,
+        endVerse,
+        upvotes: 1,
+        createdBy: uid,
+        createdAt: serverTimestamp(),
+      });
     }
 
     transaction.set(voteRef(slug, key, uid), {uid, topic: slug, createdAt: serverTimestamp()});

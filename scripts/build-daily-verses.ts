@@ -29,12 +29,53 @@ const MAX_CHARACTERS = 160;
  * people look to for a verse to start the day with.
  */
 const DEVOTIONAL_TOPICS: ReadonlySet<string> = new Set([
-  'anxiety', 'blessings', 'comfort', 'contentment', 'courage', 'depression', 'difficult-times', 'encouragement',
-  'eternal-life', 'faith', 'forgiveness', 'gentleness', 'gods-faithfulness', 'gods-grace', 'gods-love', 'gods-plan',
-  'gods-promises', 'goodness', 'grace', 'gratitude', 'guidance', 'hard-times', 'healing', 'holy-spirit', 'hope',
-  'jesus-love', 'joy', 'kindness', 'loneliness', 'love', 'mercy', 'new-life', 'patience', 'peace', 'perseverance',
-  'praise', 'prayer', 'protection', 'provision', 'rest', 'salvation', 'strength', 'thankfulness', 'trust', 'wisdom',
-  'worry', 'worship',
+  'anxiety',
+  'blessings',
+  'comfort',
+  'contentment',
+  'courage',
+  'depression',
+  'difficult-times',
+  'encouragement',
+  'eternal-life',
+  'faith',
+  'forgiveness',
+  'gentleness',
+  'gods-faithfulness',
+  'gods-grace',
+  'gods-love',
+  'gods-plan',
+  'gods-promises',
+  'goodness',
+  'grace',
+  'gratitude',
+  'guidance',
+  'hard-times',
+  'healing',
+  'holy-spirit',
+  'hope',
+  'jesus-love',
+  'joy',
+  'kindness',
+  'loneliness',
+  'love',
+  'mercy',
+  'new-life',
+  'patience',
+  'peace',
+  'perseverance',
+  'praise',
+  'prayer',
+  'protection',
+  'provision',
+  'rest',
+  'salvation',
+  'strength',
+  'thankfulness',
+  'trust',
+  'wisdom',
+  'worry',
+  'worship',
 ]);
 
 /**
@@ -91,18 +132,26 @@ function isShortWholePassage({startVerse, endVerse}: Candidate, textOf: PassageT
   const start = parseVerseId(startVerse);
   const end = parseVerseId(endVerse);
 
-  if (!start || !end || start.book !== end.book || start.chapter !== end.chapter || end.verse - start.verse >= MAX_VERSES
-    || (start.book === PSALMS && start.verse === 1)) {
+  if (
+    !start ||
+    !end ||
+    start.book !== end.book ||
+    start.chapter !== end.chapter ||
+    end.verse - start.verse >= MAX_VERSES ||
+    (start.book === PSALMS && start.verse === 1)
+  ) {
     return false;
   }
 
   const text = textOf(startVerse, endVerse);
 
-  return text !== null
-    && text.length <= MAX_CHARACTERS
-    && STARTS_SENTENCE.test(text)
-    && ENDS_SENTENCE.test(text)
-    && hasBalancedQuotes(text);
+  return (
+    text !== null &&
+    text.length <= MAX_CHARACTERS &&
+    STARTS_SENTENCE.test(text) &&
+    ENDS_SENTENCE.test(text) &&
+    hasBalancedQuotes(text)
+  );
 }
 
 function overlaps(a: Candidate, b: Candidate): boolean {
@@ -114,7 +163,7 @@ function seededRandom(seed: number): () => number {
   let state = seed;
 
   return () => {
-    state = (state + 0x6D2B79F5) | 0;
+    state = (state + 0x6d2b79f5) | 0;
 
     let value = Math.imul(state ^ (state >>> 15), 1 | state);
 
@@ -141,7 +190,11 @@ function shuffle<T>(items: T[], random: () => number): T[] {
  * John 3:16-17 do not both appear. They are shuffled with a fixed seed, so the best-loved verses are spread across
  * the year rather than all in January.
  */
-export function chooseDailyVerses(topics: Iterable<TopicFile>, textOf: PassageText, count = DAILY_VERSE_COUNT): DailyVerseList {
+export function chooseDailyVerses(
+  topics: Iterable<TopicFile>,
+  textOf: PassageText,
+  count = DAILY_VERSE_COUNT,
+): DailyVerseList {
   const totals = new Map<string, Candidate>();
 
   for (const {verses} of topics) {
@@ -153,7 +206,9 @@ export function chooseDailyVerses(topics: Iterable<TopicFile>, textOf: PassageTe
     }
   }
 
-  const ranked = [...totals.values()].sort((a, b) => b.votes - a.votes || a.startVerse.localeCompare(b.startVerse) || a.endVerse.localeCompare(b.endVerse));
+  const ranked = [...totals.values()].sort(
+    (a, b) => b.votes - a.votes || a.startVerse.localeCompare(b.startVerse) || a.endVerse.localeCompare(b.endVerse),
+  );
   const chosen: Candidate[] = [];
 
   for (const candidate of ranked) {
@@ -192,7 +247,9 @@ function bsbPassageText(): PassageText {
     let chapter = chapters.get(path);
 
     if (!chapter) {
-      chapter = JSON.parse(readFileSync(new URL(`../apps/web/public/bible/bsb/${path}.json`, import.meta.url), 'utf8')) as ChapterText;
+      chapter = JSON.parse(
+        readFileSync(new URL(`../apps/web/public/bible/bsb/${path}.json`, import.meta.url), 'utf8'),
+      ) as ChapterText;
       chapters.set(path, chapter);
     }
 
@@ -204,7 +261,9 @@ function bsbPassageText(): PassageText {
 
 if (import.meta.main) {
   const topicDir = new URL('../apps/web/public/topic-data/', import.meta.url);
-  const topics = [...DEVOTIONAL_TOPICS].map((slug) => JSON.parse(readFileSync(new URL(`${slug}.json`, topicDir), 'utf8')) as TopicFile);
+  const topics = [...DEVOTIONAL_TOPICS].map(
+    (slug) => JSON.parse(readFileSync(new URL(`${slug}.json`, topicDir), 'utf8')) as TopicFile,
+  );
   const list = chooseDailyVerses(topics, bsbPassageText());
   const output = new URL('../apps/web/public/daily-verses.json', import.meta.url);
 

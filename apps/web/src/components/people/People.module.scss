@@ -88,7 +88,9 @@ $phone-width: 900px;
   border: 0;
   background: none;
   color: var(--bc-muted);
-  font: 400 14px 'Schibsted Grotesk', sans-serif;
+  font:
+    400 14px 'Schibsted Grotesk',
+    sans-serif;
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;

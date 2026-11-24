@@ -91,7 +91,9 @@ test.describe('on a phone', () => {
       await page.goto(path);
       await expect(page.getByRole('main').getByRole('link').first()).toBeVisible();
 
-      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
 
       expect(overflow, path).toBeLessThanOrEqual(0);
     }

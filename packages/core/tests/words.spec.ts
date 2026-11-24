@@ -15,14 +15,15 @@ const ACTS_4: WordFile = {
 };
 
 describe('wordsOfVerse', () => {
-  const textsOf = (translation: 'bsb' | 'kjv', verse: number) => wordsOfVerse(ACTS_4, translation, verse).map(({text}) => text);
+  const textsOf = (translation: 'bsb' | 'kjv', verse: number) =>
+    wordsOfVerse(ACTS_4, translation, verse).map(({text}) => text);
 
   it('numbers words as each translation does', () => {
     expect(textsOf('bsb', 5)).toEqual(['ἐγένετο', 'Ἰερουσαλήμ']);
     expect(textsOf('kjv', 5)).toEqual(['ἐγένετο']);
   });
 
-  it('shows only the words each translation\'s Greek has', () => {
+  it("shows only the words each translation's Greek has", () => {
     expect(textsOf('bsb', 6)).toEqual(['θεὸς']);
     expect(textsOf('kjv', 6)).toEqual(['Ἰερουσαλήμ', 'υἱός']);
   });
@@ -40,7 +41,7 @@ describe('languageOfWords', () => {
 });
 
 describe('lexiconGroup', () => {
-  it('groups Strong\'s numbers by language and hundreds', () => {
+  it("groups Strong's numbers by language and hundreds", () => {
     expect(lexiconGroup('H7462B')).toBe('H74');
     expect(lexiconGroup('G0026')).toBe('G00');
     expect(lexiconGroup('')).toBeNull();

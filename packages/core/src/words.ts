@@ -68,11 +68,17 @@ export interface VerseWord {
 export function wordsOfVerse(file: WordFile, translation: WordTranslation, verse: number): VerseWord[] {
   return file.words
     .filter(([bsbVerse, , , , , , only, kjvVerse]) => {
-      const numbered = translation === 'kjv' ? kjvVerse ?? bsbVerse : bsbVerse;
+      const numbered = translation === 'kjv' ? (kjvVerse ?? bsbVerse) : bsbVerse;
 
       return numbered === verse && (!only || only === translation);
     })
-    .map(([, text, transliteration, english, strongs, grammar]) => ({text, transliteration, english, strongs, grammar}));
+    .map(([, text, transliteration, english, strongs, grammar]) => ({
+      text,
+      transliteration,
+      english,
+      strongs,
+      grammar,
+    }));
 }
 
 /** The language a verse's words are in. The Old Testament's Aramaic passages are in Daniel and Ezra. */

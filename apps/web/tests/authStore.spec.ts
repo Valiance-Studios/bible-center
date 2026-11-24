@@ -4,7 +4,12 @@ import {beforeEach, describe, expect, it, vi} from 'vite-plus/test';
 import {onAuthStateChanged, signInWithPopup} from 'firebase/auth';
 import {getAccess, isAccountBlocked} from '@/firebase/access';
 import {recordFirstSignIn} from '@/firebase/settings';
-import {finishTwoStepSignIn, hasEnrolledSecondFactor, signedInWithSecondFactor, twoStepResolverFor} from '@/firebase/twoStep';
+import {
+  finishTwoStepSignIn,
+  hasEnrolledSecondFactor,
+  signedInWithSecondFactor,
+  twoStepResolverFor,
+} from '@/firebase/twoStep';
 import {useAuthStore} from '@/stores/auth';
 
 const firebaseState = vi.hoisted(() => ({auth: {currentUser: null as unknown}}));

@@ -8,7 +8,9 @@ import {signInAsNewUser} from './support/auth';
 
 /** The most-voted verse of a topic in the committed data. Each test uses its own topic, so tests never share counts. */
 function topVerseOf(slug: string): string {
-  const topic = JSON.parse(readFileSync(new URL(`../public/topic-data/${slug}.json`, import.meta.url), 'utf8')) as TopicFile;
+  const topic = JSON.parse(
+    readFileSync(new URL(`../public/topic-data/${slug}.json`, import.meta.url), 'utf8'),
+  ) as TopicFile;
   const [startVerse = '', endVerse = ''] = topic.verses[0] ?? [];
 
   return formatReference(referenceOf({startVerse, endVerse})!);
@@ -32,7 +34,9 @@ test('someone signed out sees the counts, and is asked to sign in to vote', asyn
 
   await expect(page.getByText('to upvote, add a verse or report one.')).toBeVisible();
   await expect(rowOf(page, reference)).toContainText('0 on Bible Center');
-  await rowOf(page, reference).getByRole('link', {name: `Sign in to upvote ${reference}`}).click();
+  await rowOf(page, reference)
+    .getByRole('link', {name: `Sign in to upvote ${reference}`})
+    .click();
   await expect(page).toHaveURL(/\/sign-in$/);
 });
 
@@ -42,7 +46,9 @@ test('an account under a week old is told when it can vote, and can still report
   await signInAsNewUser(page, 'member', 1);
   await page.goto('/topics/gentleness');
 
-  await expect(page.getByText(/^You can upvote and add verses after [A-Z][a-z]+ \d{1,2} at \d{1,2}:\d{2} [AP]M\.$/)).toBeVisible();
+  await expect(
+    page.getByText(/^You can upvote and add verses after [A-Z][a-z]+ \d{1,2} at \d{1,2}:\d{2} [AP]M\.$/),
+  ).toBeVisible();
   await expect(rowOf(page, reference).getByRole('button', {name: `Upvote ${reference}, not available`})).toBeDisabled();
   await expect(page.getByRole('button', {name: 'Add a verse to this topic'})).toHaveCount(0);
   await expect(rowOf(page, reference).getByRole('button', {name: `Report ${reference}`})).toBeVisible();
@@ -54,15 +60,24 @@ test('an upvote counts, survives a reload, and can be removed', async ({page}) =
   await signInAsNewUser(page);
   await openTopic(page, 'kindness');
 
-  await rowOf(page, reference).getByRole('button', {name: `Upvote ${reference}`}).click();
-  await expect(rowOf(page, reference).getByRole('button', {name: `Remove your upvote from ${reference}`})).toHaveAttribute('aria-pressed', 'true');
+  await rowOf(page, reference)
+    .getByRole('button', {name: `Upvote ${reference}`})
+    .click();
+  await expect(
+    rowOf(page, reference).getByRole('button', {name: `Remove your upvote from ${reference}`}),
+  ).toHaveAttribute('aria-pressed', 'true');
   await expect(rowOf(page, reference)).toContainText('1 on Bible Center');
 
   await page.reload();
   await expect(rowOf(page, reference)).toContainText('1 on Bible Center');
 
-  await rowOf(page, reference).getByRole('button', {name: `Remove your upvote from ${reference}`}).click();
-  await expect(rowOf(page, reference).getByRole('button', {name: `Upvote ${reference}`})).toHaveAttribute('aria-pressed', 'false');
+  await rowOf(page, reference)
+    .getByRole('button', {name: `Remove your upvote from ${reference}`})
+    .click();
+  await expect(rowOf(page, reference).getByRole('button', {name: `Upvote ${reference}`})).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  );
   await expect(rowOf(page, reference)).toContainText('0 on Bible Center');
 });
 
@@ -93,7 +108,9 @@ test('a verse can be added, counting as an upvote, but not twice or one that doe
 
   await expect(rowOf(page, 'John 11:35')).toContainText('1 on Bible Center');
   await expect(rowOf(page, 'John 11:35')).not.toContainText('OpenBible');
-  await expect(rowOf(page, 'John 11:35').getByRole('button', {name: 'Remove your upvote from John 11:35'})).toBeVisible();
+  await expect(
+    rowOf(page, 'John 11:35').getByRole('button', {name: 'Remove your upvote from John 11:35'}),
+  ).toBeVisible();
 });
 
 test('adding the first verse to a topic nobody has starts it', async ({page}) => {
@@ -119,7 +136,9 @@ test('a verse can be reported for review', async ({page}) => {
 
   await signInAsNewUser(page);
   await openTopic(page, 'joy');
-  await rowOf(page, reference).getByRole('button', {name: `Report ${reference}`}).click();
+  await rowOf(page, reference)
+    .getByRole('button', {name: `Report ${reference}`})
+    .click();
 
   const dialog = page.getByRole('dialog', {name: `Report ${reference} on joy`});
 
@@ -141,10 +160,14 @@ test.describe('on a phone', () => {
 
     await signInAsNewUser(page);
     await openTopic(page, 'peace');
-    await rowOf(page, reference).getByRole('button', {name: `Upvote ${reference}`}).click();
+    await rowOf(page, reference)
+      .getByRole('button', {name: `Upvote ${reference}`})
+      .click();
     await expect(rowOf(page, reference)).toContainText('1 on Bible Center');
 
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
 
     expect(overflow).toBeLessThanOrEqual(0);
   });

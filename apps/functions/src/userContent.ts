@@ -41,7 +41,9 @@ export async function unlinkAddedContent(uid: string): Promise<void> {
     db.collection('topics').where('createdBy', '==', uid).get(),
   ]);
 
-  await Promise.all([...verses.docs, ...topics.docs].map((document) => document.ref.update({createdBy: FieldValue.delete()})));
+  await Promise.all(
+    [...verses.docs, ...topics.docs].map((document) => document.ref.update({createdBy: FieldValue.delete()})),
+  );
 }
 
 /**
@@ -55,7 +57,11 @@ export async function removeAddedContent(uid: string, adminUid: string): Promise
   ]);
 
   await Promise.all(verses.docs.map((verse) => db.recursiveDelete(verse.ref)));
-  await Promise.all(topics.docs
-    .filter((topic) => topic.get('status') !== 'rejected')
-    .map((topic) => topic.ref.update({status: 'rejected', reviewedBy: adminUid, reviewedAt: FieldValue.serverTimestamp()})));
+  await Promise.all(
+    topics.docs
+      .filter((topic) => topic.get('status') !== 'rejected')
+      .map((topic) =>
+        topic.ref.update({status: 'rejected', reviewedBy: adminUid, reviewedAt: FieldValue.serverTimestamp()}),
+      ),
+  );
 }

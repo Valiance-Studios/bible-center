@@ -50,7 +50,7 @@ export function useVerseOfTheDay(date: string): VerseOfTheDay {
   const chosen = useQuery(chosenDailyVerseQuery(date));
   const automatic = useAutomaticDailyVerse(date);
   const isChosenSettled = chosen.isSuccess || chosen.isError;
-  const verse = chosen.data ?? (isChosenSettled ? automatic.data ?? null : null);
+  const verse = chosen.data ?? (isChosenSettled ? (automatic.data ?? null) : null);
 
   return {
     verse,

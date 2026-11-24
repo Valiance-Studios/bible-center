@@ -2,8 +2,8 @@ import type {CSSVariablesResolver} from '@mantine/core';
 
 import {createTheme, defaultVariantColorsResolver} from '@mantine/core';
 
-const INTERFACE_FONT = '\'Schibsted Grotesk\', system-ui, sans-serif';
-const SCRIPTURE_FONT = '\'Literata\', Georgia, serif';
+const INTERFACE_FONT = "'Schibsted Grotesk', system-ui, sans-serif";
+const SCRIPTURE_FONT = "'Literata', Georgia, serif";
 
 /** Maps the design language in `docs/UI.md` onto Mantine. `styles/main.scss` holds the matching CSS tokens. */
 export const mantineTheme = createTheme({
@@ -22,8 +22,30 @@ export const mantineTheme = createTheme({
   headings: {fontFamily: SCRIPTURE_FONT, fontWeight: '400'},
   defaultRadius: 'sm',
   colors: {
-    lapis: ['#EEF1FA', '#DCE3F5', '#C5D2F7', '#9DB4F5', '#7B95E3', '#5472CC', '#3656AE', '#1F3F94', '#193279', '#13265D'],
-    dark: ['#E8EAF0', '#C5D2F7', '#A5AEC4', '#7C87A3', '#3A4668', '#2A3556', '#1C2A52', '#16213F', '#0F1830', '#0A1124'],
+    lapis: [
+      '#EEF1FA',
+      '#DCE3F5',
+      '#C5D2F7',
+      '#9DB4F5',
+      '#7B95E3',
+      '#5472CC',
+      '#3656AE',
+      '#1F3F94',
+      '#193279',
+      '#13265D',
+    ],
+    dark: [
+      '#E8EAF0',
+      '#C5D2F7',
+      '#A5AEC4',
+      '#7C87A3',
+      '#3A4668',
+      '#2A3556',
+      '#1C2A52',
+      '#16213F',
+      '#0F1830',
+      '#0A1124',
+    ],
   },
 });
 

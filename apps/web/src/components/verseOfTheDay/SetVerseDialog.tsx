@@ -30,14 +30,16 @@ function Preview({verse, translation}: {verse: DailyVerse | null | undefined; tr
   return (
     <div className={classes.preview}>
       <p className={classes.previewLabel}>Visitors will see</p>
-      {isReady
-        ? (
-            <>
-              <p className={classes.previewText}>{passage.text}</p>
-              <p className={classes.previewReference}>{label}</p>
-            </>
-          )
-        : <p className={classes.previewEmpty}>{passage.isError ? 'The verse could not be loaded.' : 'Enter a verse to see it here.'}</p>}
+      {isReady ? (
+        <>
+          <p className={classes.previewText}>{passage.text}</p>
+          <p className={classes.previewReference}>{label}</p>
+        </>
+      ) : (
+        <p className={classes.previewEmpty}>
+          {passage.isError ? 'The verse could not be loaded.' : 'Enter a verse to see it here.'}
+        </p>
+      )}
     </div>
   );
 }
@@ -67,10 +69,11 @@ function DailyVerseForm({uid, date, chosen, translation, onClose}: DailyVerseFor
   });
 
   return (
-    <form onSubmit={(event) => {
-      event.preventDefault();
-      save.mutate(choice === 'automatic' ? null : checked.span);
-    }}
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        save.mutate(choice === 'automatic' ? null : checked.span);
+      }}
     >
       <Radio.Group
         className={classes.choices}
@@ -83,7 +86,9 @@ function DailyVerseForm({uid, date, chosen, translation, onClose}: DailyVerseFor
           <Radio.Indicator />
           <div>
             <span className={classes.choiceTitle}>Choose automatically</span>
-            <span className={classes.choiceDescription}>Bible Center picks one from its list. This is the default for every date.</span>
+            <span className={classes.choiceDescription}>
+              Bible Center picks one from its list. This is the default for every date.
+            </span>
           </div>
         </Radio.Card>
         <Radio.Card className={classes.choice} value="chosen">
@@ -110,11 +115,19 @@ function DailyVerseForm({uid, date, chosen, translation, onClose}: DailyVerseFor
 
       <Preview verse={verse} translation={translation} />
 
-      {save.isError && <Alert color="red" mb="md">The verse could not be saved. Check your connection and try again.</Alert>}
+      {save.isError && (
+        <Alert color="red" mb="md">
+          The verse could not be saved. Check your connection and try again.
+        </Alert>
+      )}
 
       <Group justify="flex-end">
-        <Button variant="default" radius="xl" onClick={onClose} disabled={save.isPending}>Cancel</Button>
-        <Button type="submit" radius="xl" disabled={!verse} loading={save.isPending}>Save verse</Button>
+        <Button variant="default" radius="xl" onClick={onClose} disabled={save.isPending}>
+          Cancel
+        </Button>
+        <Button type="submit" radius="xl" disabled={!verse} loading={save.isPending}>
+          Save verse
+        </Button>
       </Group>
     </form>
   );
@@ -150,13 +163,22 @@ export function SetVerseDialog({uid, initialDate, translation, onClose}: SetVers
 
       {isDate && chosen.isError && (
         <Alert color="red" mt="md" title="The verse for this date could not be loaded">
-          <Button mt="xs" onClick={() => void chosen.refetch()}>Try again</Button>
+          <Button mt="xs" onClick={() => void chosen.refetch()}>
+            Try again
+          </Button>
         </Alert>
       )}
 
       {isDate && chosen.isSuccess && (
         // Keyed by date, so picking another date starts again from what is set for it.
-        <DailyVerseForm key={date} uid={uid} date={date} chosen={chosen.data} translation={translation} onClose={onClose} />
+        <DailyVerseForm
+          key={date}
+          uid={uid}
+          date={date}
+          chosen={chosen.data}
+          translation={translation}
+          onClose={onClose}
+        />
       )}
     </Modal>
   );

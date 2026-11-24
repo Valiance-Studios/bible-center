@@ -7,7 +7,9 @@ test('a sign-up from a temporary email service is refused, and says why', async 
 
   await register(page, {...user, email: user.email.replace('@example.com', '@mailinator.com')}, 'a-long-test-password');
 
-  await expect(page.getByRole('alert')).toHaveText('Bible Center does not accept sign-ups from temporary email services. Use an email address you keep, such as a personal or work one.');
+  await expect(page.getByRole('alert')).toHaveText(
+    'Bible Center does not accept sign-ups from temporary email services. Use an email address you keep, such as a personal or work one.',
+  );
   await expect(page.getByRole('heading', {name: 'Create an account'})).toBeVisible();
 });
 
@@ -20,7 +22,9 @@ test('a reviewer without two-step sign-in is asked to set it up, and keeps membe
 
   await page.goto('/review');
   await expect(page.getByRole('heading', {name: 'Set up two-step sign-in first'})).toBeVisible();
-  await expect(page.getByText('Highlights, notes, your memory list and voting work as before, without it.')).toBeVisible();
+  await expect(
+    page.getByText('Highlights, notes, your memory list and voting work as before, without it.'),
+  ).toBeVisible();
   await page.getByRole('button', {name: 'Set it up'}).click();
   await expect(page.getByRole('heading', {name: 'Confirm it is you'})).toBeVisible();
   await expect(page.getByRole('button', {name: 'Continue with Google'})).toBeVisible();
@@ -33,7 +37,10 @@ test('an account with two-step sign-in is asked for its code after Google, and c
   await signInWithGoogle(page, user);
 
   await expect(page.getByRole('heading', {name: 'Enter your code'})).toBeVisible();
-  await expect(page.getByRole('link', {name: 'bobbyjuba@gmail.com'})).toHaveAttribute('href', 'mailto:bobbyjuba@gmail.com');
+  await expect(page.getByRole('link', {name: 'bobbyjuba@gmail.com'})).toHaveAttribute(
+    'href',
+    'mailto:bobbyjuba@gmail.com',
+  );
 
   await page.getByRole('button', {name: 'Use a different account'}).click();
   await expect(page.getByRole('button', {name: 'Continue with Google'})).toBeVisible();

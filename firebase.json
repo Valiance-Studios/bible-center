@@ -2,34 +2,20 @@
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json",
-    "predeploy": [
-      "node scripts/check-release.ts"
-    ]
+    "predeploy": ["node scripts/check-release.ts"]
   },
   "functions": [
     {
       "source": "apps/functions",
       "codebase": "default",
-      "ignore": [
-        "node_modules",
-        "src",
-        "tsconfig*.json",
-        "*.log"
-      ],
-      "predeploy": [
-        "node scripts/check-release.ts",
-        "npm run build:functions"
-      ]
+      "ignore": ["node_modules", "src", "tsconfig*.json", "*.log"],
+      "predeploy": ["node scripts/check-release.ts", "npm run build:functions"]
     }
   ],
   "hosting": {
     "target": "app",
     "public": "apps/web/dist",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
         "source": "**",
@@ -82,10 +68,7 @@
         ]
       }
     ],
-    "predeploy": [
-      "node scripts/check-release.ts",
-      "node scripts/build-hosting.ts"
-    ]
+    "predeploy": ["node scripts/check-release.ts", "node scripts/build-hosting.ts"]
   },
   "emulators": {
     "auth": {

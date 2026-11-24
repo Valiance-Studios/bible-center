@@ -61,16 +61,31 @@ export function addToCount(transaction: Transaction, uid: string, record: Docume
 }
 
 /** Counts one fewer, naming the document deleted alongside, as the rules require. Documents made before counts leave it at 0. */
-export function takeFromCount(transaction: Transaction, uid: string, record: DocumentData, kind: CountedKind, documentId: string): void {
+export function takeFromCount(
+  transaction: Transaction,
+  uid: string,
+  record: DocumentData,
+  kind: CountedKind,
+  documentId: string,
+): void {
   const count = countOf(record, kind);
 
   if (count > 0) {
-    transaction.set(userRecordRef(uid), {[COUNT_FIELDS[kind].count]: count - 1, [COUNT_FIELDS[kind].change]: documentId}, {merge: true});
+    transaction.set(
+      userRecordRef(uid),
+      {[COUNT_FIELDS[kind].count]: count - 1, [COUNT_FIELDS[kind].change]: documentId},
+      {merge: true},
+    );
   }
 }
 
 /** Stamps now as the last time, as the rules require, unless the cooldown since the last one is still running. */
-export function stampAfterCooldown(transaction: Transaction, uid: string, record: DocumentData, kind: CooldownKind): void {
+export function stampAfterCooldown(
+  transaction: Transaction,
+  uid: string,
+  record: DocumentData,
+  kind: CooldownKind,
+): void {
   const last: unknown = record[STAMP_FIELDS[kind]];
   const endsAt = cooldownEndsAt(kind, last instanceof Timestamp ? last.toDate() : null, new Date());
 

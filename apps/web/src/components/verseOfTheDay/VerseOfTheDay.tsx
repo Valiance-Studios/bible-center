@@ -18,21 +18,28 @@ export function VerseOfTheDay() {
   const translation = findTranslation(useTranslationStore((state) => state.translationId));
   const today = useVerseOfTheDay(date);
   const {reference, label, passage} = useSpanText(today.verse, translation);
-  const adminUid = useAuthStore((state) => (state.status === 'allowed' && isAdmin(state.role) && !state.isBlocked && state.hasSecondFactor ? state.user?.uid : undefined));
+  const adminUid = useAuthStore((state) =>
+    state.status === 'allowed' && isAdmin(state.role) && !state.isBlocked && state.hasSecondFactor
+      ? state.user?.uid
+      : undefined,
+  );
   const [isSetting, setIsSetting] = useState(false);
   const isError = today.isError || passage.isError;
 
   return (
     <section aria-labelledby="verse-of-the-day">
-      <p id="verse-of-the-day" className={classes.label}>Verse of the day</p>
+      <p id="verse-of-the-day" className={classes.label}>
+        Verse of the day
+      </p>
 
       {isError && (
         <div className={classes.error}>
           <p>The verse of the day could not be loaded. Check your connection and try again.</p>
-          <Button onClick={() => {
-            today.retry();
-            passage.retry();
-          }}
+          <Button
+            onClick={() => {
+              today.retry();
+              passage.retry();
+            }}
           >
             Try again
           </Button>
@@ -51,18 +58,31 @@ export function VerseOfTheDay() {
         <>
           <blockquote className={classes.verse}>{passage.text}</blockquote>
           <div className={classes.foot}>
-            <Link className={classes.reference} to={referencePath(reference)}>{label}</Link>
-            <Link className={classes.quiet} to={chapterPath({book: reference.book, chapter: reference.startChapter})}>Read the chapter</Link>
-            <Link className={classes.quiet} to={memorizePath(reference)}>Memorize</Link>
+            <Link className={classes.reference} to={referencePath(reference)}>
+              {label}
+            </Link>
+            <Link className={classes.quiet} to={chapterPath({book: reference.book, chapter: reference.startChapter})}>
+              Read the chapter
+            </Link>
+            <Link className={classes.quiet} to={memorizePath(reference)}>
+              Memorize
+            </Link>
             {adminUid && (
-              <button type="button" className={classes.quiet} onClick={() => setIsSetting(true)}>Set verse of the day</button>
+              <button type="button" className={classes.quiet} onClick={() => setIsSetting(true)}>
+                Set verse of the day
+              </button>
             )}
           </div>
         </>
       )}
 
       {isSetting && adminUid && (
-        <SetVerseDialog uid={adminUid} initialDate={date} translation={translation} onClose={() => setIsSetting(false)} />
+        <SetVerseDialog
+          uid={adminUid}
+          initialDate={date}
+          translation={translation}
+          onClose={() => setIsSetting(false)}
+        />
       )}
     </section>
   );

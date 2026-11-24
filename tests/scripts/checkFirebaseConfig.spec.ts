@@ -22,7 +22,7 @@ describe('findConfigProblems', () => {
     expect(problem).toContain('VITE_APPCHECK_SITE_KEY');
   });
 
-  it('refuses another project\'s config', () => {
+  it("refuses another project's config", () => {
     const [problem] = findConfigProblems(VALID_ENV, 'production', 'other-project');
 
     expect(problem).toContain('not "other-project"');

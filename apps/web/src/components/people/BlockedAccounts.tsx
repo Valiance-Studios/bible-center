@@ -51,8 +51,13 @@ export function BlockedAccounts({uid, myEmail}: {uid: string; myEmail: string}) 
 
   return (
     <section aria-labelledby="blocked-title">
-      <h2 id="blocked-title" className={classes.sectionTitle}>Blocked accounts</h2>
-      <p className={classes.sectionIntro}>A blocked account can still read, but cannot highlight, take notes, memorize, vote, add verses, report or start topics.</p>
+      <h2 id="blocked-title" className={classes.sectionTitle}>
+        Blocked accounts
+      </h2>
+      <p className={classes.sectionIntro}>
+        A blocked account can still read, but cannot highlight, take notes, memorize, vote, add verses, report or start
+        topics.
+      </p>
 
       <form
         className={classes.blockForm}
@@ -74,9 +79,15 @@ export function BlockedAccounts({uid, myEmail}: {uid: string; myEmail: string}) 
             setProblem(null);
           }}
         />
-        <Button type="submit" size="md">Block account</Button>
+        <Button type="submit" size="md">
+          Block account
+        </Button>
       </form>
-      {problem && <Alert color="red" mt="sm" role="alert">{problem}</Alert>}
+      {problem && (
+        <Alert color="red" mt="sm" role="alert">
+          {problem}
+        </Alert>
+      )}
       <p className={classes.addHint}>Accounts can also be blocked from the Review page, beside what they added.</p>
 
       {blocked.hasLoadError && (
@@ -103,7 +114,11 @@ export function BlockedAccounts({uid, myEmail}: {uid: string; myEmail: string}) 
           </button>
         </div>
       ))}
-      {status && <p className={classes.status} role="status">{status}</p>}
+      {status && (
+        <p className={classes.status} role="status">
+          {status}
+        </p>
+      )}
 
       {confirming && (
         <BlockDialog

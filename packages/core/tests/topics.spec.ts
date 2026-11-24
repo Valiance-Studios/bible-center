@@ -48,7 +48,10 @@ describe('rankTopicVerses', () => {
   });
 
   it('breaks ties by OpenBible votes, then Bible order', () => {
-    const tied: TopicFileVerse[] = [['43001002', '43001002', 0], ['43001001', '43001001', 0]];
+    const tied: TopicFileVerse[] = [
+      ['43001002', '43001002', 0],
+      ['43001001', '43001001', 0],
+    ];
 
     expect(rankTopicVerses(tied, []).map(({startVerse}) => startVerse)).toEqual(['43001001', '43001002']);
   });
@@ -65,7 +68,11 @@ describe('rankTopicVerses', () => {
   });
 
   it('leaves out verses a reviewer removed, from OpenBible or Bible Center', () => {
-    const ranked = rankTopicVerses(verses, [{startVerse: '45012015', endVerse: '45012015', upvotes: 1}], new Set(['40005004', '45012015']));
+    const ranked = rankTopicVerses(
+      verses,
+      [{startVerse: '45012015', endVerse: '45012015', upvotes: 1}],
+      new Set(['40005004', '45012015']),
+    );
 
     expect(ranked.map(({startVerse}) => startVerse)).toEqual(['19147003', '43011035']);
   });

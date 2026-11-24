@@ -40,7 +40,9 @@ export function SearchBox({initialQuery = '', showLabel = false, placeholder}: S
           value={query}
           onChange={(event) => setQuery(event.currentTarget.value)}
         />
-        <button type="submit" className={classes.button}>Search</button>
+        <button type="submit" className={classes.button}>
+          Search
+        </button>
       </div>
     </form>
   );

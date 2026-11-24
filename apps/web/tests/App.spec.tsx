@@ -5,7 +5,7 @@ import {App} from '@/App';
 vi.mock('@/firebase', () => ({auth: {}, db: {}}));
 vi.mock('@/firebase/functions', () => ({functions: {}}));
 vi.mock('firebase/auth', async (importOriginal) => ({
-  ...await importOriginal<typeof import('firebase/auth')>(),
+  ...(await importOriginal<typeof import('firebase/auth')>()),
   onAuthStateChanged: vi.fn(() => () => {}),
 }));
 

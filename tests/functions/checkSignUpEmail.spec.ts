@@ -4,7 +4,9 @@ import {checkSignUpEmail} from '../../apps/functions/src/checkSignUpEmail.ts';
 describe('checkSignUpEmail', () => {
   it('refuses temporary email services, and their subdomains', () => {
     for (const email of ['sam@mailinator.com', 'sam@sub.mailinator.com', 'sam@guerrillamail.com']) {
-      expect(() => checkSignUpEmail(email), email).toThrow(expect.objectContaining({code: 'invalid-argument', message: 'temporary-email-service'}));
+      expect(() => checkSignUpEmail(email), email).toThrow(
+        expect.objectContaining({code: 'invalid-argument', message: 'temporary-email-service'}),
+      );
     }
   });
 

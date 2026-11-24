@@ -12,7 +12,10 @@ async function exists(path: string): Promise<boolean> {
 
 describe('requireSignedIn', () => {
   it('names the caller, with their email only once verified', () => {
-    expect(requireSignedIn(callerAuth('abc', 'Grace@Example.com'))).toEqual({uid: 'abc', verifiedEmail: 'grace@example.com'});
+    expect(requireSignedIn(callerAuth('abc', 'Grace@Example.com'))).toEqual({
+      uid: 'abc',
+      verifiedEmail: 'grace@example.com',
+    });
     expect(requireSignedIn(callerAuth('abc', 'grace@example.com', false))).toEqual({uid: 'abc', verifiedEmail: null});
   });
 
@@ -71,7 +74,10 @@ describe('deleteAccount', () => {
 
     expect(added).toEqual({upvotes: 1});
     expect((await db.doc('topics/grief/verses/19147003').get()).get('upvotes')).toBe(0);
-    expect((await db.doc('topics/caring-for-a-parent').get()).data()).toEqual({name: 'caring for a parent', status: 'approved'});
+    expect((await db.doc('topics/caring-for-a-parent').get()).data()).toEqual({
+      name: 'caring for a parent',
+      status: 'approved',
+    });
     expect(await exists(`topics/grief/verses/40005004/votes/${other}`)).toBe(true);
     expect(await exists('reports/theirs')).toBe(true);
     await expect(auth.getUser(other)).resolves.toBeDefined();

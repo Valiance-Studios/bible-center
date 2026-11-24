@@ -43,7 +43,7 @@ describe('roles', () => {
     await assertFails(setDoc(roleRef(ADA, 'grace@example.com'), {role: 'reviewer'}));
   });
 
-  it('lets people check their own role, and nobody else\'s', async () => {
+  it("lets people check their own role, and nobody else's", async () => {
     await assertSucceeds(getDoc(roleRef(RITA, emailOf(RITA))));
     await assertSucceeds(getDoc(roleRef(ALICE, emailOf(ALICE))));
     await assertSucceeds(getDoc(roleRef(MALLORY, emailOf(MALLORY))));
@@ -61,7 +61,7 @@ describe('roles', () => {
     }
   });
 
-  it('requires the admin\'s email to be verified', async () => {
+  it("requires the admin's email to be verified", async () => {
     await assertFails(getDocs(collection(dbFor(ADA, false), 'roles')));
     await assertFails(setDoc(doc(dbFor(ADA, false), 'roles', 'grace@example.com'), roleEntry(ADA)));
   });

@@ -32,9 +32,17 @@ export function NoteDialog({title, initialText, isExisting, isSaving, onSave, on
         data-autofocus
       />
       <Group justify="flex-end" mt="md">
-        {isExisting && <Button variant="subtle" color="red" onClick={onDelete} disabled={isSaving}>Delete note</Button>}
-        <Button variant="default" onClick={onClose}>Cancel</Button>
-        <Button onClick={() => onSave(trimmed)} disabled={!trimmed} loading={isSaving}>Save note</Button>
+        {isExisting && (
+          <Button variant="subtle" color="red" onClick={onDelete} disabled={isSaving}>
+            Delete note
+          </Button>
+        )}
+        <Button variant="default" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button onClick={() => onSave(trimmed)} disabled={!trimmed} loading={isSaving}>
+          Save note
+        </Button>
       </Group>
     </Modal>
   );

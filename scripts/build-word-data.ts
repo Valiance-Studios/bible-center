@@ -12,7 +12,14 @@
  * folding Psalm titles (verse 0) into verse 1; and shortens lexicon definitions to their main senses.
  * See "Original Languages" in ARCHITECTURE.md.
  */
-import type {GrammarFile, LexiconEntry, LexiconFile, WordFile, WordFileWord, WordTranslation} from '../packages/core/src/words.ts';
+import type {
+  GrammarFile,
+  LexiconEntry,
+  LexiconFile,
+  WordFile,
+  WordFileWord,
+  WordTranslation,
+} from '../packages/core/src/words.ts';
 
 import {mkdirSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
@@ -23,7 +30,8 @@ import {lexiconGroup} from '../packages/core/src/words.ts';
 const STEPBIBLE_COMMIT = '5de0a47f35f0fc13dfe1430d104e5db8a4285f9c';
 const STEPBIBLE_URL = `https://raw.githubusercontent.com/STEPBible/STEPBible-Data/${STEPBIBLE_COMMIT}`;
 
-const TAHOT = 'Translators Amalgamated OT+NT/TAHOT {part} - Translators Amalgamated Hebrew OT - STEPBible.org CC BY.txt';
+const TAHOT =
+  'Translators Amalgamated OT+NT/TAHOT {part} - Translators Amalgamated Hebrew OT - STEPBible.org CC BY.txt';
 const TAGNT = 'Translators Amalgamated OT+NT/TAGNT {part} - Translators Amalgamated Greek NT - STEPBible.org CC-BY.txt';
 const SOURCES = {
   hebrew: ['Gen-Deu', 'Jos-Est', 'Job-Sng', 'Isa-Mal'].map((part) => TAHOT.replace('{part}', part)),
@@ -36,10 +44,72 @@ const SOURCES = {
 
 /** STEPBible's book abbreviations, in the canonical order of `BIBLE_BOOKS`. */
 const BOOK_CODES = [
-  'Gen', 'Exo', 'Lev', 'Num', 'Deu', 'Jos', 'Jdg', 'Rut', '1Sa', '2Sa', '1Ki', '2Ki', '1Ch', '2Ch', 'Ezr', 'Neh', 'Est',
-  'Job', 'Psa', 'Pro', 'Ecc', 'Sng', 'Isa', 'Jer', 'Lam', 'Ezk', 'Dan', 'Hos', 'Jol', 'Amo', 'Oba', 'Jon', 'Mic', 'Nam',
-  'Hab', 'Zep', 'Hag', 'Zec', 'Mal', 'Mat', 'Mrk', 'Luk', 'Jhn', 'Act', 'Rom', '1Co', '2Co', 'Gal', 'Eph', 'Php', 'Col',
-  '1Th', '2Th', '1Ti', '2Ti', 'Tit', 'Phm', 'Heb', 'Jas', '1Pe', '2Pe', '1Jn', '2Jn', '3Jn', 'Jud', 'Rev',
+  'Gen',
+  'Exo',
+  'Lev',
+  'Num',
+  'Deu',
+  'Jos',
+  'Jdg',
+  'Rut',
+  '1Sa',
+  '2Sa',
+  '1Ki',
+  '2Ki',
+  '1Ch',
+  '2Ch',
+  'Ezr',
+  'Neh',
+  'Est',
+  'Job',
+  'Psa',
+  'Pro',
+  'Ecc',
+  'Sng',
+  'Isa',
+  'Jer',
+  'Lam',
+  'Ezk',
+  'Dan',
+  'Hos',
+  'Jol',
+  'Amo',
+  'Oba',
+  'Jon',
+  'Mic',
+  'Nam',
+  'Hab',
+  'Zep',
+  'Hag',
+  'Zec',
+  'Mal',
+  'Mat',
+  'Mrk',
+  'Luk',
+  'Jhn',
+  'Act',
+  'Rom',
+  '1Co',
+  '2Co',
+  'Gal',
+  'Eph',
+  'Php',
+  'Col',
+  '1Th',
+  '2Th',
+  '1Ti',
+  '2Ti',
+  'Tit',
+  'Phm',
+  'Heb',
+  'Jas',
+  '1Pe',
+  '2Pe',
+  '1Jn',
+  '2Jn',
+  '3Jn',
+  'Jud',
+  'Rev',
 ];
 const BOOK_SLUGS = new Map(BOOK_CODES.map((code, index) => [code, BIBLE_BOOKS[index]?.slug ?? '']));
 
@@ -101,7 +171,8 @@ function addWord(chapters: ChapterWords, slug: string, chapter: number, word: Wo
  * suffixes with `/`. A name, the element at `nameIndex`, keeps a capital, as in "Yahweh" and "leDavid".
  */
 export function cleanTransliteration(text: string, nameIndex: number | null = null): string {
-  return text.split('/')
+  return text
+    .split('/')
     .map((part, index) => {
       const plain = part.replaceAll('.', '').toLowerCase();
 
@@ -116,7 +187,12 @@ export function cleanTransliteration(text: string, nameIndex: number | null = nu
  * punctuation, as in "Word,"; and angle brackets mark a word left untranslated, as in "<the>".
  */
 export function cleanEnglish(text: string): string {
-  const plain = text.replace(/^\[\d+(?:\.\d+)?\]\s*/, '').replaceAll('/', ' ').replaceAll(/\s+/g, ' ').trim().replace(/[,.;:·]+$/, '');
+  const plain = text
+    .replace(/^\[\d+(?:\.\d+)?\]\s*/, '')
+    .replaceAll('/', ' ')
+    .replaceAll(/\s+/g, ' ')
+    .trim()
+    .replace(/[,.;:·]+$/, '');
   const untranslated = /^<(.+)>$/.exec(plain);
 
   return untranslated ? `${untranslated[1]} (not translated)` : plain;
@@ -136,7 +212,10 @@ export function parseHebrewWords(source: string, chapters: ChapterWords = new Ma
 
     const [, hebrew = '', transliteration = '', english = '', strongsField = '', grammarField = ''] = row.fields;
     const strongsParts = strongsField.split(/[/\\]/);
-    const rootIndex = Math.max(0, strongsParts.findIndex((part) => part.startsWith('{')));
+    const rootIndex = Math.max(
+      0,
+      strongsParts.findIndex((part) => part.startsWith('{')),
+    );
     const strongs = /\{(H\d+[A-Za-z]?)\}/.exec(strongsField)?.[1] ?? '';
     const grammarParts = grammarField.split('/');
     // Only the first element carries the language letter: H for Hebrew, A for Aramaic.
@@ -148,7 +227,14 @@ export function parseHebrewWords(source: string, chapters: ChapterWords = new Ma
 
     const nameIndex = /^[HA]Np/.test(grammar) ? rootIndex : null;
 
-    addWord(chapters, row.slug, row.chapter, [Math.max(1, row.verse), text, cleanTransliteration(transliteration, nameIndex), cleanEnglish(english), strongs, grammar]);
+    addWord(chapters, row.slug, row.chapter, [
+      Math.max(1, row.verse),
+      text,
+      cleanTransliteration(transliteration, nameIndex),
+      cleanEnglish(english),
+      strongs,
+      grammar,
+    ]);
   }
 
   return chapters;
@@ -169,8 +255,26 @@ type GreekRef = `${string}.${number}.${number}`;
  * Found by comparing the BSB's verses with the words' English at each place the KJV differs.
  */
 const BSB_FOLLOWS_KJV = new Set<GreekRef>([
-  'Act.5.39', 'Act.24.19', 'Rom.7.10', '2Co.10.4', '2Co.13.12', '2Co.13.13', 'Gal.2.19', 'Eph.5.14', 'Php.2.7', '1Th.1.2',
-  '1Th.2.7', 'Heb.3.10', 'Heb.12.22', '1Pe.3.16', '1Jn.2.14', '3Jn.1.15', 'Rev.2.28', 'Rev.12.18', 'Rev.17.9', 'Luk.7.18',
+  'Act.5.39',
+  'Act.24.19',
+  'Rom.7.10',
+  '2Co.10.4',
+  '2Co.13.12',
+  '2Co.13.13',
+  'Gal.2.19',
+  'Eph.5.14',
+  'Php.2.7',
+  '1Th.1.2',
+  '1Th.2.7',
+  'Heb.3.10',
+  'Heb.12.22',
+  '1Pe.3.16',
+  '1Jn.2.14',
+  '3Jn.1.15',
+  'Rev.2.28',
+  'Rev.12.18',
+  'Rev.17.9',
+  'Luk.7.18',
 ]);
 
 /**
@@ -178,11 +282,19 @@ const BSB_FOLLOWS_KJV = new Set<GreekRef>([
  * meaning variants, such as `υἱός (T=huios) son - G5207=N-NSM in: Tyn+TR+Byz`. Variants are separated by `¦`,
  * and one covering several words gives the first word's Strong's number and grammar.
  */
-export function kjvVariantOf(variants: string): {greek: string; transliteration: string; english: string; strongs: string; grammar: string} | null {
+export function kjvVariantOf(
+  variants: string,
+): {greek: string; transliteration: string; english: string; strongs: string; grammar: string} | null {
   for (const variant of variants.split('¦')) {
     const match = /^\s*(.+?) \((?:\w=)?([^)]*)\) (.*?) - ([HG]\d+[A-Za-z]?)=(\S+).* in: (.*)$/.exec(variant);
 
-    if (match && match[6]?.split('+').map((edition) => edition.trim()).includes('TR')) {
+    if (
+      match &&
+      match[6]
+        ?.split('+')
+        .map((edition) => edition.trim())
+        .includes('TR')
+    ) {
       const [, greek = '', transliteration = '', english = '', strongs = '', grammar = ''] = match;
 
       return {greek, transliteration, english, strongs, grammar};
@@ -194,8 +306,10 @@ export function kjvVariantOf(variants: string): {greek: string; transliteration:
 
 /** Passages Nestle-Aland brackets but the BSB translates: the longer ending of Mark and the woman caught in adultery. */
 function isBracketedPassageInBsb(code: string, chapter: number, verse: number): boolean {
-  return (code === 'Mrk' && chapter === 16 && verse >= 9)
-    || (code === 'Jhn' && ((chapter === 7 && verse === 53) || (chapter === 8 && verse <= 11)));
+  return (
+    (code === 'Mrk' && chapter === 16 && verse >= 9) ||
+    (code === 'Jhn' && ((chapter === 7 && verse === 53) || (chapter === 8 && verse <= 11)))
+  );
 }
 
 /**
@@ -212,7 +326,11 @@ export function parseGreekWords(source: string, chapters: ChapterWords = new Map
 
     const translations = translationsOf(row.type);
 
-    if (translations.includes('kjv') && !translations.includes('bsb') && isBracketedPassageInBsb(row.code, row.chapter, row.verse)) {
+    if (
+      translations.includes('kjv') &&
+      !translations.includes('bsb') &&
+      isBracketedPassageInBsb(row.code, row.chapter, row.verse)
+    ) {
       translations.push('bsb');
     }
 
@@ -233,8 +351,12 @@ export function parseGreekWords(source: string, chapters: ChapterWords = new Map
     const greek = bracketed.replaceAll(/\[\[|\]\]/g, '');
     const [strongs = '', grammar = ''] = strongsAndGrammar.split('=');
     const kjvMatch = /\[(\d+)\.(\d+)\]/.exec(row.alternatives);
-    const kjv = kjvMatch ? {chapter: Number(kjvMatch[1]), verse: Number(kjvMatch[2])} : {chapter: row.chapter, verse: row.verse};
-    const bsb = BSB_FOLLOWS_KJV.has(`${row.code}.${row.chapter}.${row.verse}`) ? kjv : {chapter: row.chapter, verse: row.verse};
+    const kjv = kjvMatch
+      ? {chapter: Number(kjvMatch[1]), verse: Number(kjvMatch[2])}
+      : {chapter: row.chapter, verse: row.verse};
+    const bsb = BSB_FOLLOWS_KJV.has(`${row.code}.${row.chapter}.${row.verse}`)
+      ? kjv
+      : {chapter: row.chapter, verse: row.verse};
     const details = [greek, transliteration, cleanEnglish(english), strongs, grammar] as const;
     const only = translations.length === 1 ? translations[0] : null;
 
@@ -264,8 +386,22 @@ export function parseGreekWords(source: string, chapters: ChapterWords = new Map
     addWord(chapters, row.slug, bsb.chapter, word);
 
     if (kjvVariant) {
-      const {greek: kjvGreek, transliteration: kjvTransliteration, english: kjvEnglish, strongs: kjvStrongs, grammar: kjvGrammar} = kjvVariant;
-      const variantWord: WordFileWord = [bsb.verse, kjvGreek, kjvTransliteration, cleanEnglish(kjvEnglish), kjvStrongs, kjvGrammar, 'kjv'];
+      const {
+        greek: kjvGreek,
+        transliteration: kjvTransliteration,
+        english: kjvEnglish,
+        strongs: kjvStrongs,
+        grammar: kjvGrammar,
+      } = kjvVariant;
+      const variantWord: WordFileWord = [
+        bsb.verse,
+        kjvGreek,
+        kjvTransliteration,
+        cleanEnglish(kjvEnglish),
+        kjvStrongs,
+        kjvGrammar,
+        'kjv',
+      ];
 
       if (kjv.verse !== bsb.verse) {
         variantWord.push(kjv.verse);
@@ -279,7 +415,10 @@ export function parseGreekWords(source: string, chapters: ChapterWords = new Map
 }
 
 function stripHtml(text: string): string {
-  return text.replaceAll(/<[^>]*>/g, '').replaceAll(/\s+/g, ' ').trim();
+  return text
+    .replaceAll(/<[^>]*>/g, '')
+    .replaceAll(/\s+/g, ' ')
+    .trim();
 }
 
 /**
@@ -287,9 +426,14 @@ function stripHtml(text: string): string {
  * after the headword. Anything else keeps its first line.
  */
 export function mainSenses(definition: string, lemma: string): string {
-  const lines = definition.split(/<br\s*\/?>/i).map(stripHtml).filter(Boolean);
+  const lines = definition
+    .split(/<br\s*\/?>/i)
+    .map(stripHtml)
+    .filter(Boolean);
   const numbered = lines.flatMap((line) => /^\d+\)\s*(.+)$/.exec(line)?.[1] ?? []);
-  const bold = [...definition.matchAll(/<b>(.*?)<\/b>/gi)].map(([, text = '']) => stripHtml(text)).filter((text) => text && text !== lemma);
+  const bold = [...definition.matchAll(/<b>(.*?)<\/b>/gi)]
+    .map(([, text = '']) => stripHtml(text))
+    .filter((text) => text && text !== lemma);
   const senses = numbered.length > 0 ? numbered : bold.length > 0 ? bold : lines.slice(0, 1);
 
   return [...new Set(senses.map((sense) => sense.replace(/[,;:.\s]+$/, '')))].slice(0, MAX_SENSES).join('; ');
@@ -304,7 +448,12 @@ export function parseLexicon(source: string): Map<string, LexiconEntry> {
     const strongs = /^([HG]\d+[A-Za-z]?) =/.exec(dStrong)?.[1];
 
     if (strongs && lemma && !entries.has(strongs)) {
-      const entry = {lemma, transliteration: cleanTransliteration(transliteration), gloss, meaning: mainSenses(definition, lemma)};
+      const entry = {
+        lemma,
+        transliteration: cleanTransliteration(transliteration),
+        gloss,
+        meaning: mainSenses(definition, lemma),
+      };
 
       entries.set(strongs, entry);
 
@@ -333,20 +482,23 @@ export function parseGrammar(source: string): Map<string, string> {
     }
 
     // Notes in brackets, such as "(hence Action=Simple; Voice=Active)", hold semicolons of their own.
-    const values = expansion.replaceAll(/\(.*?\)/g, '').split(';').flatMap((part) => {
-      const [key = '', value = ''] = part.split('=').map((text) => text.trim());
+    const values = expansion
+      .replaceAll(/\(.*?\)/g, '')
+      .split(';')
+      .flatMap((part) => {
+        const [key = '', value = ''] = part.split('=').map((text) => text.trim());
 
-      if (!value) {
-        return [];
-      }
+        if (!value) {
+          return [];
+        }
 
-      // Stems, such as Qal and Piel, are names.
-      if (key === 'Stem') {
-        return [value];
-      }
+        // Stems, such as Qal and Piel, are names.
+        if (key === 'Stem') {
+          return [value];
+        }
 
-      return [key === 'Person' ? `${value.toLowerCase()} person` : value.toLowerCase()];
-    });
+        return [key === 'Person' ? `${value.toLowerCase()} person` : value.toLowerCase()];
+      });
     const [first = ''] = values;
 
     descriptions.set(code, [first.charAt(0).toUpperCase() + first.slice(1), ...values.slice(1)].join(', '));
@@ -369,7 +521,10 @@ function entryFor(strongs: string, lexicon: ReadonlyMap<string, LexiconEntry>): 
 }
 
 /** The lexicon entries the words use, in files by `lexiconGroup`. */
-export function lexiconFiles(chapters: ChapterWords, lexicon: ReadonlyMap<string, LexiconEntry>): Map<string, LexiconFile> {
+export function lexiconFiles(
+  chapters: ChapterWords,
+  lexicon: ReadonlyMap<string, LexiconEntry>,
+): Map<string, LexiconFile> {
   const files = new Map<string, LexiconFile>();
 
   for (const words of chapters.values()) {
@@ -426,14 +581,22 @@ function numberingProblems(chapters: ChapterWords, translation: WordTranslation)
 
   for (const [key, words] of chapters) {
     const path = new URL(`../apps/web/public/bible/${translation}/${key}.json`, import.meta.url);
-    const verses = new Set((JSON.parse(readFileSync(path, 'utf8')) as {verses: {verse: number}[]}).verses.map(({verse}) => verse));
-    const numbered = new Set(words
-      .filter(([, , , , , , only]) => !only || only === translation)
-      .map(([verse, , , , , , , kjvVerse]) => (translation === 'kjv' ? kjvVerse ?? verse : verse)));
+    const verses = new Set(
+      (JSON.parse(readFileSync(path, 'utf8')) as {verses: {verse: number}[]}).verses.map(({verse}) => verse),
+    );
+    const numbered = new Set(
+      words
+        .filter(([, , , , , , only]) => !only || only === translation)
+        .map(([verse, , , , , , , kjvVerse]) => (translation === 'kjv' ? (kjvVerse ?? verse) : verse)),
+    );
 
     problems.push(
-      ...[...verses].filter((verse) => !numbered.has(verse)).map((verse) => `${translation} ${key}:${verse} has no words`),
-      ...[...numbered].filter((verse) => !verses.has(verse)).map((verse) => `${translation} ${key}:${verse} has words but no text`),
+      ...[...verses]
+        .filter((verse) => !numbered.has(verse))
+        .map((verse) => `${translation} ${key}:${verse} has no words`),
+      ...[...numbered]
+        .filter((verse) => !verses.has(verse))
+        .map((verse) => `${translation} ${key}:${verse} has words but no text`),
     );
   }
 
@@ -460,13 +623,18 @@ async function main() {
   hebrewSources.forEach((source) => parseHebrewWords(source, hebrew));
   greekSources.forEach((source) => parseGreekWords(source, greek));
 
-  for (const [language, chapters] of [['hebrew', hebrew], ['greek', greek]] as const) {
+  for (const [language, chapters] of [
+    ['hebrew', hebrew],
+    ['greek', greek],
+  ] as const) {
     if (countWords(chapters) < MIN_EXPECTED_WORDS[language]) {
       throw new Error(`Only ${countWords(chapters)} ${language} words were read; refusing to replace the data.`);
     }
   }
 
-  const problems = (['bsb', 'kjv'] as const).flatMap((translation) => numberingProblems(new Map([...hebrew, ...greek]), translation));
+  const problems = (['bsb', 'kjv'] as const).flatMap((translation) =>
+    numberingProblems(new Map([...hebrew, ...greek]), translation),
+  );
 
   if (problems.length > 0) {
     throw new Error(`The words do not match the translations' verses; nothing was written:\n${problems.join('\n')}`);
