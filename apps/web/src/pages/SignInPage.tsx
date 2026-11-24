@@ -230,8 +230,7 @@ function VerifyEmailPanel() {
     <>
       <h1 className={classes.title}>Check your email</h1>
       <p className={classes.body}>
-        We sent a confirmation link to
-        {email}. Open it to finish setting up your account, then come back here.
+        We sent a confirmation link to {email}. Open it to finish setting up your account, then come back here.
       </p>
       <div className={classes.fields}>
         {error && <Alert color="red">{error}</Alert>}
