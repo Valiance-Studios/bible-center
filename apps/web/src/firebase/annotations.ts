@@ -64,17 +64,22 @@ export async function listChapterAnnotations(uid: string, chapterId: string): Pr
 }
 
 /** One page of a user's annotations. It asks for one more than a page, to know whether another follows. */
-export async function listAnnotationPage(uid: string, {type, order, after, pageSize}: AnnotationPageRequest): Promise<AnnotationPage> {
-  const documents = await fetchFromServer(query(
-    annotationsOf(uid),
-    ...(type ? [where('type', '==', type)] : []),
-    ...ORDERINGS[order],
-    ...(after ? [startAfter(after)] : []),
-    limit(pageSize + 1),
-  ));
+export async function listAnnotationPage(
+  uid: string,
+  {type, order, after, pageSize}: AnnotationPageRequest,
+): Promise<AnnotationPage> {
+  const documents = await fetchFromServer(
+    query(
+      annotationsOf(uid),
+      ...(type ? [where('type', '==', type)] : []),
+      ...ORDERINGS[order],
+      ...(after ? [startAfter(after)] : []),
+      limit(pageSize + 1),
+    ),
+  );
   const page = documents.slice(0, pageSize);
 
-  return {annotations: page.map(toAnnotation), next: documents.length > pageSize ? page.at(-1) ?? null : null};
+  return {annotations: page.map(toAnnotation), next: documents.length > pageSize ? (page.at(-1) ?? null) : null};
 }
 
 /** Rejects with `WriteLimitError` once the user has as many as `WRITE_LIMITS` allows. */
@@ -83,7 +88,11 @@ export async function addAnnotation(uid: string, annotation: NewAnnotation): Pro
     const record = await readUserRecord(transaction, uid);
 
     addToCount(transaction, uid, record, 'annotations');
-    transaction.set(doc(annotationsOf(uid)), {...annotation, createdAt: serverTimestamp(), updatedAt: serverTimestamp()});
+    transaction.set(doc(annotationsOf(uid)), {
+      ...annotation,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
   });
 }
 

@@ -71,12 +71,14 @@ export function parseTopicVotes(source: string): Map<string, TopicFile> {
     builds.set(slug, build);
   }
 
-  return new Map([...builds].map(([slug, {names, verses}]) => {
-    const [name = slug] = [...names].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0] ?? [];
-    const sorted = [...verses.values()].sort((a, b) => b[2] - a[2] || a[0].localeCompare(b[0]));
+  return new Map(
+    [...builds].map(([slug, {names, verses}]) => {
+      const [name = slug] = [...names].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0] ?? [];
+      const sorted = [...verses.values()].sort((a, b) => b[2] - a[2] || a[0].localeCompare(b[0]));
 
-    return [slug, {name, verses: sorted}];
-  }));
+      return [slug, {name, verses: sorted}];
+    }),
+  );
 }
 
 if (import.meta.main) {

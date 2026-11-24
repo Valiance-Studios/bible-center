@@ -78,9 +78,14 @@ function run(command: string, args: string[]): string {
 }
 
 function listWindowsProcesses(): ProcessInfo[] {
-  const script = 'ConvertTo-Json -Compress -InputObject @(Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,CommandLine)';
+  const script =
+    'ConvertTo-Json -Compress -InputObject @(Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,CommandLine)';
   const output = run('powershell', ['-NoProfile', '-Command', script]);
-  const rows = (output ? JSON.parse(output) : []) as {ProcessId: number; ParentProcessId: number; CommandLine: string | null}[];
+  const rows = (output ? JSON.parse(output) : []) as {
+    ProcessId: number;
+    ParentProcessId: number;
+    CommandLine: string | null;
+  }[];
 
   return rows.map((row) => ({pid: row.ProcessId, parentPid: row.ParentProcessId, command: row.CommandLine ?? ''}));
 }
@@ -100,10 +105,14 @@ function listUnixProcesses(): ProcessInfo[] {
 function findEmulatorProcesses(projectId: string): ProcessInfo[] {
   const processes = isWindows ? listWindowsProcesses() : listUnixProcesses();
 
-  return processes.filter(({pid, command}) =>
-    pid !== process.pid
-    && command.includes(projectId)
-    && (/with-emulators\.ts/.test(command) || /firebase.*emulators:start/.test(command) || /cloud-firestore-emulator/.test(command)));
+  return processes.filter(
+    ({pid, command}) =>
+      pid !== process.pid &&
+      command.includes(projectId) &&
+      (/with-emulators\.ts/.test(command) ||
+        /firebase.*emulators:start/.test(command) ||
+        /cloud-firestore-emulator/.test(command)),
+  );
 }
 
 /** The processes whose parent is not also being stopped, which on Windows take their trees with them. */
@@ -158,17 +167,18 @@ async function waitForExit(processes: ProcessInfo[]): Promise<ProcessInfo[]> {
 
 /** Whether anything accepts a connection on the port, on either loopback address. */
 async function isPortInUse(port: number): Promise<boolean> {
-  const accepts = (host: string): Promise<boolean> => new Promise((resolve) => {
-    const socket = connect({host, port, timeout: PROBE_TIMEOUT_MS});
-    const finish = (inUse: boolean): void => {
-      socket.destroy();
-      resolve(inUse);
-    };
+  const accepts = (host: string): Promise<boolean> =>
+    new Promise((resolve) => {
+      const socket = connect({host, port, timeout: PROBE_TIMEOUT_MS});
+      const finish = (inUse: boolean): void => {
+        socket.destroy();
+        resolve(inUse);
+      };
 
-    socket.once('connect', () => finish(true));
-    socket.once('timeout', () => finish(false));
-    socket.once('error', () => finish(false));
-  });
+      socket.once('connect', () => finish(true));
+      socket.once('timeout', () => finish(false));
+      socket.once('error', () => finish(false));
+    });
 
   const results = await Promise.all(LOOPBACK_HOSTS.map(accepts));
 
@@ -218,14 +228,18 @@ async function main(): Promise<number> {
 
   if (stillTaken.length > 0) {
     const finder = isWindows ? 'netstat -ano | findstr LISTENING' : 'lsof -nP -iTCP -sTCP:LISTEN';
-    console.error(`Port ${stillTaken.join(', ')} is still in use by something other than this project's emulators. Find it with \`${finder}\`, stop it, then run this again.`);
+    console.error(
+      `Port ${stillTaken.join(', ')} is still in use by something other than this project's emulators. Find it with \`${finder}\`, stop it, then run this again.`,
+    );
 
     return 1;
   }
 
-  console.log(emulators.length > 0
-    ? 'All emulator ports are free.'
-    : `No emulators were running; ports ${ports.join(', ')} are free.`);
+  console.log(
+    emulators.length > 0
+      ? 'All emulator ports are free.'
+      : `No emulators were running; ports ${ports.join(', ')} are free.`,
+  );
 
   return 0;
 }

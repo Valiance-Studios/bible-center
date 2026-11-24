@@ -55,7 +55,7 @@ for (const {scheme, background, text, onAccent} of [
 test.describe('on a phone', () => {
   test.use({viewport: {width: 390, height: 844}});
 
-  test('the thumb index moves into a menu that lists each section\'s books', async ({page}) => {
+  test("the thumb index moves into a menu that lists each section's books", async ({page}) => {
     await page.goto('/');
 
     await expect(page.getByRole('navigation', {name: 'Browse by section of the Bible'})).toBeHidden();
@@ -71,7 +71,9 @@ test.describe('on a phone', () => {
   test('the page does not scroll sideways', async ({page}) => {
     await page.goto('/');
 
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
 
     expect(overflow).toBeLessThanOrEqual(0);
   });

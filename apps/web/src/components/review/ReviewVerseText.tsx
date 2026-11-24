@@ -23,12 +23,16 @@ export function ReviewVerseText({reference, translation}: ReviewVerseTextProps) 
     return (
       <p className={classes.missing}>
         {'The text could not be loaded. '}
-        <Button variant="subtle" size="compact-sm" onClick={retry}>Try again</Button>
+        <Button variant="subtle" size="compact-sm" onClick={retry}>
+          Try again
+        </Button>
       </p>
     );
   }
 
-  return text
-    ? <p className={classes.text}>{text}</p>
-    : <p className={classes.missing}>{`The ${translation.name} has no verses at this reference.`}</p>;
+  return text ? (
+    <p className={classes.text}>{text}</p>
+  ) : (
+    <p className={classes.missing}>{`The ${translation.name} has no verses at this reference.`}</p>
+  );
 }

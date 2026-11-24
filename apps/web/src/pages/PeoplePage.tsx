@@ -15,7 +15,9 @@ const ROLE_OPTIONS = STAFF_ROLES.map((role) => ({value: role, label: ROLE_NAMES[
 
 /** You first, then everyone else alphabetically. */
 function sortStaff(staff: readonly StaffMember[], myEmail: string): StaffMember[] {
-  return [...staff].sort((a, b) => Number(b.email === myEmail) - Number(a.email === myEmail) || a.email.localeCompare(b.email));
+  return [...staff].sort(
+    (a, b) => Number(b.email === myEmail) - Number(a.email === myEmail) || a.email.localeCompare(b.email),
+  );
 }
 
 function StaffList({uid, myEmail}: {uid: string; myEmail: string}) {
@@ -35,7 +37,9 @@ function StaffList({uid, myEmail}: {uid: string; myEmail: string}) {
 
   return (
     <section aria-labelledby="staff-title">
-      <h2 id="staff-title" className={classes.sectionTitle}>Reviewers and admins</h2>
+      <h2 id="staff-title" className={classes.sectionTitle}>
+        Reviewers and admins
+      </h2>
       <GiveRoleForm isSaving={people.isSaving} onGive={people.giveRole} onGiven={setStatus} />
 
       {people.hasLoadError && (
@@ -47,56 +51,63 @@ function StaffList({uid, myEmail}: {uid: string; myEmail: string}) {
 
       {people.isLoading && <Loader aria-label="Loading reviewers and admins" />}
 
-      {people.staff && sortStaff(people.staff, myEmail).map((member) => {
-        const isMe = member.email === myEmail;
+      {people.staff &&
+        sortStaff(people.staff, myEmail).map((member) => {
+          const isMe = member.email === myEmail;
 
-        return (
-          <div key={member.email} className={classes.person}>
-            <div>
-              <div className={classes.email}>{member.email}</div>
-              {isMe && <div className={classes.you}>You</div>}
+          return (
+            <div key={member.email} className={classes.person}>
+              <div>
+                <div className={classes.email}>{member.email}</div>
+                {isMe && <div className={classes.you}>You</div>}
+              </div>
+              {isMe ? (
+                <span className={classes.fixedRole}>{ROLE_NAMES[member.role]}</span>
+              ) : (
+                <NativeSelect
+                  className={classes.roleSelect}
+                  size="md"
+                  aria-label={`Role for ${member.email}`}
+                  data={ROLE_OPTIONS}
+                  value={member.role}
+                  disabled={people.isSaving}
+                  onChange={(event) => {
+                    const role = parseStaffRole(event.currentTarget.value);
+
+                    void save(
+                      () => people.changeRole({email: member.email, role}),
+                      `${member.email} is now ${ROLE_NAMES[role].toLowerCase()}.`,
+                      `The role for ${member.email} could not be changed. Check your connection and try again.`,
+                    );
+                  }}
+                />
+              )}
+              {!isMe && (
+                <button
+                  type="button"
+                  className={classes.remove}
+                  aria-label={`Make ${member.email} a member`}
+                  disabled={people.isSaving}
+                  onClick={() =>
+                    void save(
+                      () => people.makeMember(member.email),
+                      `${member.email} is now a member.`,
+                      `${member.email} could not be made a member. Check your connection and try again.`,
+                    )
+                  }
+                >
+                  Make a member
+                </button>
+              )}
             </div>
-            {isMe
-              ? <span className={classes.fixedRole}>{ROLE_NAMES[member.role]}</span>
-              : (
-                  <NativeSelect
-                    className={classes.roleSelect}
-                    size="md"
-                    aria-label={`Role for ${member.email}`}
-                    data={ROLE_OPTIONS}
-                    value={member.role}
-                    disabled={people.isSaving}
-                    onChange={(event) => {
-                      const role = parseStaffRole(event.currentTarget.value);
+          );
+        })}
 
-                      void save(
-                        () => people.changeRole({email: member.email, role}),
-                        `${member.email} is now ${ROLE_NAMES[role].toLowerCase()}.`,
-                        `The role for ${member.email} could not be changed. Check your connection and try again.`,
-                      );
-                    }}
-                  />
-                )}
-            {!isMe && (
-              <button
-                type="button"
-                className={classes.remove}
-                aria-label={`Make ${member.email} a member`}
-                disabled={people.isSaving}
-                onClick={() => void save(
-                  () => people.makeMember(member.email),
-                  `${member.email} is now a member.`,
-                  `${member.email} could not be made a member. Check your connection and try again.`,
-                )}
-              >
-                Make a member
-              </button>
-            )}
-          </div>
-        );
-      })}
-
-      {status && <p className={classes.status} role="status">{status}</p>}
+      {status && (
+        <p className={classes.status} role="status">
+          {status}
+        </p>
+      )}
     </section>
   );
 }
@@ -119,26 +130,23 @@ export function PeoplePage() {
       <title>People | Bible Center</title>
       <h1 className={pageClasses.title}>People</h1>
       <p className={pageClasses.intro}>
-        Anyone with a verified email can sign in and is a member. Give someone a role to let them do more, or block an account that misuses Bible Center.
+        Anyone with a verified email can sign in and is a member. Give someone a role to let them do more, or block an
+        account that misuses Bible Center.
       </p>
       <ul className={classes.roles}>
         <li>
-          <strong>Members</strong>
-          {' '}
-          can highlight, take notes, memorize and vote.
+          <strong>Members</strong> can highlight, take notes, memorize and vote.
         </li>
         <li>
-          <strong>Reviewers</strong>
-          {' '}
-          can also handle reports and new topics.
+          <strong>Reviewers</strong> can also handle reports and new topics.
         </li>
         <li>
-          <strong>Admins</strong>
-          {' '}
-          can also set the verse of the day, give roles and block accounts.
+          <strong>Admins</strong> can also set the verse of the day, give roles and block accounts.
         </li>
       </ul>
-      <RoleGate canSee={isAdmin} audience="admins">{(uid) => <People uid={uid} />}</RoleGate>
+      <RoleGate canSee={isAdmin} audience="admins">
+        {(uid) => <People uid={uid} />}
+      </RoleGate>
     </main>
   );
 }

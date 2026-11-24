@@ -23,7 +23,8 @@ export function requireSignedIn(auth: CallableRequest['auth']): AccountHolder {
     throw new HttpsError('unauthenticated', 'Sign in first.');
   }
 
-  const email = typeof auth.token.email === 'string' && auth.token.email_verified === true ? auth.token.email.toLowerCase() : null;
+  const email =
+    typeof auth.token.email === 'string' && auth.token.email_verified === true ? auth.token.email.toLowerCase() : null;
 
   return {uid: auth.uid, verifiedEmail: email};
 }
@@ -44,10 +45,7 @@ export async function requireAdmin(auth: CallableRequest['auth']): Promise<Calle
     throw new HttpsError('permission-denied', 'Sign in with two-step sign-in first.');
   }
 
-  const [role, blocked] = await Promise.all([
-    db.doc(`roles/${email}`).get(),
-    db.doc(`blockedUsers/${auth.uid}`).get(),
-  ]);
+  const [role, blocked] = await Promise.all([db.doc(`roles/${email}`).get(), db.doc(`blockedUsers/${auth.uid}`).get()]);
 
   if (role.get('role') !== 'admin' || blocked.exists) {
     throw new HttpsError('permission-denied', 'Only admins can do this.');

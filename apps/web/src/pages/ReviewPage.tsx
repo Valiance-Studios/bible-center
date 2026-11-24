@@ -83,8 +83,8 @@ function Queue() {
           ))}
           {queue.reports.length > 0 && (
             <p className={classes.hint}>
-              Removing a verse takes it off that topic for everyone, including verses that came from OpenBible.
-              Keeping it closes its reports. Either way, every report on that verse and topic is closed.
+              Removing a verse takes it off that topic for everyone, including verses that came from OpenBible. Keeping
+              it closes its reports. Either way, every report on that verse and topic is closed.
             </p>
           )}
         </>
@@ -106,7 +106,8 @@ function Queue() {
           ))}
           {queue.topics.length > 0 && (
             <p className={classes.hint}>
-              Approving lists a topic on the Topics page and links it from search. Rejecting hides its page, and nobody can add verses to it.
+              Approving lists a topic on the Topics page and links it from search. Rejecting hides its page, and nobody
+              can add verses to it.
             </p>
           )}
         </>
@@ -121,8 +122,12 @@ export function ReviewPage() {
     <main className={classes.content}>
       <title>Review | Bible Center</title>
       <h1 className={classes.title}>Review</h1>
-      <p className={classes.intro}>Reports and topics people have started wait here until a reviewer decides on them.</p>
-      <RoleGate canSee={canReview} audience="reviewers">{() => <Queue />}</RoleGate>
+      <p className={classes.intro}>
+        Reports and topics people have started wait here until a reviewer decides on them.
+      </p>
+      <RoleGate canSee={canReview} audience="reviewers">
+        {() => <Queue />}
+      </RoleGate>
     </main>
   );
 }

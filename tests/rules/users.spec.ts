@@ -1,8 +1,19 @@
 import type {Firestore} from 'firebase/firestore';
 
-import {describe, it} from 'vitest';
+import {describe, it} from 'vite-plus/test';
 import {assertFails, assertSucceeds} from '@firebase/rules-unit-testing';
-import {collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where} from 'firebase/firestore';
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
 import {ALICE, BOB, createCounted, dbFor, deleteCounted, MALLORY, useRulesTestEnvironment} from './support';
 
 function annotation(overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -42,7 +53,9 @@ describe('annotations', () => {
     // My verses lists all of them at once.
     await assertSucceeds(getDocs(annotationsOf(db, ALICE)));
     // Once counted, every delete lowers the count, even of an annotation made before counts.
-    await assertSucceeds(deleteCounted(doc(annotationsOf(db, ALICE), 'existing'), 'annotationCount', 'annotationChange'));
+    await assertSucceeds(
+      deleteCounted(doc(annotationsOf(db, ALICE), 'existing'), 'annotationCount', 'annotationChange'),
+    );
   });
 
   it('accepts a single verse, a range, and each type', async () => {
@@ -53,7 +66,7 @@ describe('annotations', () => {
     await assertSucceeds(addAnnotation(db, ALICE, annotation({type: 'note', text: 'My note.'})));
   });
 
-  it('never lets one user reach another user\'s', async () => {
+  it("never lets one user reach another user's", async () => {
     const db = dbFor(BOB);
 
     await assertFails(getDocs(annotationsOf(db, ALICE)));
@@ -105,7 +118,7 @@ describe('annotations', () => {
     await assertSucceeds(addAnnotation(dbFor(ALICE), ALICE, annotation({type: 'note', text: 'x'.repeat(2000)})));
   });
 
-  it('only lets a note\'s words change', async () => {
+  it("only lets a note's words change", async () => {
     const note = doc(annotationsOf(dbFor(ALICE), ALICE), 'existing-note');
 
     await assertSucceeds(updateDoc(note, {text: 'New words.', updatedAt: serverTimestamp()}));
@@ -115,7 +128,7 @@ describe('annotations', () => {
 });
 
 describe('annotation limits', () => {
-  it('counts each one on the owner\'s record, in the same write', async () => {
+  it("counts each one on the owner's record, in the same write", async () => {
     const db = dbFor(ALICE);
 
     await assertFails(setDoc(doc(annotationsOf(db, ALICE)), annotation()));
@@ -133,7 +146,9 @@ describe('annotation limits', () => {
     await assertSucceeds(createCounted(added, annotation(), 'annotationCount'));
     // Lowering the count without deleting, or naming one that stays.
     await assertFails(setDoc(doc(db, 'users', ALICE), {annotationCount: 0}, {merge: true}));
-    await assertFails(setDoc(doc(db, 'users', ALICE), {annotationCount: 0, annotationChange: 'existing'}, {merge: true}));
+    await assertFails(
+      setDoc(doc(db, 'users', ALICE), {annotationCount: 0, annotationChange: 'existing'}, {merge: true}),
+    );
     // Deleting without lowering the count.
     await assertFails(deleteDoc(added));
     await assertSucceeds(deleteCounted(added, 'annotationCount', 'annotationChange'));
@@ -159,7 +174,7 @@ describe('user settings', () => {
     await assertFails(setDoc(settings, {translationId: 'kjv', isAdmin: true}));
   });
 
-  it('records when the account was first seen, once, as the server\'s time', async () => {
+  it("records when the account was first seen, once, as the server's time", async () => {
     const record = doc(dbFor(ALICE), 'users', ALICE);
 
     await assertFails(setDoc(record, {createdAt: new Date(0)}));

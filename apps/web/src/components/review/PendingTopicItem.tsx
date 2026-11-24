@@ -27,23 +27,44 @@ interface PendingTopicItemProps {
 }
 
 /** A topic someone started, with the verses on it so far, to approve or reject. */
-export function PendingTopicItem({item: {topic, decision}, translation, isSaving, hasError, accounts, onDecide}: PendingTopicItemProps) {
-  const verses = useQuery({queryKey: topicQueryKeys.verses(topic.slug), queryFn: () => listCommunityVerses(topic.slug), staleTime: 0, retry: 4});
+export function PendingTopicItem({
+  item: {topic, decision},
+  translation,
+  isSaving,
+  hasError,
+  accounts,
+  onDecide,
+}: PendingTopicItemProps) {
+  const verses = useQuery({
+    queryKey: topicQueryKeys.verses(topic.slug),
+    queryFn: () => listCommunityVerses(topic.slug),
+    staleTime: 0,
+    retry: 4,
+  });
   const shown = (verses.data ?? []).flatMap((verse) => {
     const reference = referenceOf(verse);
 
     return reference ? [{key: topicVerseKey(verse.startVerse, verse.endVerse), reference}] : [];
   });
   const count = verses.data ? `${shown.length} ${shown.length === 1 ? 'verse' : 'verses'}` : null;
-  const outcome = decision === 'approved'
-    ? 'Approved. It is now listed on the Topics page.'
-    : decision === 'rejected' ? 'Rejected. Its page is hidden.' : null;
+  const outcome =
+    decision === 'approved'
+      ? 'Approved. It is now listed on the Topics page.'
+      : decision === 'rejected'
+        ? 'Rejected. Its page is hidden.'
+        : null;
 
   return (
     <article className={classes.item} aria-label={topic.name}>
-      <Link className={classes.topicName} to={`/topics/${topic.slug}`}>{topic.name}</Link>
-      <p className={classes.meta}>{[`Started ${formatReviewDate(topic.createdAt)}`, count].filter(Boolean).join(' · ')}</p>
-      {accounts && <AccountLine uid={topic.createdBy} lead="Started by" did={`started "${topic.name}"`} accounts={accounts} />}
+      <Link className={classes.topicName} to={`/topics/${topic.slug}`}>
+        {topic.name}
+      </Link>
+      <p className={classes.meta}>
+        {[`Started ${formatReviewDate(topic.createdAt)}`, count].filter(Boolean).join(' · ')}
+      </p>
+      {accounts && (
+        <AccountLine uid={topic.createdBy} lead="Started by" did={`started "${topic.name}"`} accounts={accounts} />
+      )}
 
       {verses.isPending && <Loader size="sm" aria-label={`Loading the verses on ${topic.name}`} />}
       {verses.isError && <p className={classes.missing}>Its verses could not be loaded.</p>}

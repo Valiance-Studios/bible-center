@@ -30,9 +30,15 @@ export function RemoveDialog({label, title, isRemoving, onConfirm, onClose}: Rem
   return (
     <Modal opened onClose={onClose} title={`Remove ${label}?`}>
       <Text>{`This removes the ${label} on ${title}. It cannot be undone.`}</Text>
-      {hasError && <Alert color="red" mt="md">It could not be removed. Check your connection and try again.</Alert>}
+      {hasError && (
+        <Alert color="red" mt="md">
+          It could not be removed. Check your connection and try again.
+        </Alert>
+      )}
       <Group justify="flex-end" mt="md">
-        <Button variant="default" onClick={onClose} disabled={isRemoving} data-autofocus>Cancel</Button>
+        <Button variant="default" onClick={onClose} disabled={isRemoving} data-autofocus>
+          Cancel
+        </Button>
         <Button color="red" onClick={() => void confirm()} loading={isRemoving}>{`Remove ${label}`}</Button>
       </Group>
     </Modal>

@@ -43,12 +43,16 @@ function Passage({reference, translation}: {reference: VerseReference; translati
         <p className={classes.notFound}>{`${translation.name} has no verses at this reference.`}</p>
       )}
 
-      {sections.filter(({verses}) => verses.length > 0).map(({chapter, verses}) => (
-        <section key={chapter}>
-          {isSpanningChapters && <h3 className={classes.chapterHeading}>{chapterTitle({book, chapter})}</h3>}
-          {verses.map(({verse, text}) => <VerseText key={verse} verse={verse} text={text} />)}
-        </section>
-      ))}
+      {sections
+        .filter(({verses}) => verses.length > 0)
+        .map(({chapter, verses}) => (
+          <section key={chapter}>
+            {isSpanningChapters && <h3 className={classes.chapterHeading}>{chapterTitle({book, chapter})}</h3>}
+            {verses.map(({verse, text}) => (
+              <VerseText key={verse} verse={verse} text={text} />
+            ))}
+          </section>
+        ))}
 
       <Link className={classes.context} to={chapterPath(first)}>{`Read ${chapterTitle(first)}`}</Link>
     </article>
@@ -87,7 +91,12 @@ function NoMatches({query, translation}: {query: string; translation: Translatio
         <li>Try a different translation, since the wording varies.</li>
       </ul>
       {others.map(({id, name}) => (
-        <Button key={id} variant="outline" radius="xl" onClick={() => setTranslationId(id)}>{`Search the ${name}`}</Button>
+        <Button
+          key={id}
+          variant="outline"
+          radius="xl"
+          onClick={() => setTranslationId(id)}
+        >{`Search the ${name}`}</Button>
       ))}
     </>
   );
@@ -132,9 +141,15 @@ function PhraseResults({query, translation}: {query: string; translation: Transl
               {formatReference({book, startChapter: chapter, startVerse: verse, endChapter: chapter, endVerse: verse})}
             </Link>
             <p className={classes.resultText}>
-              {highlightWords(text, matchedWords).map((part, partIndex) => part.isMatch
-                ? <mark key={partIndex} className={classes.hit}>{part.text}</mark>
-                : part.text)}
+              {highlightWords(text, matchedWords).map((part, partIndex) =>
+                part.isMatch ? (
+                  <mark key={partIndex} className={classes.hit}>
+                    {part.text}
+                  </mark>
+                ) : (
+                  part.text
+                ),
+              )}
             </p>
           </article>
         );
@@ -176,7 +191,11 @@ export function SearchPage() {
       {/* The key resets the box when the search changes from outside it, as with the back button. */}
       <SearchBox key={query} initialQuery={query} placeholder="John 1:1-5, “mercies never fail”, or marriage" />
 
-      {!query && <p className={classes.prompt}>Search by reference, such as John 1:1-5, or by words you remember from a verse.</p>}
+      {!query && (
+        <p className={classes.prompt}>
+          Search by reference, such as John 1:1-5, or by words you remember from a verse.
+        </p>
+      )}
       {references && <ReferenceResults references={references} translation={translation} />}
       {query && !references && <TopicLink query={query} />}
       {query && !references && <PhraseResults query={query} translation={translation} />}

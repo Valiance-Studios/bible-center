@@ -58,7 +58,10 @@ export function DeleteAccountDialog({opened, onClose}: DeleteAccountDialogProps)
         <li>your memory list and saved translation</li>
         <li>your upvotes and your reports</li>
       </ul>
-      <Text>Verses you added to topics, and topics you started, stay for others, with nothing linking them to you. This cannot be undone.</Text>
+      <Text>
+        Verses you added to topics, and topics you started, stay for others, with nothing linking them to you. This
+        cannot be undone.
+      </Text>
       <TextInput
         mt="md"
         size="md"
@@ -68,10 +71,23 @@ export function DeleteAccountDialog({opened, onClose}: DeleteAccountDialogProps)
         onChange={(event) => setTyped(event.currentTarget.value)}
         data-autofocus
       />
-      {hasError && <Alert color="red" mt="md" role="alert">Your account could not be deleted. Check your connection and try again.</Alert>}
+      {hasError && (
+        <Alert color="red" mt="md" role="alert">
+          Your account could not be deleted. Check your connection and try again.
+        </Alert>
+      )}
       <Group justify="flex-end" mt="md">
-        <Button variant="default" onClick={close} disabled={isDeleting}>Cancel</Button>
-        <Button color="red" disabled={typed.trim().toLowerCase() !== CONFIRMATION} loading={isDeleting} onClick={() => void confirm()}>Delete account</Button>
+        <Button variant="default" onClick={close} disabled={isDeleting}>
+          Cancel
+        </Button>
+        <Button
+          color="red"
+          disabled={typed.trim().toLowerCase() !== CONFIRMATION}
+          loading={isDeleting}
+          onClick={() => void confirm()}
+        >
+          Delete account
+        </Button>
       </Group>
     </Modal>
   );

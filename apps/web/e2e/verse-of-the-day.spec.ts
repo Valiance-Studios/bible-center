@@ -18,10 +18,19 @@ function automaticVerse(date: string) {
   }
 
   const {startVerse, endVerse} = reference;
-  const chapter = JSON.parse(readFileSync(new URL(`bible/bsb/${reference.book.slug}/${reference.startChapter}.json`, publicDir), 'utf8')) as ChapterText;
-  const text = chapter.verses.filter(({verse}) => verse >= startVerse && verse <= endVerse).map(({text}) => text).join(' ');
+  const chapter = JSON.parse(
+    readFileSync(new URL(`bible/bsb/${reference.book.slug}/${reference.startChapter}.json`, publicDir), 'utf8'),
+  ) as ChapterText;
+  const text = chapter.verses
+    .filter(({verse}) => verse >= startVerse && verse <= endVerse)
+    .map(({text}) => text)
+    .join(' ');
 
-  return {text, label: `${formatReference(reference)}, BSB`, chapter: `${reference.book.name} ${reference.startChapter}`};
+  return {
+    text,
+    label: `${formatReference(reference)}, BSB`,
+    chapter: `${reference.book.name} ${reference.startChapter}`,
+  };
 }
 
 /** The home page as a signed-out visitor sees it at midday on the date, in their own time zone. */
@@ -36,7 +45,7 @@ async function visitHomeOn(browser: Browser, date: string): Promise<Page> {
 
 // Each test uses its own dates, so tests running at the same time never see each other's choices.
 
-test('the home page shows the automatic verse for the visitor\'s date, linked to its chapter', async ({browser}) => {
+test("the home page shows the automatic verse for the visitor's date, linked to its chapter", async ({browser}) => {
   const expected = automaticVerse('2027-03-01');
   const page = await visitHomeOn(browser, '2027-03-01');
 
@@ -47,10 +56,12 @@ test('the home page shows the automatic verse for the visitor\'s date, linked to
   await expect(page.getByRole('heading', {name: expected.chapter})).toBeVisible();
 });
 
-test('the verse follows the visitor\'s translation', async ({browser}) => {
+test("the verse follows the visitor's translation", async ({browser}) => {
   const page = await visitHomeOn(browser, '2027-03-03');
 
-  await page.evaluate(() => localStorage.setItem('bible-center-translation', JSON.stringify({state: {translationId: 'kjv'}, version: 0})));
+  await page.evaluate(() =>
+    localStorage.setItem('bible-center-translation', JSON.stringify({state: {translationId: 'kjv'}, version: 0})),
+  );
   await page.reload();
 
   await expect(page.getByRole('link', {name: /, KJV$/})).toBeVisible();

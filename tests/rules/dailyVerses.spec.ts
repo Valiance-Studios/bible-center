@@ -1,4 +1,4 @@
-import {describe, it} from 'vitest';
+import {describe, it} from 'vite-plus/test';
 import {assertFails, assertSucceeds} from '@firebase/rules-unit-testing';
 import {collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc} from 'firebase/firestore';
 import {ADA, ALICE, dbFor, RITA, useRulesTestEnvironment} from './support';
@@ -14,7 +14,12 @@ function dateRef(uid: string | null, date = DATE) {
 }
 
 useRulesTestEnvironment(async (db) => {
-  await setDoc(doc(db, 'dailyVerses', '2026-11-09'), {startVerse: '19046010', endVerse: '19046010', setBy: ADA, setAt: new Date()});
+  await setDoc(doc(db, 'dailyVerses', '2026-11-09'), {
+    startVerse: '19046010',
+    endVerse: '19046010',
+    setBy: ADA,
+    setAt: new Date(),
+  });
 });
 
 describe('the verse of the day', () => {
@@ -25,7 +30,7 @@ describe('the verse of the day', () => {
     await assertFails(getDocs(collection(dbFor(ADA), 'dailyVerses')));
   });
 
-  it('lets an admin choose, change and clear a date\'s verse', async () => {
+  it("lets an admin choose, change and clear a date's verse", async () => {
     await assertSucceeds(setDoc(dateRef(ADA), chosen(ADA)));
     await assertSucceeds(setDoc(dateRef(ADA), chosen(ADA, '19046010', '19046010')));
     await assertSucceeds(deleteDoc(dateRef(ADA)));
@@ -50,7 +55,7 @@ describe('the verse of the day', () => {
     await assertFails(setDoc(dateRef(ADA), {startVerse: '43003016', endVerse: '43003016'}));
   });
 
-  it('requires the admin\'s email to be verified', async () => {
+  it("requires the admin's email to be verified", async () => {
     await assertFails(setDoc(doc(dbFor(ADA, false), 'dailyVerses', DATE), chosen(ADA)));
   });
 });

@@ -9,7 +9,7 @@ import {useTranslationStore} from './translation';
  * and saves each change they make. A failure only costs that convenience, as the choice is also kept in this browser.
  */
 export function useTranslationSync(): void {
-  const uid = useAuthStore((state) => state.status === 'allowed' ? state.user?.uid : undefined);
+  const uid = useAuthStore((state) => (state.status === 'allowed' ? state.user?.uid : undefined));
 
   useEffect(() => {
     if (!uid) {

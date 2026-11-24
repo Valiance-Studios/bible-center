@@ -8,10 +8,12 @@ interface TranslationState {
 }
 
 /** The translation being read, remembered in this browser. */
-export const useTranslationStore = create<TranslationState>()(persist(
-  (set) => ({
-    translationId: DEFAULT_TRANSLATION.id,
-    setTranslationId: (translationId) => set({translationId}),
-  }),
-  {name: 'bible-center-translation'},
-));
+export const useTranslationStore = create<TranslationState>()(
+  persist(
+    (set) => ({
+      translationId: DEFAULT_TRANSLATION.id,
+      setTranslationId: (translationId) => set({translationId}),
+    }),
+    {name: 'bible-center-translation'},
+  ),
+);

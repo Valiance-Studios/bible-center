@@ -26,7 +26,13 @@ export function memoryKeyOf({startVerse, endVerse}: MemorySpan): string {
 }
 
 function toEntry(document: QueryDocumentSnapshot): MemoryListEntry {
-  const data = document.data() as {startVerse: string; endVerse: string; status: MemoryStatus; createdAt: Timestamp; practicedAt: Timestamp};
+  const data = document.data() as {
+    startVerse: string;
+    endVerse: string;
+    status: MemoryStatus;
+    createdAt: Timestamp;
+    practicedAt: Timestamp;
+  };
 
   return {
     key: document.id,
@@ -59,7 +65,13 @@ export async function addMemoryVerse(uid: string, span: MemorySpan): Promise<voi
     }
 
     addToCount(transaction, uid, record, 'memoryVerses');
-    transaction.set(verseRef, {startVerse, endVerse, status: 'learning', createdAt: serverTimestamp(), practicedAt: serverTimestamp()});
+    transaction.set(verseRef, {
+      startVerse,
+      endVerse,
+      status: 'learning',
+      createdAt: serverTimestamp(),
+      practicedAt: serverTimestamp(),
+    });
   });
 }
 

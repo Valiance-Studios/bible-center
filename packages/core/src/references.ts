@@ -88,10 +88,12 @@ function bookKey(text: string): string {
   return text.toLowerCase().replaceAll(/[\s.]/g, '');
 }
 
-const BOOKS_BY_KEY = new Map<string, BibleBook>(BIBLE_BOOKS.flatMap((book) => [
-  [bookKey(book.name), book] as const,
-  ...(ABBREVIATIONS[book.name] ?? []).map((abbreviation) => [abbreviation, book] as const),
-]));
+const BOOKS_BY_KEY = new Map<string, BibleBook>(
+  BIBLE_BOOKS.flatMap((book) => [
+    [bookKey(book.name), book] as const,
+    ...(ABBREVIATIONS[book.name] ?? []).map((abbreviation) => [abbreviation, book] as const),
+  ]),
+);
 
 /** An optional book, then the numbers: `1 Cor 13:4-7`, `Psalm 23`, or just `2:3` to continue the last book. */
 const SEGMENT = /^(?:((?:[1-3]\s*)?[a-z.]+(?:\s+[a-z.]+)*)\s*)?(\d[\d\s:,\-–—]*)$/i;
@@ -117,12 +119,24 @@ function parseTerm(book: BibleBook, term: string, contextChapter: number | null)
 
   if (firstVerse !== null) {
     // `1:1`, `1:1-5`, `1:1-2:3`
-    reference = {book, startChapter: first, startVerse: firstVerse, endChapter: endChapterPart ?? first, endVerse: endPart ?? firstVerse};
+    reference = {
+      book,
+      startChapter: first,
+      startVerse: firstVerse,
+      endChapter: endChapterPart ?? first,
+      endVerse: endPart ?? firstVerse,
+    };
   } else if (endChapterPart !== null) {
     return null; // `1-2:3` names a chapter and then a verse, which reads as neither.
   } else if (contextChapter !== null) {
     // After a comma, as the `3` and `5-7` in `John 1:1, 3, 5-7`.
-    reference = {book, startChapter: contextChapter, startVerse: first, endChapter: contextChapter, endVerse: endPart ?? first};
+    reference = {
+      book,
+      startChapter: contextChapter,
+      startVerse: first,
+      endChapter: contextChapter,
+      endVerse: endPart ?? first,
+    };
   } else if (book.chapters === 1) {
     // Books of one chapter are cited by verse, as in `Jude 5`.
     reference = {book, startChapter: 1, startVerse: first, endChapter: 1, endVerse: endPart ?? first};
@@ -145,7 +159,10 @@ function parseTerm(book: BibleBook, term: string, contextChapter: number | null)
  * the text once it loads, since they vary by chapter and translation.
  */
 export function parseReferences(query: string): VerseReference[] | null {
-  const segments = query.split(';').map((segment) => segment.trim()).filter(Boolean);
+  const segments = query
+    .split(';')
+    .map((segment) => segment.trim())
+    .filter(Boolean);
   const references: VerseReference[] = [];
   let book: BibleBook | null = null;
 
@@ -198,7 +215,9 @@ export function formatReference({book, startChapter, startVerse, endChapter, end
     return `${name} ${startChapter}:${startVerse}–${endChapter}:${endVerse}`;
   }
 
-  return startVerse === endVerse ? `${name} ${startChapter}:${startVerse}` : `${name} ${startChapter}:${startVerse}–${endVerse}`;
+  return startVerse === endVerse
+    ? `${name} ${startChapter}:${startVerse}`
+    : `${name} ${startChapter}:${startVerse}–${endVerse}`;
 }
 
 /** The reference from one verse id to another, as an annotation or topic stores it, or null if either is malformed. */

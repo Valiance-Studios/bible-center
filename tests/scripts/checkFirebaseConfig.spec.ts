@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {findConfigProblems} from '../../scripts/check-firebase-config';
 
 const PROJECT = 'project';
@@ -22,7 +22,7 @@ describe('findConfigProblems', () => {
     expect(problem).toContain('VITE_APPCHECK_SITE_KEY');
   });
 
-  it('refuses another project\'s config', () => {
+  it("refuses another project's config", () => {
     const [problem] = findConfigProblems(VALID_ENV, 'production', 'other-project');
 
     expect(problem).toContain('not "other-project"');

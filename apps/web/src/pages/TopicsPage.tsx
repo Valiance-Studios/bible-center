@@ -6,7 +6,7 @@ import {Alert, Button, Loader, TextInput} from '@mantine/core';
 import {COMMON_TOPICS, topicNamesQuery, topicPath} from '@/topics/topicData';
 import classes from './TopicsPage.module.scss';
 
-const LETTERS = [...'abcdefghijklmnopqrstuvwxyz'];
+const LETTERS = 'abcdefghijklmnopqrstuvwxyz'.split('');
 /** Topics that start with a digit, such as "10 commandments", are listed under this. */
 const OTHER = '#';
 const MAX_MATCHES = 8;
@@ -35,7 +35,11 @@ function FindTopic({names}: {names: readonly string[]}) {
       />
       {matches.length > 0 && (
         <ul className={classes.matches} aria-label="Matching topics">
-          {matches.map((name) => <li key={name}><Link to={topicPath(name)}>{name}</Link></li>)}
+          {matches.map((name) => (
+            <li key={name}>
+              <Link to={topicPath(name)}>{name}</Link>
+            </li>
+          ))}
         </ul>
       )}
       {normalized && matches.length === 0 && (
@@ -61,7 +65,10 @@ export function TopicsPage() {
     <main className={classes.content}>
       <title>Topics | Bible Center</title>
       <h1 className={classes.title}>Topics</h1>
-      <p className={classes.intro}>What does the Bible say about…? Each topic ranks the verses people on Bible Center and OpenBible.info found most helpful.</p>
+      <p className={classes.intro}>
+        What does the Bible say about…? Each topic ranks the verses people on Bible Center and OpenBible.info found most
+        helpful.
+      </p>
 
       {isPending && <Loader aria-label="Loading topics" />}
 
@@ -76,7 +83,11 @@ export function TopicsPage() {
 
       <h2 className={classes.heading}>Common topics</h2>
       <div className={classes.common}>
-        {COMMON_TOPICS.map((name) => <Link key={name} to={topicPath(name)}>{name}</Link>)}
+        {COMMON_TOPICS.map((name) => (
+          <Link key={name} to={topicPath(name)}>
+            {name}
+          </Link>
+        ))}
       </div>
 
       {names && (
@@ -95,17 +106,23 @@ export function TopicsPage() {
               </Link>
             ))}
           </nav>
-          <p className={classes.count}>{`${letterTopics.length.toLocaleString('en-US')} topics starting with ${letterLabel}`}</p>
+          <p
+            className={classes.count}
+          >{`${letterTopics.length.toLocaleString('en-US')} topics starting with ${letterLabel}`}</p>
           <ul className={classes.all}>
-            {letterTopics.map((name) => <li key={name}><Link to={topicPath(name)}>{name}</Link></li>)}
+            {letterTopics.map((name) => (
+              <li key={name}>
+                <Link to={topicPath(name)}>{name}</Link>
+              </li>
+            ))}
           </ul>
         </>
       )}
 
       <p className={classes.credit}>
         {'Topics from '}
-        <a href="https://www.openbible.info/topics/">OpenBible.info</a>
-        , licensed CC BY, and from people on Bible Center.
+        <a href="https://www.openbible.info/topics/">OpenBible.info</a>, licensed CC BY, and from people on Bible
+        Center.
       </p>
     </main>
   );

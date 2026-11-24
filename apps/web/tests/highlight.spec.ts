@@ -1,8 +1,10 @@
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {highlightWords} from '@/bible/highlight';
 
 function matched(text: string, words: string[]): string[] {
-  return highlightWords(text, words).filter((part) => part.isMatch).map((part) => part.text);
+  return highlightWords(text, words)
+    .filter((part) => part.isMatch)
+    .map((part) => part.text);
 }
 
 describe('highlightWords', () => {
@@ -13,7 +15,7 @@ describe('highlightWords', () => {
     expect(matched('The old stone mill.', ['stone'])).toEqual(['stone']);
   });
 
-  it('ignores case and keeps the text\'s own casing', () => {
+  it("ignores case and keeps the text's own casing", () => {
     expect(matched('Stone by stone.', ['stone'])).toEqual(['Stone', 'stone']);
   });
 

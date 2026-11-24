@@ -1,4 +1,4 @@
-import {defineConfig} from 'vitest/config';
+import {defineConfig} from 'vite-plus';
 
 // Security rules and Cloud Functions tests run in Node against the Auth and Firestore emulators
 // (see `npm run test:emulator`).

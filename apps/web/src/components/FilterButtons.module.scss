@@ -21,7 +21,9 @@ $phone-width: 900px;
   border-radius: 22px;
   background: none;
   color: var(--bc-ink);
-  font: 500 15px 'Schibsted Grotesk', sans-serif;
+  font:
+    500 15px 'Schibsted Grotesk',
+    sans-serif;
   cursor: pointer;
 
   @media (max-width: $phone-width) {

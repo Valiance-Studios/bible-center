@@ -1,10 +1,15 @@
-import {describe, it} from 'vitest';
+import {describe, it} from 'vite-plus/test';
 import {assertFails, assertSucceeds} from '@firebase/rules-unit-testing';
 import {collection, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc} from 'firebase/firestore';
 import {ADA, ALICE, dbFor, emailOf, MALLORY, RITA, useRulesTestEnvironment} from './support';
 
 useRulesTestEnvironment(async (db) => {
-  await setDoc(doc(db, 'topics', 'screen-time'), {name: 'screen time', status: 'pending', createdBy: ALICE, createdAt: new Date()});
+  await setDoc(doc(db, 'topics', 'screen-time'), {
+    name: 'screen time',
+    status: 'pending',
+    createdBy: ALICE,
+    createdAt: new Date(),
+  });
 });
 
 describe('signing up', () => {
@@ -12,7 +17,7 @@ describe('signing up', () => {
     await assertSucceeds(setDoc(doc(dbFor(MALLORY), 'users', MALLORY), {translationId: 'kjv'}, {merge: true}));
   });
 
-  it('turns away an unverified email, as a password sign-up with someone else\'s address would be, and the signed out', async () => {
+  it("turns away an unverified email, as a password sign-up with someone else's address would be, and the signed out", async () => {
     await assertFails(setDoc(doc(dbFor(MALLORY, false), 'users', MALLORY), {translationId: 'kjv'}, {merge: true}));
     await assertFails(getDoc(doc(dbFor(null), 'users', MALLORY)));
   });

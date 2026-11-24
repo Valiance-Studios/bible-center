@@ -1,6 +1,6 @@
 import type {MemoryVerse} from '../src/memorize';
 
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {fadeWords, groupMemoryVerses, isDueForReview} from '../src/memorize';
 
 const NOW = new Date('2026-11-10T12:00:00Z');
@@ -9,8 +9,19 @@ function daysAgo(days: number): Date {
   return new Date(NOW.getTime() - days * 86_400_000);
 }
 
-function verse(startVerse: string, status: MemoryVerse['status'], addedDaysAgo: number, practicedDaysAgo: number): MemoryVerse {
-  return {startVerse, endVerse: startVerse, status, createdAt: daysAgo(addedDaysAgo), practicedAt: daysAgo(practicedDaysAgo)};
+function verse(
+  startVerse: string,
+  status: MemoryVerse['status'],
+  addedDaysAgo: number,
+  practicedDaysAgo: number,
+): MemoryVerse {
+  return {
+    startVerse,
+    endVerse: startVerse,
+    status,
+    createdAt: daysAgo(addedDaysAgo),
+    practicedAt: daysAgo(practicedDaysAgo),
+  };
 }
 
 describe('isDueForReview', () => {
@@ -31,7 +42,9 @@ describe('groupMemoryVerses', () => {
       verse('50004006', 'learning', 2, 2),
     ];
 
-    expect(groupMemoryVerses(list, NOW).map(({group, verses}) => [group, verses.map(({startVerse}) => startVerse)])).toEqual([
+    expect(
+      groupMemoryVerses(list, NOW).map(({group, verses}) => [group, verses.map(({startVerse}) => startVerse)]),
+    ).toEqual([
       ['due', ['20003005', '45008028']],
       ['learning', ['50004006', '19023001']],
       ['memorized', ['43003016']],
@@ -53,12 +66,34 @@ describe('fadeWords', () => {
   });
 
   it('hides one word in three, then two in three', () => {
-    expect(fadeWords(text, 1).map(({isHidden}) => isHidden)).toEqual([false, true, false, false, true, false, false, true]);
-    expect(fadeWords(text, 2).map(({isHidden}) => isHidden)).toEqual([false, true, true, false, true, true, false, true]);
+    expect(fadeWords(text, 1).map(({isHidden}) => isHidden)).toEqual([
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+    ]);
+    expect(fadeWords(text, 2).map(({isHidden}) => isHidden)).toEqual([
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      false,
+      true,
+    ]);
   });
 
   it('leaves first letters, then nothing', () => {
-    expect(fadeWords(text, 3).map(({hint}) => hint).join(' ')).toBe('B s a k t I a G');
+    expect(
+      fadeWords(text, 3)
+        .map(({hint}) => hint)
+        .join(' '),
+    ).toBe('B s a k t I a G');
     expect(fadeWords(text, 4).every(({isHidden, hint}) => isHidden && hint === '')).toBe(true);
   });
 

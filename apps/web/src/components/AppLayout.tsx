@@ -30,15 +30,34 @@ export function AppLayout() {
 
       <header className={classes.bar}>
         <button type="button" className={classes.menuButton} aria-label="Open menu" onClick={() => setMenuOpened(true)}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <path d="M4 7h16M4 12h16M4 17h16" />
           </svg>
         </button>
-        <Link className={classes.mark} to="/">Bible Center</Link>
-        <Link className={classes.navLink} to="/search">Search</Link>
-        <Link className={classes.navLink} to="/read">Read</Link>
-        <Link className={classes.navLink} to="/topics">Topics</Link>
-        <Link className={classes.navLink} to="/memorize">Memorize</Link>
+        <Link className={classes.mark} to="/">
+          Bible Center
+        </Link>
+        <Link className={classes.navLink} to="/search">
+          Search
+        </Link>
+        <Link className={classes.navLink} to="/read">
+          Read
+        </Link>
+        <Link className={classes.navLink} to="/topics">
+          Topics
+        </Link>
+        <Link className={classes.navLink} to="/memorize">
+          Memorize
+        </Link>
         <ThemeToggle />
         <AccountMenu onDeleteAccount={() => setDeleteOpened(true)} />
       </header>
@@ -56,13 +75,22 @@ export function AppLayout() {
         ))}
       </nav>
 
-      <PhoneMenu opened={menuOpened} onClose={() => setMenuOpened(false)} onAbout={() => setAboutOpened(true)} onDeleteAccount={() => setDeleteOpened(true)} />
+      <PhoneMenu
+        opened={menuOpened}
+        onClose={() => setMenuOpened(false)}
+        onAbout={() => setAboutOpened(true)}
+        onDeleteAccount={() => setDeleteOpened(true)}
+      />
 
       <Outlet />
 
       <footer className={classes.footer}>
-        <button type="button" className={classes.footerLink} onClick={() => setAboutOpened(true)}>About Bible Center</button>
-        <Link className={classes.footerLink} to="/privacy">Privacy</Link>
+        <button type="button" className={classes.footerLink} onClick={() => setAboutOpened(true)}>
+          About Bible Center
+        </button>
+        <Link className={classes.footerLink} to="/privacy">
+          Privacy
+        </Link>
       </footer>
 
       <AboutDialog opened={aboutOpened} onClose={() => setAboutOpened(false)} />

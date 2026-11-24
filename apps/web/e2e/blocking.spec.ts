@@ -35,13 +35,19 @@ test('an admin blocks an account by email, and unblocks it', async ({page}) => {
 
   const section = page.getByRole('region', {name: 'Blocked accounts'});
 
-  await section.getByRole('form', {name: 'Block an account'}).getByRole('textbox', {name: 'Email'}).fill('nobody-here@example.com');
+  await section
+    .getByRole('form', {name: 'Block an account'})
+    .getByRole('textbox', {name: 'Email'})
+    .fill('nobody-here@example.com');
   await section.getByRole('button', {name: 'Block account'}).click();
   await page.getByRole('dialog').getByRole('button', {name: 'Block'}).click();
   await expect(page.getByRole('dialog').getByRole('alert')).toHaveText('No account uses nobody-here@example.com.');
   await page.getByRole('dialog').getByRole('button', {name: 'Cancel'}).click();
 
-  await section.getByRole('form', {name: 'Block an account'}).getByRole('textbox', {name: 'Email'}).fill(target.email.toUpperCase());
+  await section
+    .getByRole('form', {name: 'Block an account'})
+    .getByRole('textbox', {name: 'Email'})
+    .fill(target.email.toUpperCase());
   await section.getByRole('button', {name: 'Block account'}).click();
 
   const dialog = page.getByRole('dialog', {name: `Block ${target.email}?`});
@@ -50,7 +56,9 @@ test('an admin blocks an account by email, and unblocks it', async ({page}) => {
   await dialog.getByRole('button', {name: 'Block'}).click();
   await expect(section.getByRole('status')).toHaveText(`Blocked ${target.email}.`);
   await expect(section.getByText(target.email, {exact: true})).toBeVisible();
-  await expect(section.getByText(/^Blocked [A-Z][a-z]+ \d{1,2}, \d{4} by you\. Their content was removed\.$/)).toBeVisible();
+  await expect(
+    section.getByText(/^Blocked [A-Z][a-z]+ \d{1,2}, \d{4} by you\. Their content was removed\.$/),
+  ).toBeVisible();
 
   await section.getByRole('button', {name: `Unblock ${target.email}`}).click();
   await expect(section.getByRole('status')).toHaveText(`Unblocked ${target.email}. Anything removed stays removed.`);
@@ -61,7 +69,14 @@ test('an admin blocks the account behind a report from the Review page, which re
   const target = await createTarget();
   const slug = await startUniqueTopic();
 
-  await addReport({topic: slug, verseKey: VERSE_ID, reason: 'other', details: 'Spam from a blocked account.', createdAt: new Date(), reportedBy: target.uid});
+  await addReport({
+    topic: slug,
+    verseKey: VERSE_ID,
+    reason: 'other',
+    details: 'Spam from a blocked account.',
+    createdAt: new Date(),
+    reportedBy: target.uid,
+  });
   await signInAsNewUser(page, 'admin');
   await page.goto('/review');
 
@@ -70,18 +85,29 @@ test('an admin blocks the account behind a report from the Review page, which re
 
   await expect(report).toContainText(/Reported by an account that joined [A-Z][a-z]+ \d{1,2}, \d{4}/);
   await report.getByRole('button', {name: 'Block this account'}).click();
-  await page.getByRole('dialog', {name: 'Block the account that sent this report?'}).getByRole('button', {name: 'Block'}).click();
+  await page
+    .getByRole('dialog', {name: 'Block the account that sent this report?'})
+    .getByRole('button', {name: 'Block'})
+    .click();
 
   // Its report was removed with the rest of its content, so it is no longer waiting.
   await expect(item).toHaveCount(0);
   await page.goto('/people');
-  await expect(page.getByRole('region', {name: 'Blocked accounts'}).getByText(target.email, {exact: true})).toBeVisible();
+  await expect(
+    page.getByRole('region', {name: 'Blocked accounts'}).getByText(target.email, {exact: true}),
+  ).toBeVisible();
 });
 
 test('a reviewer sees no accounts and cannot block', async ({page}) => {
   const slug = await startUniqueTopic();
 
-  await addReport({topic: slug, verseKey: VERSE_ID, reason: 'fit', details: 'Seen by a reviewer.', createdAt: new Date()});
+  await addReport({
+    topic: slug,
+    verseKey: VERSE_ID,
+    reason: 'fit',
+    details: 'Seen by a reviewer.',
+    createdAt: new Date(),
+  });
   await signInAsNewUser(page, 'reviewer');
   await page.goto('/review');
 

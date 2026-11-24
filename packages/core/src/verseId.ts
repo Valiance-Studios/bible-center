@@ -18,10 +18,15 @@ const BOOK_COUNT = 66;
 const MAX_CHAPTER_OR_VERSE = 999;
 
 function isValidLocation({book, chapter, verse}: VerseLocation): boolean {
-  return [book, chapter, verse].every(Number.isInteger)
-    && book >= 1 && book <= BOOK_COUNT
-    && chapter >= 1 && chapter <= MAX_CHAPTER_OR_VERSE
-    && verse >= 1 && verse <= MAX_CHAPTER_OR_VERSE;
+  return (
+    [book, chapter, verse].every(Number.isInteger) &&
+    book >= 1 &&
+    book <= BOOK_COUNT &&
+    chapter >= 1 &&
+    chapter <= MAX_CHAPTER_OR_VERSE &&
+    verse >= 1 &&
+    verse <= MAX_CHAPTER_OR_VERSE
+  );
 }
 
 export function formatVerseId(location: VerseLocation): VerseId {

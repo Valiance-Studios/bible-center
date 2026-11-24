@@ -41,13 +41,31 @@ export function MemoryListEntryItem({entry, translation, now, isSaving, onRemove
   return (
     <div className={classes.entry}>
       <div className={classes.entryMain}>
-        <Link className={classes.entryReference} to={referencePath(reference)}>{name}</Link>
+        <Link className={classes.entryReference} to={referencePath(reference)}>
+          {name}
+        </Link>
         <p className={classes.entryText}>{passage.isPending ? ' ' : passage.text}</p>
-        <p className={classes.entryWhen}>{entry.status === 'memorized' ? `Memorized, ${practiced}` : `Learning, ${practiced}`}</p>
+        <p className={classes.entryWhen}>
+          {entry.status === 'memorized' ? `Memorized, ${practiced}` : `Learning, ${practiced}`}
+        </p>
       </div>
-      <Button component={Link} to={memorizePath(reference)} variant="outline" radius="xl" aria-label={`Practice ${name}`}>Practice</Button>
+      <Button
+        component={Link}
+        to={memorizePath(reference)}
+        variant="outline"
+        radius="xl"
+        aria-label={`Practice ${name}`}
+      >
+        Practice
+      </Button>
       {onRemove && (
-        <button type="button" className={classes.remove} disabled={isSaving} aria-label={`Remove ${name} from my memory list`} onClick={onRemove}>
+        <button
+          type="button"
+          className={classes.remove}
+          disabled={isSaving}
+          aria-label={`Remove ${name} from my memory list`}
+          onClick={onRemove}
+        >
           Remove
         </button>
       )}

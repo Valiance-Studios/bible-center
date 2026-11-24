@@ -28,7 +28,9 @@ export function hasEnrolledSecondFactor(user: User): boolean {
 
 /** The resolver for a sign-in that needs a second step, or null if the error is anything else. */
 export function twoStepResolverFor(error: unknown): MultiFactorResolver | null {
-  return error instanceof FirebaseError && error.code === 'auth/multi-factor-auth-required' ? getMultiFactorResolver(auth, error as never) : null;
+  return error instanceof FirebaseError && error.code === 'auth/multi-factor-auth-required'
+    ? getMultiFactorResolver(auth, error as never)
+    : null;
 }
 
 /** Finishes a sign-in with the code from the person's authenticator app. */
@@ -74,6 +76,10 @@ export async function startAuthenticatorSetup(user: User): Promise<PendingAuthen
 }
 
 /** Turns on two-step sign-in with the first code from the person's app. */
-export async function finishAuthenticatorSetup(user: User, {secret}: PendingAuthenticator, code: string): Promise<void> {
+export async function finishAuthenticatorSetup(
+  user: User,
+  {secret}: PendingAuthenticator,
+  code: string,
+): Promise<void> {
   await multiFactor(user).enroll(TotpMultiFactorGenerator.assertionForEnrollment(secret, code), 'Authenticator app');
 }

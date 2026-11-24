@@ -6,10 +6,16 @@ test('the footer opens About, which credits the translations and data', async ({
 
   const dialog = page.getByRole('dialog', {name: 'About Bible Center'});
 
-  await expect(dialog.getByRole('link', {name: 'Berean Standard Bible'})).toHaveAttribute('href', 'https://berean.bible');
+  await expect(dialog.getByRole('link', {name: 'Berean Standard Bible'})).toHaveAttribute(
+    'href',
+    'https://berean.bible',
+  );
   await expect(dialog.getByRole('link', {name: 'OpenBible.info'})).toBeVisible();
   await expect(dialog.getByRole('link', {name: 'STEP Bible'})).toBeVisible();
-  await expect(dialog.getByRole('link', {name: 'Source code and suggestions on GitHub'})).toHaveAttribute('href', 'https://github.com/Valiance-Studios/bible-center');
+  await expect(dialog.getByRole('link', {name: 'Source code and suggestions on GitHub'})).toHaveAttribute(
+    'href',
+    'https://github.com/Valiance-Studios/bible-center',
+  );
 
   await dialog.getByRole('button', {name: 'Close'}).last().click();
   await expect(dialog).toBeHidden();

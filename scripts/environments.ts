@@ -11,5 +11,5 @@ export const HOSTED_PROJECTS: ReadonlyMap<string, HostedMode> = new Map([
 
 /** The mode a hosted project builds with, or null for a project that is not one of ours (such as a `demo-` one). */
 export function hostedMode(projectId: string | undefined): HostedMode | null {
-  return projectId === undefined ? null : HOSTED_PROJECTS.get(projectId) ?? null;
+  return projectId === undefined ? null : (HOSTED_PROJECTS.get(projectId) ?? null);
 }

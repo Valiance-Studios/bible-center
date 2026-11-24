@@ -19,29 +19,39 @@ interface VerseTextProps {
 }
 
 /** One verse of Scripture with its number, as the reader and search results show it. */
-export function VerseText({verse, text, id, isMarked = false, isHighlighted = false, marker, onSelect, isSelected, isStudied = false}: VerseTextProps) {
+export function VerseText({
+  verse,
+  text,
+  id,
+  isMarked = false,
+  isHighlighted = false,
+  marker,
+  onSelect,
+  isSelected,
+  isStudied = false,
+}: VerseTextProps) {
   const paragraphClass = [isMarked ? classes.markedVerse : classes.verse, onSelect ? classes.selectable : ''].join(' ');
 
   return (
     <p id={id} className={paragraphClass} onClick={onSelect}>
       {marker}
-      {onSelect
-        ? (
-            <button
-              type="button"
-              className={isStudied ? classes.studiedNumberButton : classes.numberButton}
-              aria-label={`Select verse ${verse}`}
-              aria-pressed={isSelected}
-              onClick={(event) => {
-                // The paragraph's own click would otherwise select it a second time.
-                event.stopPropagation();
-                onSelect();
-              }}
-            >
-              {verse}
-            </button>
-          )
-        : <sup className={classes.number}>{verse}</sup>}
+      {onSelect ? (
+        <button
+          type="button"
+          className={isStudied ? classes.studiedNumberButton : classes.numberButton}
+          aria-label={`Select verse ${verse}`}
+          aria-pressed={isSelected}
+          onClick={(event) => {
+            // The paragraph's own click would otherwise select it a second time.
+            event.stopPropagation();
+            onSelect();
+          }}
+        >
+          {verse}
+        </button>
+      ) : (
+        <sup className={classes.number}>{verse}</sup>
+      )}
       {isHighlighted ? <mark className={classes.highlight}>{text}</mark> : text}
     </p>
   );

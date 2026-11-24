@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {formatVerseId, parseVerseId} from '../src/verseId';
 
 describe('formatVerseId', () => {
@@ -25,7 +25,10 @@ describe('parseVerseId', () => {
     expect(parseVerseId(formatVerseId(location))).toEqual(location);
   });
 
-  it.each(['', '1001001', '430010011', '67001001', '00001001', '01000001', 'abcdefgh'])('returns null for "%s"', (id) => {
-    expect(parseVerseId(id)).toBeNull();
-  });
+  it.each(['', '1001001', '430010011', '67001001', '00001001', '01000001', 'abcdefgh'])(
+    'returns null for "%s"',
+    (id) => {
+      expect(parseVerseId(id)).toBeNull();
+    },
+  );
 });

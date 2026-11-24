@@ -68,7 +68,9 @@ test('it lists highlights, bookmarks and notes, filtered and ordered, in the sel
   await openMyVerses(page);
 
   await expect(references(page)).toHaveText(['John 1:1–3', 'Psalm 23:1', 'Genesis 1:1']);
-  await expect(page.getByRole('article').filter({hasText: 'John 1:1–3'}).locator('mark')).toContainText('Through Him all things were made');
+  await expect(page.getByRole('article').filter({hasText: 'John 1:1–3'}).locator('mark')).toContainText(
+    'Through Him all things were made',
+  );
   await expect(page.getByText('A thought on creation.')).toBeVisible();
 
   await page.getByLabel('Order').selectOption('bible');
@@ -103,7 +105,9 @@ test('removing asks first, then takes it off the list and out of the reader', as
   await expect(references(page)).toHaveText(['Psalm 23:2', 'Psalm 23:1']);
 
   await page.getByRole('button', {name: 'Remove bookmark on Psalm 23:1'}).click();
-  await expect(page.getByRole('dialog', {name: 'Remove bookmark?'})).toContainText('This removes the bookmark on Psalm 23:1. It cannot be undone.');
+  await expect(page.getByRole('dialog', {name: 'Remove bookmark?'})).toContainText(
+    'This removes the bookmark on Psalm 23:1. It cannot be undone.',
+  );
   await page.getByRole('button', {name: 'Cancel'}).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(references(page)).toHaveText(['Psalm 23:2', 'Psalm 23:1']);
@@ -129,7 +133,12 @@ test('it shows 20 at a time, in the chosen order and filter', async ({page}) => 
   const highlights = Array.from({length: 25}, (_, index) => {
     const verseId = `19119${String(index + 1).padStart(3, '0')}`;
 
-    return {type: 'highlight' as const, startVerse: verseId, endVerse: verseId, createdAt: new Date(start + index * 60_000)};
+    return {
+      type: 'highlight' as const,
+      startVerse: verseId,
+      endVerse: verseId,
+      createdAt: new Date(start + index * 60_000),
+    };
   });
 
   await addAnnotations(await uidOf(user.email), [
@@ -171,7 +180,9 @@ test.describe('on a phone', () => {
     // The full translation names do not fit beside the order picker, so they become initialisms.
     await expect(page.getByLabel('Translation').locator('option:checked')).toHaveText('BSB');
 
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
 
     expect(overflow).toBeLessThanOrEqual(0);
   });

@@ -39,12 +39,15 @@ export function FadingWords({text, label, onFinish}: FadingWordsProps) {
   return (
     <>
       <p className={classes.step}>
-        <strong>{step === 0 ? `Step 1 of ${FADING_STEP_COUNT}: read it through` : `Step ${step + 1} of ${FADING_STEP_COUNT}`}</strong>
-        {' '}
+        <strong>
+          {step === 0 ? `Step 1 of ${FADING_STEP_COUNT}: read it through` : `Step ${step + 1} of ${FADING_STEP_COUNT}`}
+        </strong>{' '}
         <span>{STEP_NOTES[step]}</span>
       </p>
       <div className={classes.dots} aria-hidden="true">
-        {STEP_NOTES.map((note, index) => <span key={note} className={index <= step ? classes.dotDone : classes.dot} />)}
+        {STEP_NOTES.map((note, index) => (
+          <span key={note} className={index <= step ? classes.dotDone : classes.dot} />
+        ))}
       </div>
 
       <section className={classes.fadingCard} aria-label={`${label}, with some words hidden`}>
@@ -56,19 +59,19 @@ export function FadingWords({text, label, onFinish}: FadingWordsProps) {
               // The words never reorder, so their places identify them.
               <span key={index} className={classes.word}>
                 {before}
-                {isShown
-                  ? word
-                  : (
-                      <button
-                        type="button"
-                        className={classes.blank}
-                        style={{width: `${word.length * 0.5 + 0.4}em`}}
-                        aria-label={`Show hidden word ${index + 1}`}
-                        onClick={() => setRevealed(new Set([...revealed, index]))}
-                      >
-                        {hint}
-                      </button>
-                    )}
+                {isShown ? (
+                  word
+                ) : (
+                  <button
+                    type="button"
+                    className={classes.blank}
+                    style={{width: `${word.length * 0.5 + 0.4}em`}}
+                    aria-label={`Show hidden word ${index + 1}`}
+                    onClick={() => setRevealed(new Set([...revealed, index]))}
+                  >
+                    {hint}
+                  </button>
+                )}
                 {after}
               </span>
             );
@@ -78,9 +81,15 @@ export function FadingWords({text, label, onFinish}: FadingWordsProps) {
       </section>
 
       <Group gap="sm" mt="lg">
-        <Button variant="outline" radius="xl" size="md" disabled={step === 0} onClick={() => goTo(step - 1)}>Show more words</Button>
-        <Button radius="xl" size="md" disabled={step === lastStep} onClick={() => goTo(step + 1)}>Hide more words</Button>
-        <Button variant="outline" radius="xl" size="md" onClick={() => goTo(0)}>Start again</Button>
+        <Button variant="outline" radius="xl" size="md" disabled={step === 0} onClick={() => goTo(step - 1)}>
+          Show more words
+        </Button>
+        <Button radius="xl" size="md" disabled={step === lastStep} onClick={() => goTo(step + 1)}>
+          Hide more words
+        </Button>
+        <Button variant="outline" radius="xl" size="md" onClick={() => goTo(0)}>
+          Start again
+        </Button>
       </Group>
       <p className={classes.tip}>Say the whole passage aloud at each step. Select a blank to see that word.</p>
 

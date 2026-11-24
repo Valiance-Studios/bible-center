@@ -39,7 +39,11 @@ export function GiveRoleForm({isSaving, onGive, onGiven}: GiveRoleFormProps) {
       setEmail('');
       onGiven(`${normalized} is now ${ROLE_NAMES[role].toLowerCase()}.`);
     } catch (error) {
-      setProblem(error instanceof AlreadyHasRoleError ? error.message : 'The role could not be given. Check your connection and try again.');
+      setProblem(
+        error instanceof AlreadyHasRoleError
+          ? error.message
+          : 'The role could not be given. Check your connection and try again.',
+      );
     }
   }
 
@@ -65,11 +69,25 @@ export function GiveRoleForm({isSaving, onGive, onGiven}: GiveRoleFormProps) {
             setProblem(null);
           }}
         />
-        <NativeSelect size="md" label="Role" data={ROLE_OPTIONS} value={role} onChange={(event) => setRole(parseStaffRole(event.currentTarget.value))} />
-        <Button type="submit" size="md" loading={isSaving}>Give role</Button>
+        <NativeSelect
+          size="md"
+          label="Role"
+          data={ROLE_OPTIONS}
+          value={role}
+          onChange={(event) => setRole(parseStaffRole(event.currentTarget.value))}
+        />
+        <Button type="submit" size="md" loading={isSaving}>
+          Give role
+        </Button>
       </form>
-      {problem && <Alert color="red" mt="sm" role="alert">{problem}</Alert>}
-      <p className={classes.addHint}>The role applies once they sign in with this email and it is verified. They do not need an account yet.</p>
+      {problem && (
+        <Alert color="red" mt="sm" role="alert">
+          {problem}
+        </Alert>
+      )}
+      <p className={classes.addHint}>
+        The role applies once they sign in with this email and it is verified. They do not need an account yet.
+      </p>
     </>
   );
 }

@@ -42,7 +42,11 @@ function GoogleButton() {
 
   return (
     <>
-      {error && <Alert color="red" mb="md">{error}</Alert>}
+      {error && (
+        <Alert color="red" mb="md">
+          {error}
+        </Alert>
+      )}
       <Button variant="default" fullWidth size="md" radius="xl" onClick={() => void run(signInWithGoogle)}>
         Continue with Google
       </Button>
@@ -86,15 +90,35 @@ function SignInForm({onRegister}: {onRegister: () => void}) {
       <form className={classes.fields} onSubmit={submit}>
         {error && <Alert color="red">{error}</Alert>}
         {notice && <Alert>{notice}</Alert>}
-        <TextInput label="Email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.currentTarget.value)} />
-        <PasswordInput label="Password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.currentTarget.value)} />
-        <Button type="submit" fullWidth size="md" radius="xl" loading={busy}>Sign in</Button>
+        <TextInput
+          label="Email"
+          type="email"
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(event) => setEmail(event.currentTarget.value)}
+        />
+        <PasswordInput
+          label="Password"
+          autoComplete="current-password"
+          required
+          value={password}
+          onChange={(event) => setPassword(event.currentTarget.value)}
+        />
+        <Button type="submit" fullWidth size="md" radius="xl" loading={busy}>
+          Sign in
+        </Button>
       </form>
-      <p className={classes.switch}><button type="button" className={classes.textButton} onClick={resetPassword}>Forgot your password?</button></p>
       <p className={classes.switch}>
-        New to Bible Center?
-        {' '}
-        <button type="button" className={classes.textButton} onClick={onRegister}>Create an account</button>
+        <button type="button" className={classes.textButton} onClick={resetPassword}>
+          Forgot your password?
+        </button>
+      </p>
+      <p className={classes.switch}>
+        New to Bible Center?{' '}
+        <button type="button" className={classes.textButton} onClick={onRegister}>
+          Create an account
+        </button>
       </p>
     </>
   );
@@ -124,22 +148,44 @@ function RegisterForm({onSignIn}: {onSignIn: () => void}) {
       <h1 className={classes.title}>Create an account</h1>
       <p className={classes.terms}>
         {`You must be ${MINIMUM_AGE} or older. Creating an account, with Google or by email, means you agree to the `}
-        <Link to="/privacy">privacy policy</Link>
-        .
+        <Link to="/privacy">privacy policy</Link>.
       </p>
       <GoogleButton />
       <div className={classes.or}>or</div>
       <form className={classes.fields} onSubmit={submit}>
         {error && <Alert color="red">{error}</Alert>}
-        <TextInput label="Name" autoComplete="name" required value={name} onChange={(event) => setName(event.currentTarget.value)} />
-        <TextInput label="Email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.currentTarget.value)} />
-        <PasswordInput label="Password" description={`Use at least ${MIN_PASSWORD_LENGTH} characters.`} autoComplete="new-password" required value={password} onChange={(event) => setPassword(event.currentTarget.value)} />
-        <Button type="submit" fullWidth size="md" radius="xl" loading={busy}>Create account</Button>
+        <TextInput
+          label="Name"
+          autoComplete="name"
+          required
+          value={name}
+          onChange={(event) => setName(event.currentTarget.value)}
+        />
+        <TextInput
+          label="Email"
+          type="email"
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(event) => setEmail(event.currentTarget.value)}
+        />
+        <PasswordInput
+          label="Password"
+          description={`Use at least ${MIN_PASSWORD_LENGTH} characters.`}
+          autoComplete="new-password"
+          required
+          value={password}
+          onChange={(event) => setPassword(event.currentTarget.value)}
+        />
+        <Button type="submit" fullWidth size="md" radius="xl" loading={busy}>
+          Create account
+        </Button>
       </form>
       <p className={classes.switch}>
-        Already have an account?
-        {' '}
-        <button type="button" className={classes.textButton} onClick={onSignIn}>Sign in</button>
+        Already have an account?{' '}
+        <button type="button" className={classes.textButton} onClick={onSignIn}>
+          Sign in
+        </button>
       </p>
     </>
   );
@@ -148,9 +194,11 @@ function RegisterForm({onSignIn}: {onSignIn: () => void}) {
 function SignedOutPanel() {
   const [mode, setMode] = useState<'signIn' | 'register'>('signIn');
 
-  return mode === 'signIn'
-    ? <SignInForm onRegister={() => setMode('register')} />
-    : <RegisterForm onSignIn={() => setMode('signIn')} />;
+  return mode === 'signIn' ? (
+    <SignInForm onRegister={() => setMode('register')} />
+  ) : (
+    <RegisterForm onSignIn={() => setMode('signIn')} />
+  );
 }
 
 function VerifyEmailPanel() {
@@ -164,7 +212,7 @@ function VerifyEmailPanel() {
   function confirm(): void {
     setNotice(null);
     void run(async () => {
-      if (await recheckAccess() === 'unverified') {
+      if ((await recheckAccess()) === 'unverified') {
         setNotice('Your email is not confirmed yet. Open the link in the email, then try again.');
       }
     });
@@ -182,20 +230,26 @@ function VerifyEmailPanel() {
     <>
       <h1 className={classes.title}>Check your email</h1>
       <p className={classes.body}>
-        We sent a confirmation link to
-        {email}
-        . Open it to finish setting up your account, then come back here.
+        We sent a confirmation link to {email}. Open it to finish setting up your account, then come back here.
       </p>
       <div className={classes.fields}>
         {error && <Alert color="red">{error}</Alert>}
         {notice && <Alert>{notice}</Alert>}
-        <Button fullWidth size="md" radius="xl" loading={busy} onClick={confirm}>I confirmed my email</Button>
+        <Button fullWidth size="md" radius="xl" loading={busy} onClick={confirm}>
+          I confirmed my email
+        </Button>
       </div>
       <p className={classes.switch}>
         Nothing in your inbox?
-        <button type="button" className={classes.textButton} onClick={resend}>Send the link again</button>
+        <button type="button" className={classes.textButton} onClick={resend}>
+          Send the link again
+        </button>
       </p>
-      <p className={classes.switch}><button type="button" className={classes.textButton} onClick={() => void signOut()}>Sign out</button></p>
+      <p className={classes.switch}>
+        <button type="button" className={classes.textButton} onClick={() => void signOut()}>
+          Sign out
+        </button>
+      </p>
     </>
   );
 }
@@ -210,13 +264,29 @@ function AccessCheckFailedPanel() {
   return (
     <>
       <h1 className={classes.title}>Could not check your access</h1>
-      <p className={classes.body}>{`You are signed in as ${email}, but checking this account's access did not work. You can still read and search everything.`}</p>
+      <p
+        className={classes.body}
+      >{`You are signed in as ${email}, but checking this account's access did not work. You can still read and search everything.`}</p>
       <div className={classes.fields}>
         {error && <Alert color="red">{error}</Alert>}
-        <Button fullWidth size="md" radius="xl" loading={busy} onClick={() => void run(async () => void await recheckAccess())}>Check again</Button>
+        <Button
+          fullWidth
+          size="md"
+          radius="xl"
+          loading={busy}
+          onClick={() => void run(async () => void (await recheckAccess()))}
+        >
+          Check again
+        </Button>
       </div>
-      <p className={classes.switch}><Link to="/">Back to the home page</Link></p>
-      <p className={classes.switch}><button type="button" className={classes.textButton} onClick={() => void signOut()}>Sign out</button></p>
+      <p className={classes.switch}>
+        <Link to="/">Back to the home page</Link>
+      </p>
+      <p className={classes.switch}>
+        <button type="button" className={classes.textButton} onClick={() => void signOut()}>
+          Sign out
+        </button>
+      </p>
     </>
   );
 }
@@ -231,7 +301,9 @@ function TwoStepCodePanel() {
   return (
     <>
       <h1 className={classes.title}>Enter your code</h1>
-      <p className={classes.body}>This account has two-step sign-in. Open your authenticator app and enter the 6-digit code for Bible Center.</p>
+      <p className={classes.body}>
+        This account has two-step sign-in. Open your authenticator app and enter the 6-digit code for Bible Center.
+      </p>
       <form
         className={classes.fields}
         onSubmit={(event) => {
@@ -239,7 +311,11 @@ function TwoStepCodePanel() {
           void run(() => finishTwoStep(code.trim()));
         }}
       >
-        {error && <Alert color="red" role="alert">{error}</Alert>}
+        {error && (
+          <Alert color="red" role="alert">
+            {error}
+          </Alert>
+        )}
         <TextInput
           className={classes.code}
           label="Code"
@@ -251,9 +327,15 @@ function TwoStepCodePanel() {
           onChange={(event) => setCode(event.currentTarget.value)}
           data-autofocus
         />
-        <Button type="submit" fullWidth size="md" radius="xl" loading={busy}>Sign in</Button>
+        <Button type="submit" fullWidth size="md" radius="xl" loading={busy}>
+          Sign in
+        </Button>
       </form>
-      <p className={classes.switch}><button type="button" className={classes.textButton} onClick={cancelTwoStep}>Use a different account</button></p>
+      <p className={classes.switch}>
+        <button type="button" className={classes.textButton} onClick={cancelTwoStep}>
+          Use a different account
+        </button>
+      </p>
       <p className={classes.switch}>
         {'Lost your phone or app? Write to '}
         <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
@@ -285,10 +367,15 @@ export function SignInPage() {
   return (
     <div className={classes.page}>
       <aside className={classes.side}>
-        <Link className={classes.mark} to="/">Bible Center</Link>
+        <Link className={classes.mark} to="/">
+          Bible Center
+        </Link>
         <div>
           <p className={classes.sideText}>Keep your place, and the verses that matter to you.</p>
-          <p className={classes.sideNote}>Reading and searching never need an account. Sign in to highlight, bookmark, memorize and upvote verses. Accounts are free.</p>
+          <p className={classes.sideNote}>
+            Reading and searching never need an account. Sign in to highlight, bookmark, memorize and upvote verses.
+            Accounts are free.
+          </p>
         </div>
       </aside>
       <main className={classes.formSide}>

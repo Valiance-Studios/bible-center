@@ -33,7 +33,9 @@ export function AnnotationItem({annotation, reference, translation, isRemoving, 
   return (
     <article className={classes.item}>
       <div className={classes.head}>
-        <Link className={classes.reference} to={`${chapterPath(chapter)}#v${span.start}`}>{title}</Link>
+        <Link className={classes.reference} to={`${chapterPath(chapter)}#v${span.start}`}>
+          {title}
+        </Link>
         <span className={classes.kind}>{TYPE_LABELS[annotation.type]}</span>
       </div>
 
@@ -42,13 +44,21 @@ export function AnnotationItem({annotation, reference, translation, isRemoving, 
       {isError && (
         <p className={classes.missing}>
           {'The text could not be loaded. '}
-          <Button variant="subtle" size="compact-sm" onClick={retry}>Try again</Button>
+          <Button variant="subtle" size="compact-sm" onClick={retry}>
+            Try again
+          </Button>
         </p>
       )}
 
-      {!isPending && !isError && (text
-        ? <p className={classes.text}>{annotation.type === 'highlight' ? <mark className={classes.highlight}>{text}</mark> : text}</p>
-        : <p className={classes.missing}>{`The ${translation.name} has no verses at this reference.`}</p>)}
+      {!isPending &&
+        !isError &&
+        (text ? (
+          <p className={classes.text}>
+            {annotation.type === 'highlight' ? <mark className={classes.highlight}>{text}</mark> : text}
+          </p>
+        ) : (
+          <p className={classes.missing}>{`The ${translation.name} has no verses at this reference.`}</p>
+        ))}
 
       {annotation.text && <p className={classes.note}>{annotation.text}</p>}
 
@@ -64,7 +74,13 @@ export function AnnotationItem({annotation, reference, translation, isRemoving, 
       )}
 
       {isConfirming && onRemove && (
-        <RemoveDialog label={label} title={title} isRemoving={isRemoving} onConfirm={onRemove} onClose={() => setIsConfirming(false)} />
+        <RemoveDialog
+          label={label}
+          title={title}
+          isRemoving={isRemoving}
+          onConfirm={onRemove}
+          onClose={() => setIsConfirming(false)}
+        />
       )}
     </article>
   );

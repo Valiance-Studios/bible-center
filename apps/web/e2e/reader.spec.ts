@@ -78,7 +78,7 @@ test('an unknown chapter leads back to the start of the reader', async ({page}) 
 test('a chapter that fails to load says so and can be retried', async ({page}) => {
   let shouldFail = true;
 
-  await page.route('**/bible/bsb/ruth/1.json', (route) => shouldFail ? route.abort() : route.continue());
+  await page.route('**/bible/bsb/ruth/1.json', (route) => (shouldFail ? route.abort() : route.continue()));
   await page.goto('/read/ruth/1');
 
   await expect(page.getByText('Could not load Ruth 1')).toBeVisible();

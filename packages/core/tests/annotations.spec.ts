@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {chapterIdOf, selectVerse, spanContains, spanOf, spansOverlap, verseIdIn} from '../src/annotations';
 import {parseChapterRef} from '../src/bibleBooks';
 

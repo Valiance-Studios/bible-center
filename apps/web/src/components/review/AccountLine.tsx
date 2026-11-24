@@ -20,7 +20,12 @@ interface AccountLineProps {
 /** For admins: when the account behind an item joined, and a way to block it. */
 export function AccountLine({uid, lead, did, accounts}: AccountLineProps) {
   const [isConfirming, setIsConfirming] = useState(false);
-  const joined = useQuery({queryKey: ['accountJoined', uid], queryFn: () => accountJoinedAt(uid ?? ''), enabled: Boolean(uid), staleTime: Infinity});
+  const joined = useQuery({
+    queryKey: ['accountJoined', uid],
+    queryFn: () => accountJoinedAt(uid ?? ''),
+    enabled: Boolean(uid),
+    staleTime: Infinity,
+  });
 
   if (!uid) {
     return null;
@@ -31,9 +36,13 @@ export function AccountLine({uid, lead, did, accounts}: AccountLineProps) {
   return (
     <p className={classes.account}>
       <span>{joinedText ? `${lead} an account that joined ${joinedText}` : `${lead} an account`}</span>
-      {accounts.isBlocked(uid)
-        ? <span className={classes.blockedTag}>Blocked</span>
-        : <button type="button" className={classes.block} onClick={() => setIsConfirming(true)}>Block this account</button>}
+      {accounts.isBlocked(uid) ? (
+        <span className={classes.blockedTag}>Blocked</span>
+      ) : (
+        <button type="button" className={classes.block} onClick={() => setIsConfirming(true)}>
+          Block this account
+        </button>
+      )}
 
       {isConfirming && (
         <BlockDialog

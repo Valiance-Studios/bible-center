@@ -1,6 +1,6 @@
 import type {FirebaseApp} from 'firebase/app';
 
-import {afterEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vite-plus/test';
 import {initializeAppCheck, ReCaptchaEnterpriseProvider} from 'firebase/app-check';
 import {activateAppCheck} from '@/firebase/appCheck';
 

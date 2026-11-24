@@ -21,12 +21,16 @@ export function findConfigProblems(env: Record<string, string | undefined>, mode
   const missing = REQUIRED.filter((key) => !env[key]);
 
   if (missing.length > 0) {
-    problems.push(`Firebase config is missing: ${missing.join(', ')}. Copy apps/web/.env.example to apps/web/.env.${mode} and fill it in from the Firebase console (see docs/DEPLOYMENT.md, "App Check Setup", for the site key).`);
+    problems.push(
+      `Firebase config is missing: ${missing.join(', ')}. Copy apps/web/.env.example to apps/web/.env.${mode} and fill it in from the Firebase console (see docs/DEPLOYMENT.md, "App Check Setup", for the site key).`,
+    );
   }
 
   if (env.VITE_FIREBASE_PROJECT_ID && env.VITE_FIREBASE_PROJECT_ID !== projectId) {
     // The site would be served by one project while its app talks to another.
-    problems.push(`apps/web/.env.${mode} is for "${env.VITE_FIREBASE_PROJECT_ID}", not "${projectId}", which this deploy goes to.`);
+    problems.push(
+      `apps/web/.env.${mode} is for "${env.VITE_FIREBASE_PROJECT_ID}", not "${projectId}", which this deploy goes to.`,
+    );
   }
 
   if (env.VITE_USE_FIREBASE_EMULATORS === 'true') {
@@ -35,7 +39,9 @@ export function findConfigProblems(env: Record<string, string | undefined>, mode
 
   if (env.VITE_APPCHECK_DEBUG_TOKEN) {
     // A registered debug token passes App Check, so shipping it would let anyone bypass it.
-    problems.push(`An App Check debug token is set (VITE_APPCHECK_DEBUG_TOKEN, likely in apps/web/.env.${mode}.local). It is for local runs only; remove it before deploying.`);
+    problems.push(
+      `An App Check debug token is set (VITE_APPCHECK_DEBUG_TOKEN, likely in apps/web/.env.${mode}.local). It is for local runs only; remove it before deploying.`,
+    );
   }
 
   return problems;

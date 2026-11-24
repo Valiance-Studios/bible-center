@@ -4,7 +4,14 @@ import type {TranslationProvider} from '@/bible/translations';
 import {useEffect, useRef, useState} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {Link, Navigate, useParams} from 'react-router';
-import {formatReference, rankTopicVerses, referenceOf, topicSlug, topicVerseKey, votingOpensAt} from '@bible-center/core';
+import {
+  formatReference,
+  rankTopicVerses,
+  referenceOf,
+  topicSlug,
+  topicVerseKey,
+  votingOpensAt,
+} from '@bible-center/core';
 import {Alert, Button, Loader} from '@mantine/core';
 import {referencePath} from '@/bible/paths';
 import {findTranslation} from '@/bible/translations';
@@ -29,7 +36,17 @@ const VOTING_NOTICE_ID = 'voting-notice';
 
 function UpArrow() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M5 15l7-7 7 7" />
     </svg>
   );
@@ -50,7 +67,13 @@ interface VoteButtonProps {
 function VoteButton({title, upvotes, canVote, isWaiting, hasVoted, isSaving, onToggle}: VoteButtonProps) {
   if (isWaiting) {
     return (
-      <button type="button" className={classes.voteWaiting} disabled aria-label={`Upvote ${title}, not available`} aria-describedby={VOTING_NOTICE_ID}>
+      <button
+        type="button"
+        className={classes.voteWaiting}
+        disabled
+        aria-label={`Upvote ${title}, not available`}
+        aria-describedby={VOTING_NOTICE_ID}
+      >
         <UpArrow />
         <span>{upvotes}</span>
       </button>
@@ -102,7 +125,20 @@ interface TopicVerseRowProps {
   onReport: () => void;
 }
 
-function TopicVerseRow({verseKey, verse, reference, translation, canVote, isWaiting, hasVoted, isSaving, isReported, canReport, onToggleVote, onReport}: TopicVerseRowProps) {
+function TopicVerseRow({
+  verseKey,
+  verse,
+  reference,
+  translation,
+  canVote,
+  isWaiting,
+  hasVoted,
+  isSaving,
+  isReported,
+  canReport,
+  onToggleVote,
+  onReport,
+}: TopicVerseRowProps) {
   const {text, isPending, isError, retry} = usePassage(reference, translation);
   const title = formatReference(reference);
   const counts = [`${verse.upvotes.toLocaleString('en-US')} on Bible Center`];
@@ -113,28 +149,49 @@ function TopicVerseRow({verseKey, verse, reference, translation, canVote, isWait
 
   return (
     <article id={rowIdOf(verseKey)} className={classes.row}>
-      <VoteButton title={title} upvotes={verse.upvotes} canVote={canVote} isWaiting={isWaiting} hasVoted={hasVoted} isSaving={isSaving} onToggle={onToggleVote} />
+      <VoteButton
+        title={title}
+        upvotes={verse.upvotes}
+        canVote={canVote}
+        isWaiting={isWaiting}
+        hasVoted={hasVoted}
+        isSaving={isSaving}
+        onToggle={onToggleVote}
+      />
       <div className={classes.body}>
-        <Link className={classes.reference} to={referencePath(reference)}>{title}</Link>
+        <Link className={classes.reference} to={referencePath(reference)}>
+          {title}
+        </Link>
 
         {isPending && <Loader size="sm" mt={8} aria-label={`Loading ${title}`} />}
 
         {isError && (
           <p className={classes.missing}>
             {'The text could not be loaded. '}
-            <Button variant="subtle" size="compact-sm" onClick={retry}>Try again</Button>
+            <Button variant="subtle" size="compact-sm" onClick={retry}>
+              Try again
+            </Button>
           </p>
         )}
 
-        {!isPending && !isError && (text
-          ? <p className={classes.text}>{text}</p>
-          : <p className={classes.missing}>{`The ${translation.name} has no verses at this reference.`}</p>)}
+        {!isPending &&
+          !isError &&
+          (text ? (
+            <p className={classes.text}>{text}</p>
+          ) : (
+            <p className={classes.missing}>{`The ${translation.name} has no verses at this reference.`}</p>
+          ))}
 
         <div className={classes.meta}>
           <span>{counts.join(', ')}</span>
-          {canReport && (isReported
-            ? <span className={classes.reported}>Reported</span>
-            : <button type="button" className={classes.report} aria-label={`Report ${title}`} onClick={onReport}>Report</button>)}
+          {canReport &&
+            (isReported ? (
+              <span className={classes.reported}>Reported</span>
+            ) : (
+              <button type="button" className={classes.report} aria-label={`Report ${title}`} onClick={onReport}>
+                Report
+              </button>
+            ))}
         </div>
       </div>
     </article>
@@ -218,13 +275,19 @@ function Topic({slug}: {slug: string}) {
         <title>Topic not available | Bible Center</title>
         <h1 className={classes.title}>{name}</h1>
         <p className={classes.notice}>This topic is not available.</p>
-        <p><Link className={classes.more} to="/topics">Browse all topics</Link></p>
+        <p>
+          <Link className={classes.more} to="/topics">
+            Browse all topics
+          </Link>
+        </p>
       </main>
     );
   }
 
   const addButton = canVote && !isWaiting && !isPending && !openBible.isError && (
-    <Button className={classes.add} variant="outline" radius="xl" size="md" onClick={() => setIsAdding(true)}>Add a verse to this topic</Button>
+    <Button className={classes.add} variant="outline" radius="xl" size="md" onClick={() => setIsAdding(true)}>
+      Add a verse to this topic
+    </Button>
   );
 
   return (
@@ -265,8 +328,16 @@ function Topic({slug}: {slug: string}) {
       )}
 
       {/* Without this, a failed load would look like nobody having voted. */}
-      {votes.hasLoadError && <Alert color="red" mb="md">Bible Center's votes could not be loaded. Check your connection and refresh the page.</Alert>}
-      {votes.hasSaveError && <Alert color="red" mb="md">Your vote could not be saved. Check your connection and try again.</Alert>}
+      {votes.hasLoadError && (
+        <Alert color="red" mb="md">
+          Bible Center's votes could not be loaded. Check your connection and refresh the page.
+        </Alert>
+      )}
+      {votes.hasSaveError && (
+        <Alert color="red" mb="md">
+          Your vote could not be saved. Check your connection and try again.
+        </Alert>
+      )}
 
       {!isPending && !openBible.isError && verses.length === 0 && (
         <>
@@ -276,7 +347,11 @@ function Topic({slug}: {slug: string}) {
               : 'No one has added a verse to this topic yet.'}
           </p>
           {addButton}
-          <p><Link className={classes.more} to="/topics">Browse all topics</Link></p>
+          <p>
+            <Link className={classes.more} to="/topics">
+              Browse all topics
+            </Link>
+          </p>
         </>
       )}
 
@@ -284,8 +359,7 @@ function Topic({slug}: {slug: string}) {
         <>
           <p className={classes.intro}>
             {'Ranked by people on Bible Center, starting from the votes on '}
-            <a href={OPENBIBLE_TOPICS_URL}>OpenBible.info</a>
-            . Upvote the verses that speak to this topic.
+            <a href={OPENBIBLE_TOPICS_URL}>OpenBible.info</a>. Upvote the verses that speak to this topic.
           </p>
           {addButton}
 
@@ -308,7 +382,13 @@ function Topic({slug}: {slug: string}) {
           ))}
 
           {verses.length > visibleCount && (
-            <Button className={classes.showMore} variant="outline" radius="xl" size="md" onClick={() => setShownCount(visibleCount + PAGE_SIZE)}>
+            <Button
+              className={classes.showMore}
+              variant="outline"
+              radius="xl"
+              size="md"
+              onClick={() => setShownCount(visibleCount + PAGE_SIZE)}
+            >
               Show more
             </Button>
           )}

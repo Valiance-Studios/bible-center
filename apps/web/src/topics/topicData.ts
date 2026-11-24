@@ -35,7 +35,10 @@ async function approvedTopicNames(): Promise<string[]> {
 export const topicNamesQuery = {
   queryKey: ['topicNames'],
   queryFn: async () => {
-    const [names, approved] = await Promise.all([fetchStaticJson<string[]>('/topic-data/_index.json'), approvedTopicNames()]);
+    const [names, approved] = await Promise.all([
+      fetchStaticJson<string[]>('/topic-data/_index.json'),
+      approvedTopicNames(),
+    ]);
 
     if (!names) {
       throw new Error('The list of topics is missing.');

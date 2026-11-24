@@ -1,6 +1,17 @@
 import type {OpenReport, ReportGroup, ReportOutcome, TopicDecision} from '@bible-center/core';
 
-import {collection, doc, getDoc, orderBy, query, runTransaction, serverTimestamp, Timestamp, updateDoc, where} from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  getDoc,
+  orderBy,
+  query,
+  runTransaction,
+  serverTimestamp,
+  Timestamp,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
 import {db} from './index';
 import {fetchFromServer} from './serverQuery';
 
@@ -20,7 +31,9 @@ function dateOf(value: unknown): Date {
 
 /** Every open report, oldest first. Only reviewers may read them. */
 export async function listOpenReports(): Promise<OpenReport[]> {
-  const documents = await fetchFromServer(query(collection(db, 'reports'), where('status', '==', 'open'), orderBy('createdAt')));
+  const documents = await fetchFromServer(
+    query(collection(db, 'reports'), where('status', '==', 'open'), orderBy('createdAt')),
+  );
 
   return documents.map((report) => {
     const data = report.data() as Omit<OpenReport, 'id' | 'createdAt'> & {createdAt: unknown};
@@ -39,7 +52,9 @@ export async function listOpenReports(): Promise<OpenReport[]> {
 
 /** Every topic waiting for a decision, oldest first. */
 export async function listPendingTopics(): Promise<PendingTopic[]> {
-  const documents = await fetchFromServer(query(collection(db, 'topics'), where('status', '==', 'pending'), orderBy('createdAt')));
+  const documents = await fetchFromServer(
+    query(collection(db, 'topics'), where('status', '==', 'pending'), orderBy('createdAt')),
+  );
 
   return documents.map((topic) => ({
     slug: topic.id,
@@ -60,7 +75,11 @@ export async function verseAdderOf(topic: string, verseKey: string): Promise<str
  * Closes every report in the group. Removing also takes the verse off the topic, in the same write,
  * as the security rules require. A verse someone already removed stays removed.
  */
-export async function resolveReports(uid: string, {topic, verseKey, reports}: ReportGroup, outcome: ReportOutcome): Promise<void> {
+export async function resolveReports(
+  uid: string,
+  {topic, verseKey, reports}: ReportGroup,
+  outcome: ReportOutcome,
+): Promise<void> {
   const removedRef = doc(db, 'topics', topic, 'removed', verseKey);
 
   await runTransaction(db, async (transaction) => {
@@ -71,7 +90,11 @@ export async function resolveReports(uid: string, {topic, verseKey, reports}: Re
     }
 
     for (const report of reports) {
-      transaction.update(doc(db, 'reports', report.id), {status: outcome, resolvedBy: uid, resolvedAt: serverTimestamp()});
+      transaction.update(doc(db, 'reports', report.id), {
+        status: outcome,
+        resolvedBy: uid,
+        resolvedAt: serverTimestamp(),
+      });
     }
   });
 }

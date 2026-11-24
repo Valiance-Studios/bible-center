@@ -25,7 +25,9 @@ export function findReleaseProblems({uncommitted, head, main}: ReleaseState): st
   }
 
   if (head !== main) {
-    problems.push(`This checkout is at ${head.slice(0, 7)}, but main on GitHub is at ${main.slice(0, 7)}. Switch to main and pull, deploy it to staging and test it there, then deploy it to production.`);
+    problems.push(
+      `This checkout is at ${head.slice(0, 7)}, but main on GitHub is at ${main.slice(0, 7)}. Switch to main and pull, deploy it to staging and test it there, then deploy it to production.`,
+    );
   }
 
   return problems;
@@ -36,7 +38,11 @@ if (import.meta.main && hostedMode(process.env.GCLOUD_PROJECT) === 'production')
 
   git('fetch --quiet origin main');
 
-  const problems = findReleaseProblems({uncommitted: git('status --porcelain'), head: git('rev-parse HEAD'), main: git('rev-parse origin/main')});
+  const problems = findReleaseProblems({
+    uncommitted: git('status --porcelain'),
+    head: git('rev-parse HEAD'),
+    main: git('rev-parse origin/main'),
+  });
 
   if (problems.length > 0) {
     console.error(`Refusing to deploy to production:\n${problems.map((problem) => `- ${problem}`).join('\n')}`);

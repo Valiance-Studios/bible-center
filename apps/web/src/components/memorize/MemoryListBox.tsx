@@ -22,7 +22,9 @@ export function MemoryListBox({span, list}: MemoryListBoxProps) {
     content = (
       <>
         <p>Sign in to keep this verse on a memory list and come back to it.</p>
-        <Button component={Link} to="/sign-in" variant="outline" radius="xl">Sign in</Button>
+        <Button component={Link} to="/sign-in" variant="outline" radius="xl">
+          Sign in
+        </Button>
       </>
     );
   } else if (!list.canKeepList && list.authStatus !== 'loading') {
@@ -40,7 +42,9 @@ export function MemoryListBox({span, list}: MemoryListBoxProps) {
     content = (
       <>
         <p>Your memory list could not be loaded.</p>
-        <Button variant="outline" radius="xl" onClick={list.reload}>Try again</Button>
+        <Button variant="outline" radius="xl" onClick={list.reload}>
+          Try again
+        </Button>
       </>
     );
   } else if (entry) {
@@ -49,9 +53,10 @@ export function MemoryListBox({span, list}: MemoryListBoxProps) {
     content = (
       <>
         <p>
-          <strong>{isMemorized ? 'On your memory list, memorized.' : 'On your memory list, learning.'}</strong>
-          {' '}
-          {isMemorized ? 'It comes back for review a week after you last practiced it.' : 'Mark it memorized once you can say it without help.'}
+          <strong>{isMemorized ? 'On your memory list, memorized.' : 'On your memory list, learning.'}</strong>{' '}
+          {isMemorized
+            ? 'It comes back for review a week after you last practiced it.'
+            : 'Mark it memorized once you can say it without help.'}
         </p>
         <Button
           variant="outline"
@@ -67,7 +72,12 @@ export function MemoryListBox({span, list}: MemoryListBoxProps) {
     content = (
       <>
         <p>Keep this verse on your memory list to come back to it.</p>
-        <Button variant="outline" radius="xl" loading={list.isSaving} onClick={() => void list.add(span).catch(() => {})}>
+        <Button
+          variant="outline"
+          radius="xl"
+          loading={list.isSaving}
+          onClick={() => void list.add(span).catch(() => {})}
+        >
           Add to my memory list
         </Button>
       </>
@@ -77,15 +87,18 @@ export function MemoryListBox({span, list}: MemoryListBoxProps) {
   return (
     <div className={classes.listBox}>
       {content}
-      {list.hasSaveError && (list.isFull
-        ? (
-            <p className={classes.saveError} role="alert">
-              {`Your memory list has ${WRITE_LIMITS.memoryVerses.toLocaleString('en-US')} verses, the most it can hold. Remove some from `}
-              <Link to="/memorize">your list</Link>
-              {' to add this one. You can still practice it.'}
-            </p>
-          )
-        : <p className={classes.saveError} role="alert">Your memory list could not be changed. Check your connection and try again.</p>)}
+      {list.hasSaveError &&
+        (list.isFull ? (
+          <p className={classes.saveError} role="alert">
+            {`Your memory list has ${WRITE_LIMITS.memoryVerses.toLocaleString('en-US')} verses, the most it can hold. Remove some from `}
+            <Link to="/memorize">your list</Link>
+            {' to add this one. You can still practice it.'}
+          </p>
+        ) : (
+          <p className={classes.saveError} role="alert">
+            Your memory list could not be changed. Check your connection and try again.
+          </p>
+        ))}
     </div>
   );
 }

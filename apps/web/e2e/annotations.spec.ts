@@ -58,7 +58,10 @@ test('a verse range can be highlighted, survives a reload, and can be removed', 
 test('removing a highlight across two others removes both', async ({page}) => {
   await openChapterAsNewUser(page);
 
-  for (const [verse, id] of [[VERSE_1, '#v1'], [VERSE_3, '#v3']] as const) {
+  for (const [verse, id] of [
+    [VERSE_1, '#v1'],
+    [VERSE_3, '#v3'],
+  ] as const) {
     // Starting from a fresh page each time keeps the last highlight's verse from being selected.
     await page.reload();
     await page.getByText(verse).click();
@@ -158,7 +161,7 @@ test('a keyboard user can select verses with the number buttons', async ({page})
   await expect(page.getByRole('button', {name: 'Select verse 2', exact: true})).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('one user never sees another user\'s annotations', async ({browser}) => {
+test("one user never sees another user's annotations", async ({browser}) => {
   const firstContext = await browser.newContext();
   const first = await firstContext.newPage();
 
@@ -188,7 +191,7 @@ test('an account that has not confirmed its email cannot annotate', async ({page
   await expect(page.getByRole('button', {name: 'Highlight'})).toHaveCount(0);
 });
 
-test('a signed-in user\'s translation follows them to another browser', async ({browser}) => {
+test("a signed-in user's translation follows them to another browser", async ({browser}) => {
   const firstContext = await browser.newContext();
   const first = await firstContext.newPage();
   const user = await openChapterAsNewUser(first);
@@ -222,7 +225,9 @@ test.describe('on a phone', () => {
 
     await expect(page.locator('#v2 mark')).toBeVisible();
 
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
 
     expect(overflow).toBeLessThanOrEqual(0);
   });

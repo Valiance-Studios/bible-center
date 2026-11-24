@@ -5,7 +5,13 @@
  */
 import type {Auth, MultiFactorResolver} from 'firebase/auth';
 
-import {getMultiFactorResolver, GoogleAuthProvider, PhoneAuthProvider, PhoneMultiFactorGenerator, signInWithCredential} from 'firebase/auth';
+import {
+  getMultiFactorResolver,
+  GoogleAuthProvider,
+  PhoneAuthProvider,
+  PhoneMultiFactorGenerator,
+  signInWithCredential,
+} from 'firebase/auth';
 
 /** The app's Firebase module, as the dev server serves it, so this shares the app's Auth instance. */
 const APP_FIREBASE_MODULE = '/src/firebase/index.ts';
@@ -28,7 +34,10 @@ export async function startStaffSignIn(googleIdToken: string): Promise<void> {
   } catch (error) {
     const resolver = getMultiFactorResolver(auth, error as never);
     const verifier = {type: 'recaptcha', verify: () => Promise.resolve('test'), _reset: () => {}};
-    const verificationId = await new PhoneAuthProvider(auth).verifyPhoneNumber({multiFactorHint: resolver.hints[0], session: resolver.session}, verifier as never);
+    const verificationId = await new PhoneAuthProvider(auth).verifyPhoneNumber(
+      {multiFactorHint: resolver.hints[0], session: resolver.session},
+      verifier as never,
+    );
 
     pending = {resolver, verificationId};
 

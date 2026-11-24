@@ -62,8 +62,9 @@ export function parseSource(source: string, clean: (text: string) => string): Ma
 
 /** Names every chapter of the canon a source is missing, so a bad download cannot be published. */
 export function findMissingChapters(chapters: Map<string, ChapterText>): string[] {
-  return BIBLE_BOOKS.flatMap((book) => Array.from({length: book.chapters}, (_, index) => `${book.name} ${index + 1}`))
-    .filter((key) => !chapters.has(key));
+  return BIBLE_BOOKS.flatMap((book) =>
+    Array.from({length: book.chapters}, (_, index) => `${book.name} ${index + 1}`),
+  ).filter((key) => !chapters.has(key));
 }
 
 async function buildTranslation({id, url, clean}: Source, outputDir: URL): Promise<void> {

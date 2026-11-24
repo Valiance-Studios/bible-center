@@ -1,6 +1,6 @@
 import type {DailyVerseList} from '../src/dailyVerses';
 
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {automaticDailyVerse, dateKeyOf, dayOfLeapYear, isDateKey} from '../src/dailyVerses';
 
 describe('dateKeyOf', () => {
@@ -36,9 +36,13 @@ describe('dayOfLeapYear', () => {
 });
 
 describe('automaticDailyVerse', () => {
-  const list: DailyVerseList = [['01001001', '01001001'], ['43003016', '43003017'], ['19023001', '19023001']];
+  const list: DailyVerseList = [
+    ['01001001', '01001001'],
+    ['43003016', '43003017'],
+    ['19023001', '19023001'],
+  ];
 
-  it('picks by the date\'s place in the year, wrapping a short list', () => {
+  it("picks by the date's place in the year, wrapping a short list", () => {
     expect(automaticDailyVerse(list, '2026-01-02')).toEqual({startVerse: '43003016', endVerse: '43003017'});
     expect(automaticDailyVerse(list, '2026-01-04')).toEqual({startVerse: '01001001', endVerse: '01001001'});
   });

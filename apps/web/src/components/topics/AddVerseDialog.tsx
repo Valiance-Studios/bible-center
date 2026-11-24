@@ -25,7 +25,15 @@ interface AddVerseDialogProps {
 }
 
 /** Adds a verse or passage to a topic, which counts as the person's upvote. */
-export function AddVerseDialog({topicName, existingKeys, removedKeys, translation, isSaving, onAdd, onClose}: AddVerseDialogProps) {
+export function AddVerseDialog({
+  topicName,
+  existingKeys,
+  removedKeys,
+  translation,
+  isSaving,
+  onAdd,
+  onClose,
+}: AddVerseDialogProps) {
   const [text, setText] = useState('');
   const [hasError, setHasError] = useState(false);
   /** Set when this person started a topic too recently, saying when they can start another. */
@@ -58,7 +66,9 @@ export function AddVerseDialog({topicName, existingKeys, removedKeys, translatio
       const limit = limitOf(error);
 
       if (limit?.type === 'cooldown') {
-        setWaitMessage(`You started a topic a few minutes ago. You can start another at ${formatTime(limit.endsAt)}. Until then you can still add verses to topics that already exist.`);
+        setWaitMessage(
+          `You started a topic a few minutes ago. You can start another at ${formatTime(limit.endsAt)}. Until then you can still add verses to topics that already exist.`,
+        );
       } else if (await wasRefusedForBlock(error)) {
         setIsBlocked(true);
       } else {
@@ -69,10 +79,11 @@ export function AddVerseDialog({topicName, existingKeys, removedKeys, translatio
 
   return (
     <Modal opened onClose={onClose} title={`Add a verse to ${topicName}`}>
-      <form onSubmit={(event) => {
-        event.preventDefault();
-        void add();
-      }}
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          void add();
+        }}
       >
         <TextInput
           label="Verse or passage"
@@ -90,25 +101,45 @@ export function AddVerseDialog({topicName, existingKeys, removedKeys, translatio
         )}
 
         {passage.isError && (
-          <Text c="red" size="sm" mt="sm">The verse could not be loaded. Check your connection and try again.</Text>
+          <Text c="red" size="sm" mt="sm">
+            The verse could not be loaded. Check your connection and try again.
+          </Text>
         )}
 
         {problem && <p className={classes.problem}>{problem}</p>}
 
-        <p className={classes.note}>Adding a verse counts as your upvote. It starts with 1, and others can upvote it from there.</p>
+        <p className={classes.note}>
+          Adding a verse counts as your upvote. It starts with 1, and others can upvote it from there.
+        </p>
 
-        {waitMessage && <Alert color="gray" mt="md" role="status">{waitMessage}</Alert>}
+        {waitMessage && (
+          <Alert color="gray" mt="md" role="status">
+            {waitMessage}
+          </Alert>
+        )}
         {isBlocked && (
           <Alert color="red" mt="md" role="alert">
             Your account has been blocked, so this could not be added.
             <SupportContact />
           </Alert>
         )}
-        {hasError && <Alert color="red" mt="md">It could not be added. Check your connection and try again.</Alert>}
+        {hasError && (
+          <Alert color="red" mt="md">
+            It could not be added. Check your connection and try again.
+          </Alert>
+        )}
 
         <Group justify="flex-end" mt="md">
-          <Button variant="default" onClick={onClose} disabled={isSaving}>Cancel</Button>
-          <Button type="submit" disabled={!span || isListed || isRemoved || waitMessage !== null || isBlocked} loading={isSaving}>Add verse</Button>
+          <Button variant="default" onClick={onClose} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={!span || isListed || isRemoved || waitMessage !== null || isBlocked}
+            loading={isSaving}
+          >
+            Add verse
+          </Button>
         </Group>
       </form>
     </Modal>

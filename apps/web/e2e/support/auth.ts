@@ -2,7 +2,15 @@ import type {Page} from '@playwright/test';
 import type {EmulatorRole} from '../../../../scripts/emulator-admin.ts';
 
 import {expect} from '@playwright/test';
-import {createGoogleAccount, enrollSmsSecondFactor, googleIdTokenOf, latestSmsCode, setAccountAge, setRole, uidOf} from '../../../../scripts/emulator-admin.ts';
+import {
+  createGoogleAccount,
+  enrollSmsSecondFactor,
+  googleIdTokenOf,
+  latestSmsCode,
+  setAccountAge,
+  setRole,
+  uidOf,
+} from '../../../../scripts/emulator-admin.ts';
 
 export interface TestUser {
   email: string;
@@ -35,7 +43,7 @@ async function attemptPopupSignIn(page: Page, user: TestUser): Promise<void> {
   // deleted (firebase-tools 15.35.0 leaves the extra id pointing at the deleted account).
   const existing = popup.locator('.js-reuse-account').filter({hasText: user.email});
 
-  if (await existing.count() > 0) {
+  if ((await existing.count()) > 0) {
     await existing.first().click();
   } else {
     await popup.getByRole('button', {name: 'Add new account'}).click();
@@ -91,11 +99,17 @@ async function signInAsStaff(page: Page, user: TestUser, accountAgeDays: number)
   await setAccountAge(await uidOf(user.email), accountAgeDays);
   await page.goto('/');
   await expect(page.getByRole('link', {name: 'Sign in'})).toBeVisible();
-  await page.evaluate(async ({path, token}) => (await import(/* @vite-ignore */ path) as BrowserSignIn).startStaffSignIn(token), {path: BROWSER_SIGN_IN_MODULE, token: googleIdTokenOf(user)});
+  await page.evaluate(
+    async ({path, token}) => ((await import(/* @vite-ignore */ path)) as BrowserSignIn).startStaffSignIn(token),
+    {path: BROWSER_SIGN_IN_MODULE, token: googleIdTokenOf(user)},
+  );
 
   const code = await latestSmsCode(phoneNumber);
 
-  await page.evaluate(async ({path, smsCode}) => (await import(/* @vite-ignore */ path) as BrowserSignIn).finishStaffSignIn(smsCode), {path: BROWSER_SIGN_IN_MODULE, smsCode: code});
+  await page.evaluate(
+    async ({path, smsCode}) => ((await import(/* @vite-ignore */ path)) as BrowserSignIn).finishStaffSignIn(smsCode),
+    {path: BROWSER_SIGN_IN_MODULE, smsCode: code},
+  );
 }
 
 /** Old enough to vote; see `VOTER_MIN_ACCOUNT_DAYS`. */
@@ -106,7 +120,11 @@ const ESTABLISHED_ACCOUNT_DAYS = 30;
  * signed in. The account is made beforehand and recorded as a month old, so it can vote, unless `accountAgeDays`
  * says otherwise. Reviewers and admins sign in with a second step, as the rules require.
  */
-export async function signInAsNewUser(page: Page, role: EmulatorRole = 'member', accountAgeDays = ESTABLISHED_ACCOUNT_DAYS): Promise<TestUser> {
+export async function signInAsNewUser(
+  page: Page,
+  role: EmulatorRole = 'member',
+  accountAgeDays = ESTABLISHED_ACCOUNT_DAYS,
+): Promise<TestUser> {
   const user = createTestUser();
 
   await setRole(user.email, role);

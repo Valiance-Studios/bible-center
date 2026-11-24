@@ -1,4 +1,4 @@
-import {describe, it} from 'vitest';
+import {describe, it} from 'vite-plus/test';
 import {assertFails, assertSucceeds} from '@firebase/rules-unit-testing';
 import {deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc} from 'firebase/firestore';
 import {ALICE, BOB, createCounted, dbFor, deleteCounted, MALLORY, useRulesTestEnvironment} from './support';
@@ -18,7 +18,11 @@ useRulesTestEnvironment(async (db) => {
   // Bob's list is as long as anyone's may be.
   await setDoc(doc(db, 'users', BOB), {memoryVerseCount: 500});
   await setDoc(doc(db, 'users', BOB, 'memoryVerses', '43003016'), {
-    startVerse: '43003016', endVerse: '43003016', status: 'learning', createdAt: new Date(), practicedAt: new Date(),
+    startVerse: '43003016',
+    endVerse: '43003016',
+    status: 'learning',
+    createdAt: new Date(),
+    practicedAt: new Date(),
   });
 });
 
@@ -56,7 +60,7 @@ describe('the memory list', () => {
     await assertFails(updateDoc(verseRef(ALICE), {endVerse: '19023006', practicedAt: serverTimestamp()}));
   });
 
-  it('counts each verse on the owner\'s record, and refuses one past the limit', async () => {
+  it("counts each verse on the owner's record, and refuses one past the limit", async () => {
     await assertFails(setDoc(verseRef(ALICE), entry()));
     await assertFails(createCounted(verseRef(BOB), entry(), COUNT));
   });
@@ -64,6 +68,8 @@ describe('the memory list', () => {
   it('only lowers the count when the verse is deleted in the same write', async () => {
     await assertSucceeds(createCounted(verseRef(ALICE), entry(), COUNT));
     await assertFails(deleteDoc(verseRef(ALICE)));
-    await assertFails(setDoc(doc(dbFor(ALICE), 'users', ALICE), {memoryVerseCount: 0, memoryVerseChange: KEY}, {merge: true}));
+    await assertFails(
+      setDoc(doc(dbFor(ALICE), 'users', ALICE), {memoryVerseCount: 0, memoryVerseChange: KEY}, {merge: true}),
+    );
   });
 });

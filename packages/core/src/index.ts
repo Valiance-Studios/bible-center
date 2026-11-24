@@ -10,7 +10,17 @@ export type {FadingWord, MemoryGroup, MemoryStatus, MemoryVerse} from './memoriz
 export type {Role, StaffRole} from './roles';
 export type {CommunityTopicVerse, ReportReason, TopicFile, TopicFileVerse, TopicVerse} from './topics';
 export type {VerseId, VerseLocation} from './verseId';
-export type {GrammarFile, LexiconEntry, LexiconFile, VerseWord, WordFile, WordFileLanguage, WordFileWord, WordLanguage, WordTranslation} from './words';
+export type {
+  GrammarFile,
+  LexiconEntry,
+  LexiconFile,
+  VerseWord,
+  WordFile,
+  WordFileLanguage,
+  WordFileWord,
+  WordLanguage,
+  WordTranslation,
+} from './words';
 
 export {TEMPORARY_EMAIL_ERROR} from './accounts';
 export {chapterIdOf, NOTE_MAX_LENGTH, selectVerse, spanContains, spanOf, spansOverlap, verseIdIn} from './annotations';
@@ -19,10 +29,37 @@ export {BIBLE_BOOKS, chapterTitle, isOldTestament, nextChapter, parseChapterRef,
 export {BIBLE_SECTIONS} from './bibleSections';
 export {formatReference, parseReferences, referenceOf} from './references';
 export {COOLDOWN_MS, cooldownEndsAt, WRITE_LIMITS} from './limits';
-export {FADING_STEP_COUNT, fadeWords, groupMemoryVerses, isDueForReview, MEMORY_GROUPS, MEMORY_STATUSES, REVIEW_AFTER_DAYS} from './memorize';
+export {
+  FADING_STEP_COUNT,
+  fadeWords,
+  groupMemoryVerses,
+  isDueForReview,
+  MEMORY_GROUPS,
+  MEMORY_STATUSES,
+  REVIEW_AFTER_DAYS,
+} from './memorize';
 export {groupReports, parseTopicVerseKey} from './review';
-export {canReview, isAdmin, isEmailAddress, normalizeEmail, parseRole, parseStaffRole, ROLE_NAMES, ROLES, STAFF_ROLES} from './roles';
+export {
+  canReview,
+  isAdmin,
+  isEmailAddress,
+  normalizeEmail,
+  parseRole,
+  parseStaffRole,
+  ROLE_NAMES,
+  ROLES,
+  STAFF_ROLES,
+} from './roles';
 export {formatVerseId, parseVerseId} from './verseId';
 export {MAX_SEED_SCORE, seedScore, topicVerseScore} from './topicScore';
-export {normalizeTopicName, rankTopicVerses, REPORT_DETAILS_MAX_LENGTH, REPORT_REASONS, topicSlug, topicVerseKey, VOTER_MIN_ACCOUNT_DAYS, votingOpensAt} from './topics';
+export {
+  normalizeTopicName,
+  rankTopicVerses,
+  REPORT_DETAILS_MAX_LENGTH,
+  REPORT_REASONS,
+  topicSlug,
+  topicVerseKey,
+  VOTER_MIN_ACCOUNT_DAYS,
+  votingOpensAt,
+} from './topics';
 export {languageOfWords, lexiconGroup, wordsOfVerse} from './words';

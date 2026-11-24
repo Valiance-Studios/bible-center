@@ -11,7 +11,7 @@ export function seedScore(openBibleVotes: number, topicMaxOpenBibleVotes: number
     return 0;
   }
 
-  return MAX_SEED_SCORE * Math.log1p(openBibleVotes) / Math.log1p(topicMaxOpenBibleVotes);
+  return (MAX_SEED_SCORE * Math.log1p(openBibleVotes)) / Math.log1p(topicMaxOpenBibleVotes);
 }
 
 /** Where a verse ranks within a topic: its OpenBible starting score plus one point per Bible Center upvote. */

@@ -14,7 +14,7 @@ export interface ReferenceSpan {
 function parseOneReference(text: string): VerseReference | null {
   const references = text.trim() ? parseReferences(text) : null;
 
-  return references?.length === 1 ? references[0] ?? null : null;
+  return references?.length === 1 ? (references[0] ?? null) : null;
 }
 
 /**
@@ -29,16 +29,19 @@ export function useReferenceSpan(text: string, translation: TranslationProvider)
   const lastSection = passage.sections.at(-1);
   const firstVerse = firstSection?.verses[0]?.verse;
   const lastVerse = lastSection?.verses.at(-1)?.verse;
-  const isWhole = isLoaded
-    && firstVerse !== undefined && lastVerse !== undefined
-    && (reference.startVerse === null || reference.startVerse === firstVerse)
-    && (reference.endVerse === null || reference.endVerse === lastVerse);
-  const span: ReferenceSpan | null = reference && isWhole && firstSection && lastSection
-    ? {
-        startVerse: verseIdIn({book: reference.book, chapter: firstSection.chapter}, firstVerse),
-        endVerse: verseIdIn({book: reference.book, chapter: lastSection.chapter}, lastVerse),
-      }
-    : null;
+  const isWhole =
+    isLoaded &&
+    firstVerse !== undefined &&
+    lastVerse !== undefined &&
+    (reference.startVerse === null || reference.startVerse === firstVerse) &&
+    (reference.endVerse === null || reference.endVerse === lastVerse);
+  const span: ReferenceSpan | null =
+    reference && isWhole && firstSection && lastSection
+      ? {
+          startVerse: verseIdIn({book: reference.book, chapter: firstSection.chapter}, firstVerse),
+          endVerse: verseIdIn({book: reference.book, chapter: lastSection.chapter}, lastVerse),
+        }
+      : null;
   const title = reference ? formatReference(reference) : '';
   let problem: string | null = null;
 

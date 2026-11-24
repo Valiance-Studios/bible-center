@@ -20,7 +20,7 @@ async function fetchJson<T>(path: string, description: string): Promise<T> {
     throw new Error(`Could not load ${description}: ${response.status}`);
   }
 
-  return await response.json() as T;
+  return (await response.json()) as T;
 }
 
 /** Reads the per-chapter files `scripts/build-bible-data.ts` writes. */
@@ -30,7 +30,8 @@ function staticTranslation(id: string, name: string, abbreviation: string, credi
     name,
     abbreviation,
     credit,
-    getChapter: ({book, chapter}) => fetchJson(`/bible/${id}/${book.slug}/${chapter}.json`, `${name}, ${book.name} ${chapter}`),
+    getChapter: ({book, chapter}) =>
+      fetchJson(`/bible/${id}/${book.slug}/${chapter}.json`, `${name}, ${book.name} ${chapter}`),
     getSearchableVerses: () => fetchJson(`/bible/${id}/verses.json`, `${name} for searching`),
   };
 }

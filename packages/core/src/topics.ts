@@ -59,7 +59,9 @@ export function normalizeTopicName(name: string): string {
 
 /** A topic's part of a URL and its file name, such as `self-control` for "self control". */
 export function topicSlug(name: string): string {
-  return normalizeTopicName(name).replaceAll(/[^a-z0-9]+/g, '-').replaceAll(/^-|-$/g, '');
+  return normalizeTopicName(name)
+    .replaceAll(/[^a-z0-9]+/g, '-')
+    .replaceAll(/^-|-$/g, '');
 }
 
 /** Identifies a verse or passage within a topic, for its votes: `bbcccvvv`, or `bbcccvvv-bbcccvvv` for a passage. */
@@ -78,7 +80,9 @@ export function rankTopicVerses(
   removedKeys: ReadonlySet<string> = new Set(),
 ): TopicVerse[] {
   const topicMax = Math.max(0, ...openBible.map(([, , votes]) => votes));
-  const upvotes = new Map(community.map(({startVerse, endVerse, upvotes: count}) => [topicVerseKey(startVerse, endVerse), count]));
+  const upvotes = new Map(
+    community.map(({startVerse, endVerse, upvotes: count}) => [topicVerseKey(startVerse, endVerse), count]),
+  );
   const openBibleKeys = new Set(openBible.map(([startVerse, endVerse]) => topicVerseKey(startVerse, endVerse)));
   const onlyOnBibleCenter = community
     .filter(({startVerse, endVerse}) => !openBibleKeys.has(topicVerseKey(startVerse, endVerse)))
@@ -89,7 +93,15 @@ export function rankTopicVerses(
     .map(([startVerse, endVerse, openBibleVotes]) => {
       const verseUpvotes = upvotes.get(topicVerseKey(startVerse, endVerse)) ?? 0;
 
-      return {startVerse, endVerse, openBibleVotes, upvotes: verseUpvotes, score: topicVerseScore(openBibleVotes, topicMax, verseUpvotes)};
+      return {
+        startVerse,
+        endVerse,
+        openBibleVotes,
+        upvotes: verseUpvotes,
+        score: topicVerseScore(openBibleVotes, topicMax, verseUpvotes),
+      };
     })
-    .sort((a, b) => b.score - a.score || b.openBibleVotes - a.openBibleVotes || a.startVerse.localeCompare(b.startVerse));
+    .sort(
+      (a, b) => b.score - a.score || b.openBibleVotes - a.openBibleVotes || a.startVerse.localeCompare(b.startVerse),
+    );
 }

@@ -25,10 +25,23 @@ export function PhoneMenu({opened, onClose, onAbout, onDeleteAccount}: PhoneMenu
   const accountLinks = useAccountLinks();
 
   return (
-    <Drawer opened={opened} onClose={onClose} position="left" size={334} title="Bible Center" classNames={{title: classes.title, body: classes.body}}>
-      <Link className={classes.link} to="/search" onClick={onClose}>Search</Link>
-      <Link className={classes.link} to="/topics" onClick={onClose}>Topics</Link>
-      <Link className={classes.link} to="/memorize" onClick={onClose}>Memorize</Link>
+    <Drawer
+      opened={opened}
+      onClose={onClose}
+      position="left"
+      size={334}
+      title="Bible Center"
+      classNames={{title: classes.title, body: classes.body}}
+    >
+      <Link className={classes.link} to="/search" onClick={onClose}>
+        Search
+      </Link>
+      <Link className={classes.link} to="/topics" onClick={onClose}>
+        Topics
+      </Link>
+      <Link className={classes.link} to="/memorize" onClick={onClose}>
+        Memorize
+      </Link>
       <button
         type="button"
         className={classes.link}
@@ -39,9 +52,13 @@ export function PhoneMenu({opened, onClose, onAbout, onDeleteAccount}: PhoneMenu
       >
         About
       </button>
-      <Link className={classes.link} to="/privacy" onClick={onClose}>Privacy</Link>
+      <Link className={classes.link} to="/privacy" onClick={onClose}>
+        Privacy
+      </Link>
       {accountLinks.map((link) => (
-        <Link key={link.to} className={classes.link} to={link.to} onClick={onClose}><AccountLinkLabel {...link} /></Link>
+        <Link key={link.to} className={classes.link} to={link.to} onClick={onClose}>
+          <AccountLinkLabel {...link} />
+        </Link>
       ))}
       {isSignedIn && (
         <button
@@ -75,7 +92,14 @@ export function PhoneMenu({opened, onClose, onAbout, onDeleteAccount}: PhoneMenu
               {isOpen && (
                 <div className={classes.books}>
                   {books.map((book) => (
-                    <Link key={book.slug} className={classes.book} to={chapterPath({book, chapter: 1})} onClick={onClose}>{book.name}</Link>
+                    <Link
+                      key={book.slug}
+                      className={classes.book}
+                      to={chapterPath({book, chapter: 1})}
+                      onClick={onClose}
+                    >
+                      {book.name}
+                    </Link>
                   ))}
                 </div>
               )}

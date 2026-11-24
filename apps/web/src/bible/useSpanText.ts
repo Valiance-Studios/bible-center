@@ -5,7 +5,10 @@ import {formatReference, referenceOf} from '@bible-center/core';
 import {usePassage} from './usePassage';
 
 /** A passage's text in a translation, and how to label it, such as "Lamentations 3:22–23, BSB". */
-export function useSpanText(span: {startVerse: VerseId; endVerse: VerseId} | null | undefined, translation: TranslationProvider) {
+export function useSpanText(
+  span: {startVerse: VerseId; endVerse: VerseId} | null | undefined,
+  translation: TranslationProvider,
+) {
   const reference = span ? referenceOf(span) : null;
   const passage = usePassage(reference, translation);
 

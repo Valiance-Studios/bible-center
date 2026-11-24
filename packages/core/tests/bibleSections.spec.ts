@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {BIBLE_SECTIONS} from '../src/bibleSections';
 
 describe('BIBLE_SECTIONS', () => {

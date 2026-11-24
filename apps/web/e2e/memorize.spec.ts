@@ -98,7 +98,9 @@ test('a memorized verse comes back for review after a week', async ({page}) => {
 
   await expect(due.getByRole('link', {name: 'John 3:16', exact: true})).toBeVisible();
   await expect(due.getByText('Memorized, practiced 10 days ago')).toBeVisible();
-  await expect(page.getByRole('region', {name: 'Learning'}).getByRole('link', {name: 'Psalm 23:1', exact: true})).toBeVisible();
+  await expect(
+    page.getByRole('region', {name: 'Learning'}).getByRole('link', {name: 'Psalm 23:1', exact: true}),
+  ).toBeVisible();
 
   // Practicing it moves it back among the memorized verses.
   await due.getByRole('link', {name: 'Practice John 3:16'}).click();
@@ -107,7 +109,9 @@ test('a memorized verse comes back for review after a week', async ({page}) => {
   await expect(page.getByRole('status')).toHaveText('You knew it 1 of 1 time this session.');
 
   await page.getByRole('link', {name: 'My memory list'}).click();
-  await expect(page.getByRole('region', {name: 'Memorized'}).getByRole('link', {name: 'John 3:16', exact: true})).toBeVisible();
+  await expect(
+    page.getByRole('region', {name: 'Memorized'}).getByRole('link', {name: 'John 3:16', exact: true}),
+  ).toBeVisible();
   await expect(page.getByRole('region', {name: 'Ready to review'})).toHaveCount(0);
 });
 

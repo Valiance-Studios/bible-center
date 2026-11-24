@@ -27,7 +27,14 @@ interface ReportGroupItemProps {
 }
 
 /** Every open report on one verse of one topic, to remove the verse from the topic or keep it. */
-export function ReportGroupItem({item: {group, outcome}, translation, isSaving, hasError, accounts, onResolve}: ReportGroupItemProps) {
+export function ReportGroupItem({
+  item: {group, outcome},
+  translation,
+  isSaving,
+  hasError,
+  accounts,
+  onResolve,
+}: ReportGroupItemProps) {
   // OpenBible's topics are named in their files, and the topics people start in Firestore.
   const {data: topicFile} = useQuery(topicQuery(group.topic));
   const {data: started} = useQuery({...startedTopicQuery(group.topic), enabled: topicFile === null});
@@ -41,16 +48,23 @@ export function ReportGroupItem({item: {group, outcome}, translation, isSaving, 
   const reference = span ? referenceOf(span) : null;
   const title = reference ? formatReference(reference) : group.verseKey;
   const count = group.reports.length;
-  const outcomeText = outcome === 'removed'
-    ? `Removed from ${topicName}. Its reports are closed.`
-    : outcome === 'kept' ? `Kept on ${topicName}. Its reports are closed.` : null;
+  const outcomeText =
+    outcome === 'removed'
+      ? `Removed from ${topicName}. Its reports are closed.`
+      : outcome === 'kept'
+        ? `Kept on ${topicName}. Its reports are closed.`
+        : null;
 
   return (
     <article className={classes.item} aria-label={`${title} on ${topicName}`}>
       <div className={classes.head}>
-        {reference
-          ? <Link className={classes.reference} to={referencePath(reference)}>{title}</Link>
-          : <span className={classes.reference}>{title}</span>}
+        {reference ? (
+          <Link className={classes.reference} to={referencePath(reference)}>
+            {title}
+          </Link>
+        ) : (
+          <span className={classes.reference}>{title}</span>
+        )}
         <span className={classes.onTopic}>
           {'on '}
           <Link to={`/topics/${group.topic}`}>{topicName}</Link>
@@ -59,7 +73,9 @@ export function ReportGroupItem({item: {group, outcome}, translation, isSaving, 
 
       {reference && <ReviewVerseText reference={reference} translation={translation} />}
 
-      {accounts && <AccountLine uid={adder.data} lead="Added by" did={`added ${title} to ${topicName}`} accounts={accounts} />}
+      {accounts && (
+        <AccountLine uid={adder.data} lead="Added by" did={`added ${title} to ${topicName}`} accounts={accounts} />
+      )}
 
       <ul className={classes.reports} aria-label={count === 1 ? '1 report' : `${count} reports`}>
         {group.reports.map((report) => (
@@ -67,7 +83,9 @@ export function ReportGroupItem({item: {group, outcome}, translation, isSaving, 
             <strong>{REPORT_REASONS[report.reason]}</strong>
             <span className={classes.when}>{` · ${formatReviewDate(report.createdAt)}`}</span>
             {report.details && <p className={classes.details}>{report.details}</p>}
-            {accounts && <AccountLine uid={report.reportedBy} lead="Reported by" did="sent this report" accounts={accounts} />}
+            {accounts && (
+              <AccountLine uid={report.reportedBy} lead="Reported by" did="sent this report" accounts={accounts} />
+            )}
           </li>
         ))}
       </ul>

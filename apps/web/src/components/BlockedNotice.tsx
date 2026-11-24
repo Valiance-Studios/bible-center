@@ -10,5 +10,9 @@ interface BlockedNoticeProps {
 
 /** Tells a blocked account, where it would save something, why it cannot. */
 export function BlockedNotice({id, children}: BlockedNoticeProps) {
-  return <p id={id} className={classes.notice}>{children}</p>;
+  return (
+    <p id={id} className={classes.notice}>
+      {children}
+    </p>
+  );
 }

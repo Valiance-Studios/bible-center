@@ -15,10 +15,14 @@ import {HOSTED_PROJECTS} from './environments.ts';
 
 /** The projects this may change. */
 const PROJECTS = new Set(HOSTED_PROJECTS.keys());
-const {values} = parseArgs({options: {project: {type: 'string'}, email: {type: 'string'}, write: {type: 'boolean', default: false}}});
+const {values} = parseArgs({
+  options: {project: {type: 'string'}, email: {type: 'string'}, write: {type: 'boolean', default: false}},
+});
 
 if (!values.project || !PROJECTS.has(values.project) || !values.email) {
-  console.error(`Usage: node scripts/reset-two-step.ts --project <${[...PROJECTS].join(' | ')}> --email <email> [--write]`);
+  console.error(
+    `Usage: node scripts/reset-two-step.ts --project <${[...PROJECTS].join(' | ')}> --email <email> [--write]`,
+  );
   process.exit(1);
 }
 
@@ -33,7 +37,9 @@ if (factors.length === 0) {
   process.exit(0);
 }
 
-console.log(`${user.email} (${user.uid}) has: ${factors.map(({displayName, factorId}) => displayName ?? factorId).join(', ')}.`);
+console.log(
+  `${user.email} (${user.uid}) has: ${factors.map(({displayName, factorId}) => displayName ?? factorId).join(', ')}.`,
+);
 
 if (!values.write) {
   console.log('Dry run: pass --write to turn it off.');

@@ -1,6 +1,6 @@
 import type {SearchableVerse} from '@bible-center/core';
 
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {buildPhraseIndex} from '@/bible/phraseSearch';
 
 // Invented text, as test fixtures must never hold copyrighted translations.
@@ -11,7 +11,8 @@ const VERSES: SearchableVerse[] = [
   ['psalms', 4, 5, 'Morning light fell gently across the river valley.'],
 ];
 
-const locationOf = ({slug, chapter, verse}: {slug: string; chapter: number; verse: number}) => `${slug} ${chapter}:${verse}`;
+const locationOf = ({slug, chapter, verse}: {slug: string; chapter: number; verse: number}) =>
+  `${slug} ${chapter}:${verse}`;
 
 describe('buildPhraseIndex', () => {
   const index = buildPhraseIndex(VERSES);
@@ -53,7 +54,12 @@ describe('buildPhraseIndex', () => {
   });
 
   it('limits how many results it returns', () => {
-    const many: SearchableVerse[] = Array.from({length: 50}, (_, verse) => ['genesis', 1, verse + 1, 'The same river.']);
+    const many: SearchableVerse[] = Array.from({length: 50}, (_, verse) => [
+      'genesis',
+      1,
+      verse + 1,
+      'The same river.',
+    ]);
 
     expect(buildPhraseIndex(many).search('river')).toHaveLength(20);
   });

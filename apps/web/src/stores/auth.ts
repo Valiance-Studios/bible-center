@@ -17,7 +17,12 @@ import {auth} from '@/firebase';
 import {FirebaseError} from 'firebase/app';
 import {getAccess, isAccountBlocked} from '@/firebase/access';
 import {recordFirstSignIn} from '@/firebase/settings';
-import {finishTwoStepSignIn, hasEnrolledSecondFactor, signedInWithSecondFactor, twoStepResolverFor} from '@/firebase/twoStep';
+import {
+  finishTwoStepSignIn,
+  hasEnrolledSecondFactor,
+  signedInWithSecondFactor,
+  twoStepResolverFor,
+} from '@/firebase/twoStep';
 
 /**
  * Where the current visitor stands. Reading is open in every state; `allowed` is what will unlock
@@ -73,7 +78,13 @@ interface Access {
   isEnrolled: boolean;
 }
 
-const NO_ACCESS = {role: 'member', accountCreatedAt: null, isBlocked: false, hasSecondFactor: false, isEnrolled: false} as const;
+const NO_ACCESS = {
+  role: 'member',
+  accountCreatedAt: null,
+  isBlocked: false,
+  hasSecondFactor: false,
+  isEnrolled: false,
+} as const;
 
 /** A failed check counts as not blocked: the rules still refuse a blocked account's writes. */
 async function isBlockedOrUnknown(uid: string): Promise<boolean> {
@@ -121,7 +132,13 @@ async function accessFor(user: User): Promise<Access> {
   const twoStep = {hasSecondFactor: await signedInWithSecondFactor(user), isEnrolled: hasEnrolledSecondFactor(user)};
 
   // A blocked account cannot save its first sign-in, and cannot vote either way.
-  return {status: 'allowed', role, isBlocked, ...twoStep, accountCreatedAt: isBlocked ? null : await accountCreatedAtOf(user.uid)};
+  return {
+    status: 'allowed',
+    role,
+    isBlocked,
+    ...twoStep,
+    accountCreatedAt: isBlocked ? null : await accountCreatedAtOf(user.uid),
+  };
 }
 
 export const useAuthStore = create<AuthState>((set) => {
@@ -167,9 +184,10 @@ export const useAuthStore = create<AuthState>((set) => {
     twoStepResolver: null,
     ...NO_ACCESS,
 
-    init: () => onAuthStateChanged(auth, (user) => {
-      void applyUser(user);
-    }),
+    init: () =>
+      onAuthStateChanged(auth, (user) => {
+        void applyUser(user);
+      }),
 
     signInWithGoogle: () => signInWith(() => signInWithPopup(auth, new GoogleAuthProvider())),
 
@@ -235,5 +253,7 @@ export const useAuthStore = create<AuthState>((set) => {
  * when the rules refused it, and updates the store so the pages show the blocked notice.
  */
 export async function wasRefusedForBlock(error: unknown): Promise<boolean> {
-  return error instanceof FirebaseError && error.code === 'permission-denied' && useAuthStore.getState().recheckBlocked();
+  return (
+    error instanceof FirebaseError && error.code === 'permission-denied' && useAuthStore.getState().recheckBlocked()
+  );
 }

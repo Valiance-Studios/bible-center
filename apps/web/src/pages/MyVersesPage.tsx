@@ -45,8 +45,12 @@ function parseOrder(value: string | null): AnnotationOrder {
 function NothingSaved() {
   return (
     <>
-      <p className={classes.body}>Verses you highlight, bookmark or add notes to will appear here. To start, open a chapter and select a verse.</p>
-      <Button component={Link} to="/read" radius="xl" size="md">Read the Bible</Button>
+      <p className={classes.body}>
+        Verses you highlight, bookmark or add notes to will appear here. To start, open a chapter and select a verse.
+      </p>
+      <Button component={Link} to="/read" radius="xl" size="md">
+        Read the Bible
+      </Button>
     </>
   );
 }
@@ -87,13 +91,12 @@ function SavedVerses({uid}: {uid: string}) {
     return <NothingSaved />;
   }
 
-  const shown = pages.annotations
-    .flatMap((annotation) => {
-      const reference = referenceOf(annotation);
+  const shown = pages.annotations.flatMap((annotation) => {
+    const reference = referenceOf(annotation);
 
-      // The rules only accept well-formed verse ids, so this only skips data written some other way.
-      return reference ? [{annotation, reference}] : [];
-    });
+    // The rules only accept well-formed verse ids, so this only skips data written some other way.
+    return reference ? [{annotation, reference}] : [];
+  });
   const filterLabel = FILTERS.find(({value}) => value === filter)?.label ?? '';
 
   return (
@@ -120,7 +123,9 @@ function SavedVerses({uid}: {uid: string}) {
 
       {pages.isLoading && <Loader className={classes.loader} aria-label="Loading your verses" />}
 
-      {!pages.isLoading && shown.length === 0 && <p className={classes.none}>{`You have no ${filterLabel.toLowerCase()} yet.`}</p>}
+      {!pages.isLoading && shown.length === 0 && (
+        <p className={classes.none}>{`You have no ${filterLabel.toLowerCase()} yet.`}</p>
+      )}
 
       {shown.map(({annotation, reference}) => (
         <AnnotationItem
@@ -133,10 +138,21 @@ function SavedVerses({uid}: {uid: string}) {
         />
       ))}
 
-      {pages.hasMoreError && <Alert color="red" mt="md">More verses could not be loaded. Check your connection and try again.</Alert>}
+      {pages.hasMoreError && (
+        <Alert color="red" mt="md">
+          More verses could not be loaded. Check your connection and try again.
+        </Alert>
+      )}
 
       {pages.hasMore && (
-        <Button className={classes.more} variant="outline" radius="xl" size="md" loading={pages.isLoadingMore} onClick={pages.loadMore}>
+        <Button
+          className={classes.more}
+          variant="outline"
+          radius="xl"
+          size="md"
+          loading={pages.isLoadingMore}
+          onClick={pages.loadMore}
+        >
           Show more
         </Button>
       )}
@@ -161,14 +177,18 @@ export function MyVersesPage() {
       {status === 'signedOut' && (
         <>
           <p className={classes.body}>Sign in to see the verses you highlight, bookmark and add notes to.</p>
-          <Button component={Link} to="/sign-in" radius="xl" size="md">Sign in</Button>
+          <Button component={Link} to="/sign-in" radius="xl" size="md">
+            Sign in
+          </Button>
         </>
       )}
 
       {status !== 'loading' && status !== 'signedOut' && status !== 'allowed' && (
         <>
           <p className={classes.body}>Your account cannot save verses yet.</p>
-          <Button component={Link} to="/sign-in" radius="xl" size="md">Account status</Button>
+          <Button component={Link} to="/sign-in" radius="xl" size="md">
+            Account status
+          </Button>
         </>
       )}
 
