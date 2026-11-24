@@ -28,14 +28,14 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run lint
+      - run: npm run check
 
       - run: npm run type-check
 
       # Builds with the production config, which is public; it is the type and bundle check.
       - run: npm run build
 
-      - run: npx vitest run
+      - run: npm run test:unit
 
   emulator-tests:
     name: Rules and E2E tests (Firebase emulators)

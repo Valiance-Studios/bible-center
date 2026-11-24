@@ -178,9 +178,9 @@ flowchart LR
 | Routing | React Router |
 | State | Zustand for app state, TanStack Query for fetched data |
 | Backend | Firebase Authentication, Firestore, Hosting, App Check; Cloud Functions when needed |
-| Build | Vite, npm workspaces |
-| Tests | Vitest with React Testing Library, Playwright, Firebase emulators |
-| Linting | ESLint with `@stylistic` and `react-hooks` |
+| Build | Vite+ (Vite), npm workspaces |
+| Tests | Vitest (through Vite+) with React Testing Library, Playwright, Firebase emulators |
+| Linting and formatting | Oxlint and Oxfmt (through Vite+) |
 
 ## Bible Text
 
@@ -853,7 +853,7 @@ flowchart LR
   e2e["npm run test:e2e"] -- ".env.development" --> emulators
   rules["npm run test:emulator"] --> emulators
   devStaging["npm run dev:staging"] -- ".env.staging<br/>.env.staging.local" --> staging["vs-bible-center-dev<br/>vs-bible-center-dev.web.app"]
-  deployStaging["npm run deploy:staging<br/>any branch, to try it"] --> buildStaging["build-hosting.ts<br/>vite build --mode staging"]
+  deployStaging["npm run deploy:staging<br/>any branch, to try it"] --> buildStaging["build-hosting.ts<br/>vp build --mode staging"]
   buildStaging --> staging
 ```
 

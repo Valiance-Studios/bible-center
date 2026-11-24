@@ -9,7 +9,7 @@ Setting up a machine, running the app, testing, and known quirks. The diagram un
 
 ## Repository Conventions
 
-Run every command from the repository root. The root holds the commands, shared tool config (ESLint, the base `tsconfig`, the Vitest workspace) and Firebase project files. Anything specific to one workspace, such as its Vite and Playwright config, env files and tests, lives in that workspace.
+Run every command from the repository root. The root holds the commands, shared tool config (Vite+, the base `tsconfig`) and Firebase project files. Anything specific to one workspace, such as its Vite and Playwright config, env files and tests, lives in that workspace.
 
 ## Running Locally
 
@@ -55,21 +55,21 @@ Never put real secrets in `VITE_` variables, as they end up in the bundle. The p
 
 ## Testing
 
-Before opening a pull request, run `npm run lint`, `npm run type-check`, `npm run build`, `npx vitest run`, `npm run test:emulator`, and `npm run test:e2e`.
+Before opening a pull request, run `npm run check`, `npm run type-check`, `npm run build`, `npm run test:unit`, `npm run test:emulator`, and `npm run test:e2e`.
 
 | Command | Runs | Where |
 | --- | --- | --- |
-| `npx vitest run` | Unit tests in jsdom (web) or Node (others) | `apps/web/tests`, `packages/core/tests`, `tests/scripts` |
+| `npm run test:unit` (`npx vp test watch` to watch) | Unit tests in jsdom (web) or Node (others) | `apps/web/tests`, `packages/core/tests`, `tests/scripts` |
 | `npm run test:emulator` | Security rules, and the Cloud Functions' code through the Admin SDK, against the Auth and Firestore emulators | `tests/rules`, `tests/functions` |
 | `npm run test:e2e` | Playwright against the dev server and emulators, configured by `apps/web/playwright.config.ts` | `apps/web/e2e` |
 
-GitHub Actions runs the same checks on every pull request and push to `main` (`.github/workflows/ci.yml`). The `checks` job runs lint, type-check, build and unit tests. The `emulator-tests` job installs Java for the Firestore emulator, caches the emulator downloads, and runs the rules and E2E tests. When it fails, the Playwright HTML report, with traces from retried tests, is attached to the run as the `playwright-report` artifact. On pushes to `main`, two more jobs release the commit to staging and production; see [Releasing](DEPLOYMENT.md#releasing).
+GitHub Actions runs the same checks on every pull request and push to `main` (`.github/workflows/ci.yml`). The `checks` job runs formatting and lint, type-check, build and unit tests. The `emulator-tests` job installs Java for the Firestore emulator, caches the emulator downloads, and runs the rules and E2E tests. When it fails, the Playwright HTML report, with traces from retried tests, is attached to the run as the `playwright-report` artifact. On pushes to `main`, two more jobs release the commit to staging and production; see [Releasing](DEPLOYMENT.md#releasing).
 
 **Keep copyrighted text out of tests.** Fixtures must use public-domain translations or invented text. See [ESV Rules](../ARCHITECTURE.md#esv-rules).
 
-## Linting
+## Linting and Formatting
 
-ESLint (`eslint.config.js`) with `typescript-eslint`, `eslint-plugin-react-hooks`, and `@stylistic` (semicolons, single quotes, 1tbs braces, always-parenthesized arrow params, no spaces inside object braces). Run `npm run lint` or `npm run lint:fix`. Other conventions are in [CLAUDE.md](../CLAUDE.md#code-style).
+Oxlint lints, with type-aware rules and the React hooks rules, and Oxfmt formats everything except Markdown and generated files. Both come with Vite+ and are configured in `vite.config.ts`. Run `npm run check` (formatting, lint and types, as CI does), `npm run lint`, `npm run lint:fix` or `npm run fmt`. Other conventions are in [CLAUDE.md](../CLAUDE.md#code-style).
 
 ## Known Quirks
 
@@ -77,7 +77,9 @@ ESLint (`eslint.config.js`) with `typescript-eslint`, `eslint-plugin-react-hooks
 - **Deleting a Google account in the Auth emulator can break its sign-in popup.** In firebase-tools 15.35.0, choosing "Add new account" for an email that already exists gives that account a second Google id. Once the account is deleted, the extra id still points at it, and every later popup fails with "Internal state invariant broken". Pick existing accounts under "Choose an account" instead, as the E2E helper does, or restart the emulators to clear it.
 - **The Auth emulator has no authenticator apps (TOTP).** It offers only SMS as a second step, which the rules accept too, so E2E tests give reviewer and admin accounts an SMS second factor (`enrollSmsSecondFactor`) and sign them in through `apps/web/e2e/support/browserSignIn.ts`, a test-only module the dev server serves to the page. The authenticator-app screens are covered by unit tests instead. To act as staff by hand locally, add the same SMS second factor in the Emulator UI, or use the hosted project.
 - **Firestore indexes are not checked locally.** The emulators answer any query, including ones the hosted project rejects for lack of a composite index. When adding a query that filters on one field and orders by another, or orders by more than one, add its index to `firestore.indexes.json` and deploy it with `npm run deploy:staging -- --only firestore`, and to production with the next release.
-- **npm audit:** production dependencies are clean, using `overrides` in `package.json` for a newer `@grpc/grpc-js` under the Firestore SDK. Moderate findings remain in dev tooling (`firebase-tools`, `eslint`, `typescript-eslint`), where the only suggested fixes are major downgrades.
+- **Deploy hooks in `firebase.json` must not need forward slashes.** On Windows, the Firebase CLI runs them through `cross-env`, which turns every `/` into ``. File paths survive that, but a workspace name such as `@bible-center/functions` does not, so hooks call root scripts such as `build:functions` instead.
+- **npm audit:** production dependencies are clean, using `overrides` in `package.json` for a newer `@grpc/grpc-js` under the Firestore SDK. Moderate findings remain in dev tooling (such as `firebase-tools`), where the only suggested fixes are major downgrades.
 - **Install scripts:** npm does not run dependencies' install scripts unless approved. The test suites and build pass without them.
-- **TypeScript:** stays on 6.0 until `typescript-eslint` supports 7.
+- **Vite+:** the npm scripts use the local copy, so a global `vp` is optional. `vite` is an alias for `@voidzero-dev/vite-plus-core`, in both `devDependencies` and `overrides`: to upgrade, change `vite-plus` and both aliases together, to the core version that `vite-plus` depends on.
+- **TypeScript:** `npm run check` type-checks with Vite+'s checker, a beta port of TypeScript 7, and `npm run type-check` with the installed TypeScript 6.0, which also builds the Cloud Functions. `type-check` is the authority if they differ.
 - **Workspace packages:** `packages/core` exports TypeScript source and has no build step, so Vite compiles it as part of the app. Its `tsconfig` has no project reference from `apps/web`, because `tsc --build` rejects references to projects that use `noEmit`.

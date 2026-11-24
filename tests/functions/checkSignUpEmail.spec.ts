@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {checkSignUpEmail} from '../../apps/functions/src/checkSignUpEmail.ts';
 
 describe('checkSignUpEmail', () => {

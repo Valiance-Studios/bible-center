@@ -1,7 +1,7 @@
 import type {LexiconFile, WordFile} from '../../packages/core/src/words.ts';
 
 import {existsSync, readFileSync} from 'node:fs';
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {BIBLE_BOOKS} from '../../packages/core/src/bibleBooks.ts';
 import {lexiconGroup} from '../../packages/core/src/words.ts';
 import {

@@ -1,6 +1,6 @@
 import type {MemoryVerse} from '../src/memorize';
 
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {fadeWords, groupMemoryVerses, isDueForReview} from '../src/memorize';
 
 const NOW = new Date('2026-11-10T12:00:00Z');

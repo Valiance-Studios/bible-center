@@ -3,7 +3,7 @@ import type {TopicFile} from '../../packages/core/src/topics.ts';
 import type {PassageText} from '../../scripts/build-daily-verses';
 
 import {readFileSync} from 'node:fs';
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {DAILY_VERSE_COUNT} from '../../packages/core/src/dailyVerses.ts';
 import {parseVerseId} from '../../packages/core/src/verseId.ts';
 import {chooseDailyVerses} from '../../scripts/build-daily-verses';

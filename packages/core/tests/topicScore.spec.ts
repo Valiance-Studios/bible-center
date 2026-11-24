@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {MAX_SEED_SCORE, seedScore, topicVerseScore} from '../src/topicScore';
 
 const TOPIC_MAX = 2953;

@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it} from 'vite-plus/test';
 import {blockAccount, parseBlockAccountRequest} from '../../apps/functions/src/blockAccount.ts';
 import {requireAdmin} from '../../apps/functions/src/caller.ts';
 import {db} from '../../apps/functions/src/firebase.ts';

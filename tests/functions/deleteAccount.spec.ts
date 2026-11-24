@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it} from 'vite-plus/test';
 import {requireSignedIn} from '../../apps/functions/src/caller.ts';
 import {deleteAccount} from '../../apps/functions/src/deleteAccount.ts';
 import {auth, db} from '../../apps/functions/src/firebase.ts';

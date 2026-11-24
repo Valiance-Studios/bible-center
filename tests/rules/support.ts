@@ -2,7 +2,7 @@ import type {RulesTestEnvironment} from '@firebase/rules-unit-testing';
 import type {DocumentReference, Firestore} from 'firebase/firestore';
 
 import {readFileSync} from 'node:fs';
-import {afterAll, beforeAll, beforeEach} from 'vitest';
+import {afterAll, beforeAll, beforeEach} from 'vite-plus/test';
 import {initializeTestEnvironment} from '@firebase/rules-unit-testing';
 import {doc, increment, serverTimestamp, setDoc, writeBatch} from 'firebase/firestore';
 

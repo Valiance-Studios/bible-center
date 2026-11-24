@@ -18,7 +18,7 @@
       ],
       "predeploy": [
         "node scripts/check-release.ts",
-        "npm run build -w @bible-center/functions"
+        "npm run build:functions"
       ]
     }
   ],

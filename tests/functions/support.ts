@@ -1,6 +1,6 @@
 import type {CallableRequest} from 'firebase-functions/v2/https';
 
-import {beforeEach} from 'vitest';
+import {beforeEach} from 'vite-plus/test';
 import {auth, db} from '../../apps/functions/src/firebase.ts';
 
 const PROJECT = 'demo-bible-center';

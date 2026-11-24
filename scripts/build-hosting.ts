@@ -5,7 +5,7 @@
  */
 import {execSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {loadEnv} from 'vite';
+import {loadEnv} from 'vite-plus';
 import {findConfigProblems} from './check-firebase-config.ts';
 import {hostedMode} from './environments.ts';
 

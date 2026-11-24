@@ -1,6 +1,6 @@
 import type {DocumentReference, Firestore} from 'firebase/firestore';
 
-import {describe, it} from 'vitest';
+import {describe, it} from 'vite-plus/test';
 import {assertFails, assertSucceeds} from '@firebase/rules-unit-testing';
 import {
   addDoc,

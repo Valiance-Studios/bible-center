@@ -1,6 +1,6 @@
 import type {Firestore} from 'firebase/firestore';
 
-import {describe, it} from 'vitest';
+import {describe, it} from 'vite-plus/test';
 import {assertFails, assertSucceeds} from '@firebase/rules-unit-testing';
 import {collection, deleteDoc, doc, getDoc, getDocs, runTransaction, serverTimestamp, setDoc, updateDoc} from 'firebase/firestore';
 import {ADA, ALICE, BOB, createCounted, createStamped, dbFor, RITA, useRulesTestEnvironment} from './support';

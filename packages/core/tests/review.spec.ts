@@ -1,6 +1,6 @@
 import type {OpenReport} from '../src/review';
 
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {groupReports, parseTopicVerseKey} from '../src/review';
 
 function report(id: string, topic: string, verseKey: string, day: number): OpenReport {

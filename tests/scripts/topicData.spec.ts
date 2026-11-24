@@ -1,7 +1,7 @@
 import type {TopicFile} from '../../packages/core/src/topics.ts';
 
 import {existsSync, readFileSync} from 'node:fs';
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {topicSlug} from '../../packages/core/src/topics.ts';
 import {parseTopicVotes} from '../../scripts/build-topic-data';
 

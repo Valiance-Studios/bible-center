@@ -1,6 +1,6 @@
 import type {SearchableVerse} from '@bible-center/core';
 
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {buildPhraseIndex} from '@/bible/phraseSearch';
 
 // Invented text, as test fixtures must never hold copyrighted translations.

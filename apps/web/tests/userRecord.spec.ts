@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vite-plus/test';
 import {WRITE_LIMITS} from '@bible-center/core';
 import {Timestamp} from 'firebase/firestore';
 import {addToCount, stampAfterCooldown, takeFromCount, WriteLimitError} from '@/firebase/userRecord';

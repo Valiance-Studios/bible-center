@@ -44,12 +44,14 @@ The ESV and other copyrighted translations must never enter this public reposito
 
 ## Testing Preferences
 
-* Use Vitest for unit testing.
+* Use Vitest (through Vite+) for unit testing.
 * Use Playwright for end-to-end (E2E) testing.
 
 ## Code Style
 
-ESLint (`npm run lint`) enforces most formatting. These conventions are not enforced by the linter but should be followed:
+Vite+ (`vite-plus`) is the toolchain. Its configuration is in the root `vite.config.ts` (`fmt`, `lint` and `test` keys) and `apps/web/vite.config.ts`; don't add separate Oxlint, Oxfmt or Vitest config files (`vitest.emulator.config.ts` is the exception, so that `vp test` needs no emulators). Import from `vite-plus` and `vite-plus/test`, not `vite` and `vitest`.
+
+Oxfmt (`npm run fmt`) formats the code and Oxlint (`npm run lint`) lints it. These conventions are not enforced by either but should be followed:
 
 * Put `import type {...}` statements first as their own group, followed by a blank line, then value imports. Do not use inline `type` modifiers inside value imports (e.g. `import {foo, type Bar}`).
 * Leave a blank line before a `try`, between consecutive `if` blocks, and before a `return` that follows a block.
@@ -89,6 +91,6 @@ Mermaid diagrams in `ARCHITECTURE.md` are required, not optional, and a stale di
 * Keep the documentation up to date as part of each change (see "Documentation"), including the "Project Status" section of `ARCHITECTURE.md`. That file is the main handoff document between sessions.
 * Work on a feature branch (e.g. `feature/<name>`) per step, never directly on `main`. The user reviews and merges pull requests, and may push follow-up tweaks to the branch.
 * Only commit, push, or open a pull request when asked.
-* Before opening a pull request, run `npm run lint`, `npm run type-check`, `npm run build`, `npx vitest run`, `npm run test:emulator`, and `npm run test:e2e`.
+* Before opening a pull request, run `npm run check`, `npm run type-check`, `npm run build`, `npm run test:unit`, `npm run test:emulator`, and `npm run test:e2e`.
 * Pull request descriptions include a Summary, a Test plan checklist, and Notes for decisions or caveats.
 * Merging releases to production, so a pull request's Notes must list anything to do in the consoles of both projects before merging, and its Test plan includes trying it on staging.

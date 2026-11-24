@@ -1,6 +1,6 @@
 import type {DailyVerseList} from '../src/dailyVerses';
 
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {automaticDailyVerse, dateKeyOf, dayOfLeapYear, isDateKey} from '../src/dailyVerses';
 
 describe('dateKeyOf', () => {

@@ -1,6 +1,6 @@
 import type {User} from 'firebase/auth';
 
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vite-plus/test';
 import {onAuthStateChanged, signInWithPopup} from 'firebase/auth';
 import {getAccess, isAccountBlocked} from '@/firebase/access';
 import {recordFirstSignIn} from '@/firebase/settings';

@@ -1,6 +1,6 @@
 import type {WordFile} from '../src/words';
 
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {BIBLE_BOOKS, isOldTestament} from '../src/bibleBooks';
 import {languageOfWords, lexiconGroup, wordsOfVerse} from '../src/words';
 

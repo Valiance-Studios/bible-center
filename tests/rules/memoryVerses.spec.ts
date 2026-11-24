@@ -1,4 +1,4 @@
-import {describe, it} from 'vitest';
+import {describe, it} from 'vite-plus/test';
 import {assertFails, assertSucceeds} from '@firebase/rules-unit-testing';
 import {deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc} from 'firebase/firestore';
 import {ALICE, BOB, createCounted, dbFor, deleteCounted, MALLORY, useRulesTestEnvironment} from './support';

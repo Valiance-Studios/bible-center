@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {BIBLE_BOOKS, chapterTitle, nextChapter, parseChapterRef, previousChapter} from '../src/bibleBooks';
 
 function ref(slug: string, chapter: string) {

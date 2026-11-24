@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {highlightWords} from '@/bible/highlight';
 
 function matched(text: string, words: string[]): string[] {

@@ -1,7 +1,7 @@
 import type {ChapterText, SearchableVerse} from '../../packages/core/src/bibleBooks.ts';
 
 import {readFileSync} from 'node:fs';
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {BIBLE_BOOKS} from '../../packages/core/src/bibleBooks.ts';
 import {findMissingChapters, parseSource} from '../../scripts/build-bible-data';
 

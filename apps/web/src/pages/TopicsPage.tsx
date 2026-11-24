@@ -6,7 +6,7 @@ import {Alert, Button, Loader, TextInput} from '@mantine/core';
 import {COMMON_TOPICS, topicNamesQuery, topicPath} from '@/topics/topicData';
 import classes from './TopicsPage.module.scss';
 
-const LETTERS = [...'abcdefghijklmnopqrstuvwxyz'];
+const LETTERS = 'abcdefghijklmnopqrstuvwxyz'.split('');
 /** Topics that start with a digit, such as "10 commandments", are listed under this. */
 const OTHER = '#';
 const MAX_MATCHES = 8;

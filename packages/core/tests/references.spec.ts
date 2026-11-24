@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {BIBLE_BOOKS} from '../src/bibleBooks';
 import {formatReference, parseReferences, referenceOf} from '../src/references';
 

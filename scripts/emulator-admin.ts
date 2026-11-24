@@ -8,7 +8,7 @@
  */
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {loadEnv} from 'vite';
+import {loadEnv} from 'vite-plus';
 
 export interface EmulatorAccount {
   email: string;

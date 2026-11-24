@@ -1,6 +1,6 @@
 import type {TopicFileVerse} from '../src/topics';
 
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vite-plus/test';
 import {normalizeTopicName, rankTopicVerses, topicSlug, topicVerseKey, votingOpensAt} from '../src/topics';
 
 describe('topic names', () => {
